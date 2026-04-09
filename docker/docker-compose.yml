@@ -1,0 +1,21 @@
+services:
+  ccf-directory:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ccf-directory
+    expose:
+      - "8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/ccf.db
+      - PORT=8080
+    restart: unless-stopped
+    networks:
+      - monitor-network
+
+networks:
+  monitor-network:
+    external: true
+    name: copilot-api-monitor_monitor-network

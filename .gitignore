@@ -1,0 +1,33 @@
+# Dependencies
+web/node_modules/
+
+# Build output
+web/dist/
+
+# Data (not public)
+data/
+
+# Generated data
+server/db/import_data.json
+server/db/import.sql
+
+# Runtime database
+docker/data/
+
+# Scraper logs/progress
+scraper/output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSL / domain info
+*.pem
+*.key
+*.crt
+nginx.conf

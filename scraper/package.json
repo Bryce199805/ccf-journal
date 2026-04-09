@@ -1,0 +1,6 @@
+{
+  "name": "ccf-scraper",
+  "version": "1.0.0",
+  "description": "CCF journal/conference LetPub data scraper",
+  "private": true
+}
