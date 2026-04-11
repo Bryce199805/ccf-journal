@@ -1,7 +1,8 @@
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Search, ArrowUpDown } from 'lucide-react'
+import { Search, ArrowUpDown, Settings2 } from 'lucide-react'
+import { useTags } from '@/hooks/use-tags'
 import { FilterChip } from '@/components/shared/FilterChip'
 import { DOMAINS, LEVELS, ZONES, SORT_OPTIONS } from '@/lib/constants'
 import type { FilterState } from '@/api/types'
@@ -10,9 +11,11 @@ interface FilterBarProps {
   filter: FilterState
   onFilterChange: (updates: Partial<FilterState>) => void
   onSearchChange: (query: string) => void
+  onManageTags: () => void
+  deviceId: string
 }
 
-export function FilterBar({ filter, onFilterChange, onSearchChange }: FilterBarProps) {
+export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags, deviceId }: FilterBarProps) {
   const isJournal = filter.type === 'journal'
 
   return (
@@ -151,6 +154,40 @@ export function FilterBar({ filter, onFilterChange, onSearchChange }: FilterBarP
             </>
           )}
         </div>
+
+        {/* Tag filter - only in favOnly mode */}
+        {filter.favOnly && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">标签</span>
+            {(() => {
+              const { data: tags } = useTags(deviceId)
+              return tags?.map(tag => (
+                <FilterChip
+                  key={tag.name}
+                  label={tag.name}
+                  active={filter.tag === tag.name}
+                  onClick={() => onFilterChange({ tag: filter.tag === tag.name ? '' : tag.name, page: 1 })}
+                />
+              ))
+            })()}
+            {filter.tag && (
+              <button
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => onFilterChange({ tag: '', page: 1 })}
+              >
+                清除筛选
+              </button>
+            )}
+            <span className="mx-1 text-muted-foreground/30">|</span>
+            <button
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              onClick={onManageTags}
+            >
+              <Settings2 className="h-3 w-3" />
+              管理标签
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
