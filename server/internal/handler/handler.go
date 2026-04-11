@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"ccf-directory/internal/middleware"
 	"ccf-directory/internal/model"
 	"ccf-directory/internal/repository"
 
@@ -14,12 +15,25 @@ import (
 type Handler struct {
 	entryRepo    *repository.EntryRepo
 	favoriteRepo *repository.FavoriteRepo
+	noteRepo     *repository.NoteRepo
+	tagRepo      *repository.TagRepo
+	userRepo     *repository.UserRepo
+	authHandler  *AuthHandler
 }
 
 func New(db *sql.DB) *Handler {
+	favRepo := repository.NewFavoriteRepo(db)
+	noteRepo := repository.NewNoteRepo(db)
+	tagRepo := repository.NewTagRepo(db)
+	userRepo := repository.NewUserRepo(db)
+
 	return &Handler{
 		entryRepo:    repository.NewEntryRepo(db),
-		favoriteRepo: repository.NewFavoriteRepo(db),
+		favoriteRepo: favRepo,
+		noteRepo:     noteRepo,
+		tagRepo:      tagRepo,
+		userRepo:     userRepo,
+		authHandler:  NewAuthHandler(userRepo, favRepo, noteRepo, tagRepo),
 	}
 }
 
@@ -79,11 +93,12 @@ func (h *Handler) GetEntry(c *gin.Context) {
 		return
 	}
 
-	// Check if favorite - always include is_favorite in entry response
+	// Check if favorite
 	isFav := false
 	deviceID := c.Query("device_id")
-	if deviceID != "" {
-		isFav, _ = h.favoriteRepo.IsFavorite(deviceID, id)
+	userID := middleware.GetUserID(c)
+	if deviceID != "" || userID != nil {
+		isFav, _ = h.favoriteRepo.IsFavorite(deviceID, userID, id)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -110,7 +125,13 @@ func (h *Handler) AddFavorite(c *gin.Context) {
 		return
 	}
 
-	if err := h.favoriteRepo.Add(req.DeviceID, req.EntryID); err != nil {
+	userID := middleware.GetUserID(c)
+	tags := req.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
+	if err := h.favoriteRepo.Add(req.DeviceID, userID, req.EntryID, tags); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -126,7 +147,8 @@ func (h *Handler) RemoveFavorite(c *gin.Context) {
 		return
 	}
 
-	if err := h.favoriteRepo.Remove(req.DeviceID, req.EntryID); err != nil {
+	userID := middleware.GetUserID(c)
+	if err := h.favoriteRepo.Remove(req.DeviceID, userID, req.EntryID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -137,12 +159,14 @@ func (h *Handler) RemoveFavorite(c *gin.Context) {
 // ListFavorites returns list of favorite entry IDs for a device
 func (h *Handler) ListFavorites(c *gin.Context) {
 	deviceID := c.Query("device_id")
-	if deviceID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id required"})
+	userID := middleware.GetUserID(c)
+
+	if deviceID == "" && userID == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
 		return
 	}
 
-	ids, err := h.favoriteRepo.ListEntryIDs(deviceID)
+	ids, err := h.favoriteRepo.ListEntryIDs(deviceID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -153,4 +177,46 @@ func (h *Handler) ListFavorites(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"entry_ids": ids})
+}
+
+// UpdateFavoriteTags updates the tags for a favorite entry
+func (h *Handler) UpdateFavoriteTags(c *gin.Context) {
+	var req model.UpdateFavoriteTagsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID := middleware.GetUserID(c)
+	if err := h.favoriteRepo.UpdateTags(req.DeviceID, userID, req.EntryID, req.Tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}
+
+// RegisterRoutes registers all API routes
+func (h *Handler) RegisterRoutes(api *gin.RouterGroup) {
+	api.GET("/entries", h.ListEntries)
+	api.GET("/entries/:id", h.GetEntry)
+	api.GET("/stats", h.GetStats)
+	api.POST("/favorites", h.AddFavorite)
+	api.DELETE("/favorites", h.RemoveFavorite)
+	api.GET("/favorites", h.ListFavorites)
+	api.PUT("/favorites/tags", h.UpdateFavoriteTags)
+
+	api.GET("/notes", h.ListNotes)
+	api.PUT("/notes", h.UpsertNote)
+	api.DELETE("/notes", h.DeleteNote)
+
+	api.GET("/tags", h.ListTags)
+	api.POST("/tags", h.CreateTag)
+	api.PUT("/tags/:id", h.UpdateTag)
+	api.DELETE("/tags/:id", h.DeleteTag)
+
+	api.POST("/auth/register", h.authHandler.Register)
+	api.POST("/auth/login", h.authHandler.Login)
+	api.POST("/auth/logout", h.authHandler.Logout)
+	api.GET("/auth/me", h.authHandler.Me)
 }
