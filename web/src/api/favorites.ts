@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from './client'
+import { apiGet, apiPost, apiPut, apiDelete } from './client'
 import type { FavoritesResponse, FavoriteRequest } from './types'
 
 export function fetchFavorites(deviceId: string) {
@@ -11,4 +11,8 @@ export function addFavorite(req: FavoriteRequest) {
 
 export function removeFavorite(req: FavoriteRequest) {
   return apiDelete<unknown>('/favorites', req)
+}
+
+export function updateFavoriteTags(deviceId: string, entryId: number, tags: string[]) {
+  return apiPut<unknown>('/favorites/tags', { device_id: deviceId, entry_id: entryId, tags })
 }

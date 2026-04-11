@@ -43,6 +43,8 @@ export interface EntryListItem {
   article_count: number | null
   letpub_score: number | null
   is_favorite: boolean
+  tags: string[]
+  note: string
 }
 
 export interface Entry extends EntryListItem {
@@ -96,6 +98,7 @@ export interface EntryDetailResponse {
 export interface FavoriteRequest {
   device_id: string
   entry_id: number
+  tags?: string[]
 }
 
 export interface FavoritesResponse {
@@ -114,5 +117,61 @@ export interface FilterState {
   perPage: number
   favOnly: boolean
   topOnly: boolean
+  tag: string
   layout: 'card' | 'table'
+}
+
+export interface User {
+  id: number
+  username: string
+  created_at: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: User
+}
+
+export interface RegisterRequest {
+  username: string
+  password: string
+}
+
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface Note {
+  entry_id: number
+  ccf_abbr: string
+  ccf_full: string
+  ccf_level: string
+  content: string
+  updated_at: string
+}
+
+export interface NoteRequest {
+  device_id: string
+  entry_id: number
+  content: string
+}
+
+export interface NotesResponse {
+  notes: Note[]
+}
+
+export interface Tag {
+  id?: number
+  name: string
+  color: string
+}
+
+export interface TagsResponse {
+  tags: Tag[]
+}
+
+export interface CreateTagRequest {
+  name: string
+  color: string
 }

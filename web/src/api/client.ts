@@ -1,3 +1,8 @@
+function getAuthHeader(): Record<string, string> {
+  const token = localStorage.getItem('ccf_token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export async function apiGet<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
   const url = new URL('/api' + path, window.location.origin)
   if (params) {
@@ -5,7 +10,9 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
       if (v !== '' && v != null && v !== undefined) url.searchParams.set(k, String(v))
     })
   }
-  const res = await fetch(url)
+  const res = await fetch(url, {
+    headers: { ...getAuthHeader() },
+  })
   if (!res.ok) throw new Error(`API ${res.status}`)
   return res.json()
 }
@@ -13,7 +20,17 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch('/api' + path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API ${res.status}`)
+  return res.json()
+}
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch('/api' + path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
     body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`API ${res.status}`)
@@ -23,7 +40,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
 export async function apiDelete<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch('/api' + path, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
     body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`API ${res.status}`)
