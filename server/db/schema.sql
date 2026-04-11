@@ -61,6 +61,35 @@ CREATE TABLE IF NOT EXISTS favorites (
     UNIQUE(device_id, entry_id)
 );
 
+-- User accounts for cross-device sync
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Notes (independent of favorites - any entry can have notes)
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+    content TEXT NOT NULL DEFAULT '',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(device_id, entry_id)
+);
+
+-- Tag definitions for logged-in users
+CREATE TABLE IF NOT EXISTS user_tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, name)
+);
+
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_entries_type ON entries(type);
 CREATE INDEX IF NOT EXISTS idx_entries_domain ON entries(ccf_domain);
@@ -72,3 +101,7 @@ CREATE INDEX IF NOT EXISTS idx_entries_cite_score ON entries(cite_score DESC);
 CREATE INDEX IF NOT EXISTS idx_entries_abbr ON entries(ccf_abbr);
 CREATE INDEX IF NOT EXISTS idx_favorites_device ON favorites(device_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_device_entry ON favorites(device_id, entry_id);
+CREATE INDEX IF NOT EXISTS idx_notes_device ON notes(device_id);
+CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_entry ON notes(entry_id);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
