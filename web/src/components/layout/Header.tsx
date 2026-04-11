@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Sun, Moon, Star, LayoutGrid, Table2 } from 'lucide-react'
+import { Sun, Moon, Star, LayoutGrid, Table2, User, LogOut } from 'lucide-react'
 import { useTheme } from '@/lib/theme-provider'
 import { useStats } from '@/hooks/use-stats'
 import type { FilterState } from '@/api/types'
@@ -7,11 +7,15 @@ import type { FilterState } from '@/api/types'
 interface HeaderProps {
   filter: FilterState
   favCount: number
+  isAuthenticated: boolean
+  username: string | null
   onToggleFav: () => void
   onToggleLayout: (layout: 'card' | 'table') => void
+  onLoginClick: () => void
+  onLogout: () => void
 }
 
-export function Header({ filter, favCount, onToggleFav, onToggleLayout }: HeaderProps) {
+export function Header({ filter, favCount, isAuthenticated, username, onToggleFav, onToggleLayout, onLoginClick, onLogout }: HeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const { data: stats } = useStats()
   const isJournal = filter.type === 'journal'
@@ -50,6 +54,18 @@ export function Header({ filter, favCount, onToggleFav, onToggleLayout }: Header
                 <Table2 className="h-4 w-4" />
               </Button>
             </div>
+          )}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground hidden sm:inline">{username}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLogout}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLoginClick}>
+              <User className="h-4 w-4" />
+            </Button>
           )}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
