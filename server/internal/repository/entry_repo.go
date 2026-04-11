@@ -97,6 +97,12 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		conditions = append(conditions, "(e.cas2025 LIKE '%\"isTop\":true%' OR e.xinrui LIKE '%\"isTop\":true%')")
 	}
 
+	// Tag filter (filter favorites by tag name in JSON)
+	if q.Tag != "" && q.Favorites && q.DeviceID != "" {
+		conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.tags LIKE ?)")
+		args = append(args, q.DeviceID, `%"`+escapeLike(q.Tag)+`"%`)
+	}
+
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")

@@ -74,6 +74,8 @@ type EntryListItem struct {
 	ArticleCount *int    `json:"article_count"`
 	LetPubScore  *float64 `json:"letpub_score"`
 	IsFavorite   bool    `json:"is_favorite"`
+	Tags         []string `json:"tags"`
+	Note         string   `json:"note"`
 }
 
 // ScanEntry scans a full entry from a sql row
@@ -121,7 +123,6 @@ type UpdateFavoriteTagsRequest struct {
 	EntryID  int      `json:"entry_id" binding:"required,min=1"`
 	Tags     []string `json:"tags" binding:"required"`
 }
-}
 
 // ListQuery represents query parameters for listing entries
 type ListQuery struct {
@@ -137,6 +138,7 @@ type ListQuery struct {
 	DeviceID  string `form:"device_id"`
 	Favorites bool   `form:"favorites"`
 	Top       bool   `form:"top"`
+	Tag       string `form:"tag"`
 }
 
 // Domains returns the list of domains (comma-separated)
