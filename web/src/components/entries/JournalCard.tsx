@@ -2,7 +2,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ZoneBadge, LevelBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { FavoriteStar } from './FavoriteStar'
+import { NoteEditor } from './NoteEditor'
+import { TagPicker } from './TagPicker'
+import { TagBadge } from '@/components/tags/TagBadge'
+import { useUpdateFavoriteTags } from '@/hooks/use-favorites'
 import { fmt } from '@/lib/utils'
+import { Tag } from 'lucide-react'
 import type { EntryListItem } from '@/api/types'
 
 function extractZone(json: string | null): string {
@@ -25,6 +30,12 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
   const cas = extractZone(entry.cas2025)
   const xin = extractZone(entry.xinrui)
   const isTopJournal = isTop(entry.cas2025) || isTop(entry.xinrui)
+
+  const updateFavTags = useUpdateFavoriteTags(deviceId)
+  const entryTags = entry.tags || []
+  const handleTagsChange = (newTags: string[]) => {
+    updateFavTags.mutate({ entryId: entry.id, tags: newTags })
+  }
 
   return (
     <Card
@@ -63,8 +74,33 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
           )}
           {entry.ccf_publisher && <span className="text-xs text-muted-foreground">{entry.ccf_publisher}</span>}
         </div>
-        {/* Favorite star - top right corner */}
-        <div className="absolute top-3 right-2">
+        {/* Tags + Note section */}
+        {(entryTags.length > 0 || entry.note || entry.is_favorite) && (
+          <>
+            <div className="border-t my-2" />
+            {entryTags.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap mb-0.5" onClick={e => e.stopPropagation()}>
+                {entryTags.map(t => <TagBadge key={t} name={t} />)}
+              </div>
+            )}
+            <div onClick={e => e.stopPropagation()}>
+              <NoteEditor entryId={entry.id} deviceId={deviceId} initialContent={entry.note || ''} />
+            </div>
+          </>
+        )}
+        {/* Favorite star + Tag picker - top right corner */}
+        <div className="absolute top-3 right-2 flex items-center gap-0.5">
+          {entry.is_favorite && (
+            <TagPicker deviceId={deviceId} selectedTags={entryTags} onTagsChange={handleTagsChange}>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 -m-1 rounded-md hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground/60 transition-all"
+                aria-label="标签"
+              >
+                <Tag className="h-4 w-4" />
+              </button>
+            </TagPicker>
+          )}
           <FavoriteStar entryId={entry.id} isFavorite={entry.is_favorite} deviceId={deviceId} />
         </div>
       </CardContent>
