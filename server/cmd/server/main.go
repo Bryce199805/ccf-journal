@@ -10,6 +10,7 @@ import (
 
 	dbpkg "ccf-directory/db"
 	"ccf-directory/internal/handler"
+	"ccf-directory/internal/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -77,22 +78,16 @@ func main() {
 	// CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 	}))
 
 	// API routes
 	h := handler.New(db)
 	api := r.Group("/api")
-	{
-		api.GET("/entries", h.ListEntries)
-		api.GET("/entries/:id", h.GetEntry)
-		api.GET("/stats", h.GetStats)
-		api.POST("/favorites", h.AddFavorite)
-		api.DELETE("/favorites", h.RemoveFavorite)
-		api.GET("/favorites", h.ListFavorites)
-	}
+	api.Use(middleware.AuthMiddleware())
+	h.RegisterRoutes(api)
 
 	// Serve frontend static files (Vite build output)
 	r.Static("/assets", filepath.Join(frontendDir, "assets"))
