@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	dbpkg "ccf-directory/db"
 	"ccf-directory/internal/handler"
@@ -55,6 +56,9 @@ func main() {
 		log.Fatalf("Failed to initialize schema: %v", err)
 	}
 	log.Println("Database initialized")
+
+	// Run migrations for existing databases
+	runMigrations(db)
 
 	// Import data if available
 	importPath := os.Getenv("IMPORT_PATH")
@@ -109,4 +113,20 @@ func main() {
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
+}
+
+func runMigrations(db *sql.DB) {
+	migrations := []string{
+		"ALTER TABLE favorites ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'",
+		"ALTER TABLE favorites ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE",
+	}
+	for _, m := range migrations {
+		if _, err := db.Exec(m); err != nil {
+			// Column already exists is expected for new databases
+			if !strings.Contains(err.Error(), "duplicate column name") {
+				log.Printf("Migration warning: %v", err)
+			}
+		}
+	}
+	log.Println("Migrations applied")
 }
