@@ -5,10 +5,13 @@ import { useDeviceId } from '@/hooks/use-device-id'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useEntries } from '@/hooks/use-entries'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useAuth } from '@/hooks/use-auth'
 import { Header } from '@/components/layout/Header'
 import { FilterBar } from '@/components/layout/FilterBar'
 import { EntryList } from '@/components/entries/EntryList'
 import { DetailDialog } from '@/components/detail/DetailDialog'
+import { AuthDialog } from '@/components/auth/AuthDialog'
+import { TagManager } from '@/components/tags/TagManager'
 import type { FilterState } from '@/api/types'
 
 const queryClient = new QueryClient({
@@ -33,13 +36,17 @@ const DEFAULT_FILTER: FilterState = {
   favOnly: false,
   topOnly: false,
   layout: 'card',
+  tag: '',
 }
 
 function AppContent() {
   const deviceId = useDeviceId()
+  const { user, isAuthenticated, login, register, logout } = useAuth()
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
   const [detailId, setDetailId] = useState<number | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [tagManagerOpen, setTagManagerOpen] = useState(false)
 
   const debouncedQuery = useDebounce(filter.query, 300)
   const filterWithDebounce = { ...filter, query: debouncedQuery }
@@ -61,25 +68,35 @@ function AppContent() {
     setDialogOpen(true)
   }, [])
 
+  const handleLogin = useCallback(async (username: string, password: string) => {
+    return login(username, password, deviceId)
+  }, [login, deviceId])
+
   return (
     <div className="min-h-screen bg-background">
       <Header
         filter={filter}
         favCount={favCount}
+        isAuthenticated={isAuthenticated}
+        username={user?.username ?? null}
         onToggleFav={() => updateFilter({ favOnly: !filter.favOnly, page: 1 })}
         onToggleLayout={layout => updateFilter({ layout, page: 1 })}
+        onLoginClick={() => setAuthOpen(true)}
+        onLogout={logout}
       />
       <FilterBar
         filter={filter}
         onFilterChange={updateFilter}
         onSearchChange={handleSearchChange}
+        onManageTags={() => setTagManagerOpen(true)}
+        deviceId={deviceId}
       />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
         <EntryList
           entries={data?.data ?? []}
           total={data?.total ?? 0}
           page={data?.page ?? 1}
-          totalPages={data?.total_pages ?? 0}
+          totalPages={data?.total_pages ?? 1}
           filter={filter}
           deviceId={deviceId}
           isLoading={isLoading}
@@ -92,6 +109,17 @@ function AppContent() {
         deviceId={deviceId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+      />
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        onLogin={handleLogin}
+        onRegister={register}
+      />
+      <TagManager
+        open={tagManagerOpen}
+        onOpenChange={setTagManagerOpen}
+        deviceId={deviceId}
       />
     </div>
   )
