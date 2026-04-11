@@ -10,7 +10,7 @@ export function useTags(deviceId: string) {
   })
 }
 
-export function useCreateTag(deviceId: string) {
+export function useCreateTag(_deviceId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (req: CreateTagRequest) => createTag(req),
@@ -18,7 +18,7 @@ export function useCreateTag(deviceId: string) {
   })
 }
 
-export function useUpdateTag(deviceId: string) {
+export function useUpdateTag(_deviceId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...req }: { id: number } & CreateTagRequest) => updateTag(id, req),
