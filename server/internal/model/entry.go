@@ -102,14 +102,25 @@ func ScanEntry(row *sql.Row) (*Entry, error) {
 type Favorite struct {
 	ID        int    `json:"id"`
 	DeviceID  string `json:"device_id"`
+	UserID    *int   `json:"user_id"`
 	EntryID   int    `json:"entry_id"`
+	Tags      string `json:"tags"`
 	CreatedAt string `json:"created_at"`
 }
 
 // FavoriteRequest is the request body for adding/removing favorites
 type FavoriteRequest struct {
-	DeviceID string `json:"device_id" binding:"required"`
-	EntryID  int    `json:"entry_id" binding:"required,min=1"`
+	DeviceID string   `json:"device_id"`
+	EntryID  int      `json:"entry_id" binding:"required,min=1"`
+	Tags     []string `json:"tags"`
+}
+
+// UpdateFavoriteTagsRequest is the request body for updating favorite tags
+type UpdateFavoriteTagsRequest struct {
+	DeviceID string   `json:"device_id"`
+	EntryID  int      `json:"entry_id" binding:"required,min=1"`
+	Tags     []string `json:"tags" binding:"required"`
+}
 }
 
 // ListQuery represents query parameters for listing entries
