@@ -21,6 +21,7 @@ export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
             <th className="py-2 px-2 font-medium text-muted-foreground text-xs whitespace-nowrap">领域</th>
             <th className="py-2 px-2 font-medium text-muted-foreground text-xs whitespace-nowrap hidden md:table-cell">出版社</th>
             <th className="py-2 px-2 w-16 font-medium text-muted-foreground text-xs">链接</th>
+            <th className="py-2 px-2 min-w-[80px] font-medium text-muted-foreground text-xs">备注</th>
             <th className="py-2 px-2 w-12 text-center font-medium text-muted-foreground text-xs">★</th>
           </tr>
         </thead>
@@ -42,6 +43,7 @@ export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
                   </a>
                 )}
               </td>
+              <td className="py-2 px-2 text-xs text-muted-foreground truncate max-w-[150px]">{e.note || '-'}</td>
               <td className="py-2 px-2 text-center" onClick={(ev) => ev.stopPropagation()}>
                 <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} />
               </td>

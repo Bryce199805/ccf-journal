@@ -2,6 +2,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { ZoneBadge, LevelBadge, TopBadge } from '@/components/shared/ZoneBadge'
+import { TagBadge } from '@/components/tags/TagBadge'
 import { FavoriteStar } from './FavoriteStar'
 import { fmt } from '@/lib/utils'
 import type { EntryListItem } from '@/api/types'
@@ -37,6 +38,8 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
             <TableHead className="w-14 text-center">IF</TableHead>
             <TableHead className="w-14 text-center">CS</TableHead>
             <TableHead className="w-10 text-center">H</TableHead>
+            <TableHead className="min-w-[80px]">标签</TableHead>
+            <TableHead className="min-w-[100px]">备注</TableHead>
             <TableHead className="w-12 text-center">★</TableHead>
           </TableRow>
         </TableHeader>
@@ -63,6 +66,16 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
                 <TableCell className="text-center font-medium tabular-nums">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
                 <TableCell className="text-center font-medium tabular-nums">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
                 <TableCell className="text-center">{e.h_index ?? '-'}</TableCell>
+                <TableCell>
+                  {e.tags && e.tags.length > 0 ? (
+                    <div className="flex gap-0.5 flex-wrap">
+                      {e.tags.map(t => <TagBadge key={t} name={t} />)}
+                    </div>
+                  ) : '-'}
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate text-xs text-muted-foreground">
+                  {e.note || '-'}
+                </TableCell>
                 <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                   <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} />
                 </TableCell>
