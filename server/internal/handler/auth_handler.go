@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"ccf-directory/internal/middleware"
@@ -75,13 +76,26 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	// Merge device data if device_id provided
 	deviceID := c.Query("device_id")
+	log.Printf("Login: username=%s device_id=%s", req.Username, deviceID)
 	if deviceID != "" {
 		tx, err := h.userRepo.DB().Begin()
-		if err == nil {
-			_ = h.favoriteRepo.MergeDeviceFavorites(tx, deviceID, user.ID)
-			_ = h.noteRepo.MergeDeviceNotes(tx, deviceID, user.ID)
-			_ = h.tagRepo.MergeDeviceTags(tx, deviceID, user.ID)
-			tx.Commit()
+		if err != nil {
+			log.Printf("Login: failed to begin transaction: %v", err)
+		} else {
+			if err := h.favoriteRepo.MergeDeviceFavorites(tx, deviceID, user.ID); err != nil {
+				log.Printf("Login: MergeDeviceFavorites error: %v", err)
+			}
+			if err := h.noteRepo.MergeDeviceNotes(tx, deviceID, user.ID); err != nil {
+				log.Printf("Login: MergeDeviceNotes error: %v", err)
+			}
+			if err := h.tagRepo.MergeDeviceTags(tx, deviceID, user.ID); err != nil {
+				log.Printf("Login: MergeDeviceTags error: %v", err)
+			}
+			if err := tx.Commit(); err != nil {
+				log.Printf("Login: commit error: %v", err)
+			} else {
+				log.Printf("Login: merge committed for user_id=%d device_id=%s", user.ID, deviceID)
+			}
 		}
 	}
 

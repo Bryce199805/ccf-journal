@@ -51,6 +51,9 @@ func (h *Handler) ListEntries(c *gin.Context) {
 		return
 	}
 
+	// Inject user_id from JWT if available
+	q.UserID = middleware.GetUserID(c)
+
 	items, total, err := h.entryRepo.List(q)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

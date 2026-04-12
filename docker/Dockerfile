@@ -41,6 +41,7 @@ ENV DB_PATH=/app/data/ccf.db \
     PORT=8080 \
     FRONTEND_DIR=/app/frontend \
     SCHEMA_PATH=/app/db/schema.sql \
-    IMPORT_PATH=/app/db/import_data.json
+    IMPORT_PATH=/app/db/import_data.json \
+    JWT_SECRET=change-me-in-production
 
 CMD ["/app/ccf-server"]

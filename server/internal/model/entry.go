@@ -139,6 +139,7 @@ type ListQuery struct {
 	Favorites bool   `form:"favorites"`
 	Top       bool   `form:"top"`
 	Tag       string `form:"tag"`
+	UserID    *int   `form:"-"` // injected from JWT, not from query params
 }
 
 // Domains returns the list of domains (comma-separated)

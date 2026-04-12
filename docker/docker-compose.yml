@@ -11,6 +11,7 @@ services:
     environment:
       - DB_PATH=/app/data/ccf.db
       - PORT=8080
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
     restart: unless-stopped
     networks:
       - monitor-network

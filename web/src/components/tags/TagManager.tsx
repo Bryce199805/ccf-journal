@@ -74,11 +74,11 @@ export function TagManager({ open, onOpenChange, deviceId }: TagManagerProps) {
               </Button>
             </div>
             <div className="flex gap-1.5 mt-2">
-              {TAG_COLORS.map((c, i) => (
+              {TAG_COLORS.map((c) => (
                 <button
-                  key={i}
-                  className={`w-5 h-5 rounded-full ${c.bg} border-2 ${newColor === String(i) ? 'border-primary' : 'border-transparent'}`}
-                  onClick={() => setNewColor(String(i))}
+                  key={c.key}
+                  className={`w-5 h-5 rounded-full ${c.bg} border-2 ${newColor === c.key ? 'border-primary' : 'border-transparent'}`}
+                  onClick={() => setNewColor(c.key)}
                 />
               ))}
             </div>

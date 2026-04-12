@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -87,9 +88,14 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	}
 
 	// Favorites filter
-	if q.Favorites && q.DeviceID != "" {
-		conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ?)")
-		args = append(args, q.DeviceID)
+	if q.Favorites {
+		if q.UserID != nil {
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.user_id = ?)")
+			args = append(args, *q.UserID)
+		} else if q.DeviceID != "" {
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.user_id IS NULL)")
+			args = append(args, q.DeviceID)
+		}
 	}
 
 	// Top journal filter (isTop in cas2025 or xinrui JSON)
@@ -98,9 +104,14 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	}
 
 	// Tag filter (filter favorites by tag name in JSON)
-	if q.Tag != "" && q.Favorites && q.DeviceID != "" {
-		conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.tags LIKE ?)")
-		args = append(args, q.DeviceID, `%"`+escapeLike(q.Tag)+`"%`)
+	if q.Tag != "" && q.Favorites {
+		if q.UserID != nil {
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.user_id = ? AND f.tags LIKE ?)")
+			args = append(args, *q.UserID, `%"`+escapeLike(q.Tag)+`"%`)
+		} else if q.DeviceID != "" {
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.user_id IS NULL AND f.tags LIKE ?)")
+			args = append(args, q.DeviceID, `%"`+escapeLike(q.Tag)+`"%`)
+		}
 	}
 
 	whereClause := ""
@@ -142,14 +153,17 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	// Pagination
 	offset := (q.Page - 1) * q.PerPage
 
-	// Is favorite subquery
+	// Is favorite subquery + tags + note
 	favSubquery := ""
 	favArgs := []interface{}{}
-	if q.DeviceID != "" {
-		favSubquery = fmt.Sprintf(", EXISTS(SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ?) as is_favorite")
-		favArgs = append(favArgs, q.DeviceID)
+	if q.UserID != nil {
+		favSubquery = `, COALESCE((SELECT f2.tags FROM favorites f2 WHERE f2.entry_id = e.id AND f2.user_id = ?), '[]') as tags, COALESCE((SELECT n.content FROM notes n WHERE n.entry_id = e.id AND n.user_id = ?), '') as note, EXISTS(SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.user_id = ?) as is_favorite`
+		favArgs = append(favArgs, *q.UserID, *q.UserID, *q.UserID)
+	} else if q.DeviceID != "" {
+		favSubquery = `, COALESCE((SELECT f2.tags FROM favorites f2 WHERE f2.entry_id = e.id AND f2.device_id = ? AND f2.user_id IS NULL), '[]') as tags, COALESCE((SELECT n.content FROM notes n WHERE n.entry_id = e.id AND n.device_id = ? AND n.user_id IS NULL), '') as note, EXISTS(SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.user_id IS NULL) as is_favorite`
+		favArgs = append(favArgs, q.DeviceID, q.DeviceID, q.DeviceID)
 	} else {
-		favSubquery = ", 0 as is_favorite"
+		favSubquery = `, '[]' as tags, '' as note, 0 as is_favorite`
 	}
 
 	query := fmt.Sprintf(
@@ -170,16 +184,19 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	var items []model.EntryListItem
 	for rows.Next() {
 		var item model.EntryListItem
+		var tagsJSON string
 		err := rows.Scan(
 			&item.ID, &item.Type, &item.CCFDomain, &item.CCFLevel,
 			&item.CCFAbbr, &item.CCFFull, &item.CCFPublisher, &item.CCFUrl,
 			&item.LetPubUrl, &item.ISSN, &item.ImpactFactor, &item.CiteScore,
 			&item.HIndex, &item.CAS2025, &item.Xinrui, &item.WoSZone,
-			&item.SCIType, &item.ArticleCount, &item.LetPubScore, &item.IsFavorite,
+			&item.SCIType, &item.ArticleCount, &item.LetPubScore,
+			&tagsJSON, &item.Note, &item.IsFavorite,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+		json.Unmarshal([]byte(tagsJSON), &item.Tags)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
