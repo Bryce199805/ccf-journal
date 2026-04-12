@@ -26,6 +26,9 @@ scraper/output/
 .DS_Store
 Thumbs.db
 
+# Planning docs
+docs/
+
 # SSL / domain info
 *.pem
 *.key
