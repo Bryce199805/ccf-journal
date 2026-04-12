@@ -79,7 +79,7 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
           {entry.note && !noteEditing && (
             <span
               onClick={e => { e.stopPropagation(); setNoteEditing(true) }}
-              className="text-[11px] text-muted-foreground/70 italic truncate max-w-[140px] cursor-pointer hover:text-muted-foreground"
+              className="flex-1 text-[11px] text-muted-foreground/70 italic truncate cursor-pointer hover:text-muted-foreground min-w-0"
               title={entry.note}
             >
               📝 {entry.note}
@@ -91,21 +91,21 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
           <NoteEditor entryId={entry.id} deviceId={deviceId} initialContent={entry.note || ''} onDone={() => setNoteEditing(false)} />
         )}
         {/* Favorite star + Tag picker - top right corner */}
-        <div className="absolute top-3 right-2 flex items-center gap-0.5">
+        <div className="absolute top-3 right-2 flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); setNoteEditing(true) }}
-            className="p-1.5 -m-1 rounded-md hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground/60 transition-all"
+            className="p-2 -m-1.5 rounded-md hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground/60 transition-all"
             aria-label="备注"
           >
-            <PencilLine className="h-4 w-4" />
+            <PencilLine className="h-5 w-5" />
           </button>
           <TagPicker deviceId={deviceId} selectedTags={entryTags} onTagsChange={handleTagsChange}>
             <button
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 -m-1 rounded-md hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground/60 transition-all"
+              className="p-2 -m-1.5 rounded-md hover:bg-muted/60 text-muted-foreground/40 hover:text-muted-foreground/60 transition-all"
               aria-label="标签"
             >
-              <Tag className="h-4 w-4" />
+              <Tag className="h-5 w-5" />
             </button>
           </TagPicker>
           <FavoriteStar entryId={entry.id} isFavorite={entry.is_favorite} deviceId={deviceId} />

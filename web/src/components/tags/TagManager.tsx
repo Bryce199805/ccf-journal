@@ -20,17 +20,24 @@ export function TagManager({ open, onOpenChange, deviceId }: TagManagerProps) {
   const deleteTag = useDeleteTag()
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleCreate = () => {
     if (!newName.trim()) return
     createTag.mutate(
       { name: newName.trim(), color: newColor },
-      { onSuccess: () => { setNewName(''); setNewColor('') } },
+      { onSuccess: () => { setNewName(''); setNewColor(''); setErrorMsg('') } },
     )
   }
 
   const handleDelete = (id: number) => {
-    deleteTag.mutate(id)
+    setErrorMsg('')
+    deleteTag.mutate(id, {
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error || '删除失败'
+        setErrorMsg(msg)
+      },
+    })
   }
 
   return (
@@ -40,6 +47,9 @@ export function TagManager({ open, onOpenChange, deviceId }: TagManagerProps) {
           <DialogTitle>管理标签</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {errorMsg && (
+            <div className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">{errorMsg}</div>
+          )}
           {tags && tags.length > 0 && (
             <div className="space-y-1.5">
               {tags.map((tag: { id?: number; name: string; color: string }) => (

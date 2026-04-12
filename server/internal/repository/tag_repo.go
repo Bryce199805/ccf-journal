@@ -2,8 +2,10 @@ package repository
 
 import (
 	"database/sql"
-	"ccf-directory/internal/model"
 	"encoding/json"
+	"strings"
+
+	"ccf-directory/internal/model"
 )
 
 type TagRepo struct {
@@ -73,6 +75,19 @@ func (r *TagRepo) Update(id int, name, color string) (*model.Tag, error) {
 func (r *TagRepo) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM user_tags WHERE id = ?", id)
 	return err
+}
+
+// IsTagInUse checks if a tag name is used in any favorite for the user
+func (r *TagRepo) IsTagInUse(userID int, tagName string) (bool, error) {
+	escaped := strings.ReplaceAll(tagName, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `%`, `\%`)
+	escaped = strings.ReplaceAll(escaped, `_`, `\_`)
+	var count int
+	err := r.db.QueryRow(
+		"SELECT COUNT(*) FROM favorites WHERE user_id = ? AND tags LIKE ? ESCAPE '\\'",
+		userID, `%"`+escaped+`"%)`,
+	).Scan(&count)
+	return count > 0, err
 }
 
 // AggregateTagsFromFavorites extracts unique tag names from favorites.tags for device_id (guest users)

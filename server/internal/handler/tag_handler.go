@@ -118,15 +118,21 @@ func (h *Handler) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	tx, err := h.userRepo.DB().Begin()
+	// Check if tag is in use
+	inUse, err := h.tagRepo.IsTagInUse(*userID, existing.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if inUse {
+		c.JSON(http.StatusConflict, gin.H{"error": "标签正在使用中，请先移除所有条目上的该标签"})
+		return
+	}
 
-	_ = h.tagRepo.RemoveTagFromFavorites(tx, *userID, existing.Name)
-	_ = h.tagRepo.Delete(tagID)
-	tx.Commit()
+	if err := h.tagRepo.Delete(tagID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
