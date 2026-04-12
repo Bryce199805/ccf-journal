@@ -19,4 +19,4 @@ services:
 networks:
   monitor-network:
     external: true
-    name: copilot-api-monitor_monitor-network
+    name: shared-proxy
