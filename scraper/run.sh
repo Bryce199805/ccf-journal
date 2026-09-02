@@ -1,4 +1,5 @@
 #!/bin/bash
-# Run batch scraper in background with unbuffered output
+# Compatibility wrapper. Prefer: npm run scrape
 cd "$(dirname "$0")"
-NODE_OPTIONS="--max-old-space-size=512" stdbuf -oL node batch_scrape.js >> output/scrape.log 2>&1
+mkdir -p output
+NODE_OPTIONS="--max-old-space-size=512" node batch_scrape.js

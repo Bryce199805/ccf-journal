@@ -1,0 +1,37 @@
+[
+  {
+    "journalid": "500",
+    "name": "CCF JOURNAL",
+    "type": "journal",
+    "isCCF": true,
+    "issn": "5555-5555",
+    "ccfRelations": [
+      {
+        "domain": "人工智能",
+        "level": "A",
+        "abbr": "CCFJ",
+        "full": "CCF JOURNAL",
+        "publisher": "Example",
+        "url": "https://example.invalid/ccfj"
+      }
+    ]
+  },
+  {
+    "journalid": "101",
+    "name": "COMPUTER ONE",
+    "type": "journal",
+    "isCCF": false,
+    "issn": "1111-1111",
+    "casPartitions": {
+      "2025": {
+        "bigCategory": "计算机科学",
+        "bigZone": "1区"
+      }
+    },
+    "latestCASYear": "2025",
+    "latestCAS": {
+      "bigCategory": "计算机科学",
+      "bigZone": "1区"
+    }
+  }
+]

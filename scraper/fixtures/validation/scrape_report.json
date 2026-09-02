@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "totalTasks": 2,
+  "closed": true,
+  "counts": {
+    "pending": 0,
+    "success": 2,
+    "rejected": 0,
+    "not_found": 0,
+    "parse_failed": 0,
+    "rate_limited": 0
+  }
+}

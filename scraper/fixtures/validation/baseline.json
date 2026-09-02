@@ -1,0 +1,16 @@
+[
+  {
+    "journalid": "500",
+    "name": "CCF JOURNAL",
+    "type": "journal",
+    "isCCF": true,
+    "issn": "5555-5555"
+  },
+  {
+    "journalid": "101",
+    "name": "COMPUTER ONE",
+    "type": "journal",
+    "isCCF": false,
+    "issn": "1111-1111"
+  }
+]
