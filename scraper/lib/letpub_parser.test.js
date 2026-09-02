@@ -37,6 +37,19 @@ test('distinguishes Xinrui from latest CAS when sections are reordered', () => {
   assert.equal(detail.xinrui.bigZone, '1区');
 });
 
+test('parses current LetPub nested partition rows and ignores Xinrui/JCR sections', () => {
+  const detail = parseDetailHTML('27254', fixture('current_nested_partitions.html'));
+  assert.equal(detail.latestCASYear, '2025');
+  assert.equal(detail.latestCAS.bigCategory, '计算机科学');
+  assert.equal(detail.latestCAS.bigZone, '3区');
+  assert.equal(detail.latestCAS.smallCategory, 'REMOTE SENSING 遥感');
+  assert.equal(detail.latestCAS.smallZone, '3区');
+  assert.equal(detail.casPartitions['2023'].bigCategory, '地球科学');
+  assert.equal(detail.casPartitions['2023'].bigZone, '2区');
+  assert.equal(detail.xinrui.bigZone, '1区');
+  assert.equal(Object.hasOwn(detail.casPartitions, '2026'), false);
+});
+
 test('parses zones 3/4 and non-computer zone 1 for policy rejection', () => {
   assert.equal(parseDetailHTML('103', fixture('non_ccf_zone3.html')).latestCAS.bigZone, '3区');
   assert.equal(parseDetailHTML('106', fixture('non_ccf_zone4.html')).latestCAS.bigZone, '4区');

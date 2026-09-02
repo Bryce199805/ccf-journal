@@ -130,7 +130,10 @@ test('MAX_JOURNALS leaves unattempted tasks pending and counts still close', asy
   });
   assert.equal(result.report.attemptedThisRun, 1);
   assert.equal(result.report.counts.pending, 2);
-  assert.equal(result.report.closed, true);
+  assert.equal(result.report.countsClosed, true);
+  assert.equal(result.report.closed, false);
+  assert.equal(result.report.mode, 'partial');
+  assert.equal(result.report.canaryCoverage.adequate, false);
 });
 
 test('a discovered candidate with a strong CCF identity is not treated as Non-CCF', async t => {
@@ -146,4 +149,220 @@ test('a discovered candidate with a strong CCF identity is not treated as Non-CC
   assert.equal(result.results.length, 1);
   assert.equal(result.results[0].isCCF, true);
   assert.equal(result.conflicts.some(conflict => conflict.type === 'candidate_is_ccf'), true);
+});
+
+test('finite canary selects CCF plus accepted and rejected Non-CCF tasks', async t => {
+  const files = makeWorkspace(t, [
+    { journalid: '101', full: 'Computer One', issn: '1111-1111' },
+    { journalid: '103', full: 'Computer Three', issn: '3333-3333' },
+    { journalid: '102', full: 'Computer Two', issn: '2222-2222' }
+  ]);
+  const html = {
+    500: detail('ccf_missing_partition.html'),
+    101: detail('non_ccf_zone1_reordered.html'),
+    103: detail('non_ccf_zone3.html')
+  };
+  const result = await runBatch({
+    ...files,
+    offline: true,
+    maxJournals: 3,
+    delayMs: 0,
+    jitterMs: 0,
+    fetchDetailImpl: async journalid => ({ ok: true, body: html[journalid] })
+  });
+  assert.deepEqual(result.report.selectedTaskKeys, [
+    'ccf:CCF JOURNAL|CCFJ',
+    'nonccf:101',
+    'nonccf:103'
+  ]);
+  assert.equal(result.report.counts.pending, 1);
+  assert.equal(result.report.closed, false);
+  assert.deepEqual(result.report.canaryCoverage, {
+    selectedCCF: 1,
+    selectedNonCCF: 2,
+    acceptedNonCCF: 1,
+    rejectedNonCCF: 1,
+    ccfTaskKeys: ['ccf:CCF JOURNAL|CCFJ'],
+    acceptedNonCCFTaskKeys: ['nonccf:101'],
+    rejectedNonCCFTaskKeys: ['nonccf:103'],
+    adequate: true
+  });
+});
+
+test('repeated canary resumes pending tasks and accumulates coverage', async t => {
+  const files = makeWorkspace(t, [
+    { journalid: '101', full: 'Computer One', issn: '1111-1111' },
+    { journalid: '103', full: 'Computer Three', issn: '3333-3333' }
+  ]);
+  const html = {
+    500: detail('ccf_missing_partition.html'),
+    101: detail('non_ccf_zone1_reordered.html'),
+    103: detail('non_ccf_zone3.html')
+  };
+  const first = await runBatch({
+    ...files,
+    offline: true,
+    maxJournals: 2,
+    delayMs: 0,
+    jitterMs: 0,
+    fetchDetailImpl: async journalid => ({ ok: true, body: html[journalid] })
+  });
+  assert.equal(first.report.canaryCoverage.adequate, false);
+  assert.equal(first.report.counts.pending, 1);
+
+  const resumed = await runBatch({
+    ...files,
+    offline: true,
+    maxJournals: 2,
+    delayMs: 0,
+    jitterMs: 0,
+    fetchDetailImpl: async journalid => ({ ok: true, body: html[journalid] })
+  });
+  assert.deepEqual(resumed.report.selectedTaskKeys, ['nonccf:103']);
+  assert.equal(resumed.report.canaryCoverage.selectedCCF, 1);
+  assert.equal(resumed.report.canaryCoverage.acceptedNonCCF, 1);
+  assert.equal(resumed.report.canaryCoverage.rejectedNonCCF, 1);
+  assert.equal(resumed.report.canaryCoverage.adequate, true);
+  assert.equal(resumed.report.closed, true);
+});
+
+test('retries stale missing-partition rejections once after a parser upgrade', async t => {
+  const files = makeWorkspace(t, [
+    { journalid: '103', full: 'Computer Three', issn: '3333-3333' }
+  ]);
+  fs.writeFileSync(files.progressFile, JSON.stringify({
+    schemaVersion: 1,
+    tasks: {
+      'nonccf:103': {
+        status: 'rejected',
+        reason: 'missing_cas_partition',
+        partitionParserVersion: 1,
+        identityCheck: { valid: true },
+        updatedAt: '2026-09-02T00:00:00Z'
+      }
+    }
+  }));
+  const html = {
+    500: detail('ccf_missing_partition.html'),
+    103: detail('non_ccf_zone3.html')
+  };
+  const first = await runBatch({
+    ...files,
+    offline: true,
+    maxJournals: 2,
+    delayMs: 0,
+    jitterMs: 0,
+    now: () => '2026-09-02T01:00:00Z',
+    fetchDetailImpl: async journalid => ({ ok: true, body: html[journalid] })
+  });
+  assert.equal(first.report.attemptedThisRun, 2);
+  assert.equal(first.progress.tasks['nonccf:103'].status, 'rejected');
+  assert.equal(first.progress.tasks['nonccf:103'].reason, 'cas_big_zone_not_1_or_2');
+  assert.equal(first.progress.tasks['nonccf:103'].partitionParserVersion, 2);
+
+  let fetched = false;
+  const second = await runBatch({
+    ...files,
+    offline: true,
+    maxJournals: 2,
+    delayMs: 0,
+    jitterMs: 0,
+    now: () => '2026-09-02T02:00:00Z',
+    fetchDetailImpl: async () => {
+      fetched = true;
+      throw new Error('fresh current-version rejection must not retry');
+    }
+  });
+  assert.equal(second.report.attemptedThisRun, 0);
+  assert.equal(fetched, false);
+});
+
+test('mismatched legacy journalid is detached from the wrong CCF catalog entry', async t => {
+  const files = makeWorkspace(t, []);
+  fs.writeFileSync(files.ccfFile, JSON.stringify({
+    数据库: [
+      { level: 'B', abbr: 'IS', full: 'Information Systems', publisher: 'Elsevier', url: '' },
+      { level: 'B', abbr: 'INS', full: 'Information Sciences', publisher: 'Elsevier', url: '' }
+    ]
+  }));
+  fs.writeFileSync(files.legacyIdentityFile, JSON.stringify({
+    IS: { issn: '0020-0255' },
+    INS: { issn: '0020-0255' }
+  }));
+  fs.writeFileSync(files.baselineFile, JSON.stringify([
+    {
+      journalid: '3567',
+      name: 'INFORMATION SCIENCES',
+      issn: '0020-0255',
+      type: 'journal',
+      isCCF: true,
+      ccfAbbr: 'IS',
+      ccfFull: 'Information Systems',
+      ccfDomain: '数据库',
+      ccfLevel: 'B'
+    },
+    {
+      journalid: '3567',
+      name: 'INFORMATION SCIENCES',
+      issn: '0020-0255',
+      type: 'journal',
+      isCCF: true,
+      ccfAbbr: 'INS',
+      ccfFull: 'Information Sciences',
+      ccfDomain: '数据库',
+      ccfLevel: 'B'
+    }
+  ]));
+  const result = await runBatch({
+    ...files,
+    offline: true,
+    delayMs: 0,
+    jitterMs: 0,
+    resolveJournalImpl: async () => ({ ok: true, journalid: '3567', method: 'legacy_hint' }),
+    fetchDetailImpl: async () => ({ ok: true, body: detail('information_sciences.html') })
+  });
+  const informationSystems = result.results.find(entry => entry.ccfAbbr === 'IS');
+  const informationSciences = result.results.find(entry => entry.ccfAbbr === 'INS');
+  assert.equal(informationSystems.name, 'Information Systems');
+  assert.equal(informationSystems.journalid, '');
+  assert.equal(informationSystems.letpubMatchStatus, 'unmatched');
+  assert.equal(informationSciences.journalid, '3567');
+  assert.equal(informationSciences.letpubMatchStatus, 'verified');
+  assert.equal(result.progress.tasks['ccf:INFORMATION SYSTEMS|IS'].status, 'not_found');
+  assert.equal(result.progress.tasks['ccf:INFORMATION SCIENCES|INS'].status, 'success');
+  assert.equal(result.results.filter(entry => entry.journalid === '3567').length, 1);
+  assert.equal(result.conflicts.some(conflict =>
+    conflict.type === 'resolved_identity_mismatch'
+    && conflict.taskKey === 'ccf:INFORMATION SYSTEMS|IS'
+  ), true);
+});
+
+test('unmatched CCF remains as a catalog placeholder without a fabricated journalid', async t => {
+  const files = makeWorkspace(t, []);
+  fs.writeFileSync(files.ccfFile, JSON.stringify({
+    数据库: [{ level: 'C', abbr: 'TORS', full: 'ACM Transactions on Recommender Systems', publisher: 'ACM', url: '' }]
+  }));
+  fs.writeFileSync(files.legacyIdentityFile, JSON.stringify({ TORS: { issn: '2833-0072' } }));
+  fs.writeFileSync(files.baselineFile, JSON.stringify([{
+    journalid: '',
+    name: '',
+    type: 'journal',
+    isCCF: true,
+    ccfAbbr: 'TORS',
+    ccfFull: 'ACM Transactions on Recommender Systems',
+    ccfDomain: '数据库',
+    ccfLevel: 'C'
+  }]));
+  const result = await runBatch({
+    ...files,
+    offline: true,
+    delayMs: 0,
+    jitterMs: 0,
+    resolveJournalImpl: async () => ({ ok: false, status: 'not_found', reason: 'not_found' })
+  });
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].name, 'ACM Transactions on Recommender Systems');
+  assert.equal(result.results[0].journalid, '');
+  assert.equal(result.results[0].letpubMatchStatus, 'unmatched');
+  assert.equal(result.progress.tasks['ccf:ACM TRANSACTIONS ON RECOMMENDER SYSTEMS|TORS'].status, 'not_found');
 });

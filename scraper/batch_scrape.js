@@ -8,7 +8,7 @@ const {
 } = require('./lib/runtime');
 const { evaluateCatalogEntry, isFresh } = require('./lib/catalog_policy');
 const { findStrongMatches, normalizeISSN, normalizeName, strongMatch } = require('./lib/identity');
-const { parseDetailHTML } = require('./lib/letpub_parser');
+const { PARTITION_PARSER_VERSION, parseDetailHTML } = require('./lib/letpub_parser');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const OUTPUT_DIR = path.join(__dirname, 'output');
@@ -26,6 +26,7 @@ function defaultConfig(env = process.env) {
     reportFile: env.SCRAPE_REPORT_FILE || path.join(OUTPUT_DIR, 'scrape_report.json'),
     conflictFile: env.IDENTITY_CONFLICT_FILE || path.join(OUTPUT_DIR, 'identity_conflicts.json'),
     maxJournals: env.MAX_JOURNALS ? Number(env.MAX_JOURNALS) : Infinity,
+    canaryCCFJournals: Number(env.CANARY_CCF_JOURNALS || 1),
     forceRefresh: env.FORCE_REFRESH === '1',
     refreshDays: Number(env.REFRESH_DAYS || 30),
     delayMs: Number(env.SCRAPE_DELAY_MS || 12000),
@@ -111,18 +112,107 @@ function hydrateKnownIdentity(task, baseline) {
 }
 
 function normalizeBaseline(entries) {
-  return entries.map(entry => ({
-    ...entry,
-    isCCF: entry.isCCF ?? true,
-    ccfRelations: entry.ccfRelations || (entry.ccfFull ? [{
+  return entries.map(entry => {
+    const isCCF = entry.isCCF ?? true;
+    const ccfRelations = entry.ccfRelations || (entry.ccfFull ? [{
       domain: entry.ccfDomain || '',
       level: entry.ccfLevel || '',
       abbr: entry.ccfAbbr || '',
       full: entry.ccfFull || '',
       publisher: entry.ccfPublisher || '',
       url: entry.ccfUrl || ''
-    }] : [])
-  }));
+    }] : []);
+    return {
+      ...entry,
+      type: entry.type || 'journal',
+      isCCF,
+      journalid: entry.journalid ? String(entry.journalid) : '',
+      name: entry.name || (isCCF ? entry.ccfFull || ccfRelations[0]?.full || '' : ''),
+      ccfRelations
+    };
+  });
+}
+
+function matchesCCFCatalog(entry, task) {
+  if (!task.isCCF) return false;
+  const taskFull = normalizeName(task.full);
+  const taskAbbr = normalizeName(task.abbr);
+  const relations = entry.ccfRelations?.length ? entry.ccfRelations : [{
+    full: entry.ccfFull,
+    abbr: entry.ccfAbbr
+  }];
+  return relations.some(relation =>
+    normalizeName(relation.full) === taskFull
+    && normalizeName(relation.abbr) === taskAbbr
+  );
+}
+
+function ccfPlaceholder(task) {
+  return resultEntry(task, {
+    journalid: '',
+    letpubUrl: '',
+    name: task.full,
+    issn: '',
+    eissn: '',
+    letpubMatchStatus: 'unmatched'
+  });
+}
+
+function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
+  let indexes = results
+    .map((entry, index) => matchesCCFCatalog(entry, task) ? index : -1)
+    .filter(index => index >= 0);
+  if (indexes.length === 0) {
+    const strongMatches = findStrongMatches(task, results);
+    if (strongMatches.length === 1) indexes = [strongMatches[0].index];
+  }
+  const placeholder = ccfPlaceholder(task);
+  if (indexes.length === 0) {
+    results.push(placeholder);
+    return results.length - 1;
+  }
+  const index = indexes[0];
+  if (detachIdentity) {
+    results[index] = placeholder;
+  } else {
+    results[index] = mergePreserving(results[index], resultEntry(task, {}));
+    if (!results[index].name) results[index].name = task.full;
+    if (!results[index].journalid) results[index].letpubMatchStatus = 'unmatched';
+  }
+  return index;
+}
+
+function validateResolvedIdentity(task, detail) {
+  const expectedName = normalizeName(task.full);
+  const actualName = normalizeName(detail.name);
+  const expectedSerials = new Set([normalizeISSN(task.issn), normalizeISSN(task.eissn)].filter(Boolean));
+  const actualSerials = new Set([normalizeISSN(detail.issn), normalizeISSN(detail.eissn)].filter(Boolean));
+  const nameMatches = Boolean(expectedName && actualName && expectedName === actualName);
+  const comparableSerials = expectedSerials.size > 0 && actualSerials.size > 0;
+  const serialMatches = comparableSerials
+    && [...expectedSerials].some(serial => actualSerials.has(serial));
+  const reasons = [];
+  if (task.isCCF && expectedName && !nameMatches) reasons.push('name_mismatch');
+  if (comparableSerials && !serialMatches) reasons.push('serial_mismatch');
+  return {
+    valid: reasons.length === 0,
+    reason: reasons.length ? 'resolved_identity_mismatch' : 'identity_verified',
+    reasons,
+    expected: {
+      name: task.full || null,
+      issn: task.issn || null,
+      eissn: task.eissn || null,
+      journalid: task.journalid || null
+    },
+    actual: {
+      name: detail.name || null,
+      issn: detail.issn || null,
+      eissn: detail.eissn || null,
+      journalid: detail.journalid || null
+    },
+    nameMatches,
+    serialMatches: comparableSerials ? serialMatches : null
+  };
 }
 
 function parseSearchResults(html) {
@@ -250,6 +340,27 @@ function upsertResult(results, incoming, conflicts) {
   return { ok: true, index: results.length - 1, method: 'append' };
 }
 
+function upsertCCFResult(results, task, incoming, conflicts) {
+  const indexes = results
+    .map((entry, index) => matchesCCFCatalog(entry, task) ? index : -1)
+    .filter(index => index >= 0);
+  if (indexes.length > 1) {
+    conflicts.push({
+      type: 'ccf_catalog_conflict',
+      taskKey: task.key,
+      matchedIndexes: indexes
+    });
+    return { ok: false, reason: 'ccf_catalog_conflict' };
+  }
+  if (indexes.length === 1) {
+    const index = indexes[0];
+    results[index] = mergePreserving(results[index], incoming);
+    return { ok: true, index, method: 'ccf_catalog' };
+  }
+  results.push(incoming);
+  return { ok: true, index: results.length - 1, method: 'append_ccf' };
+}
+
 function removeStrongIdentity(results, target) {
   return results.filter(entry => !strongMatch(entry, target).matched);
 }
@@ -258,6 +369,51 @@ function statusCounts(tasks) {
   const counts = Object.fromEntries(ALL_STATUSES.map(status => [status, 0]));
   for (const task of Object.values(tasks)) counts[task.status] = (counts[task.status] || 0) + 1;
   return counts;
+}
+
+function shouldRunTask(task, state, config) {
+  if (
+    state.status === 'rejected'
+    && state.reason === 'missing_cas_partition'
+    && state.partitionParserVersion !== PARTITION_PARSER_VERSION
+  ) return true;
+  if (TERMINAL_STATUSES.has(state.status) && state.identityCheck?.valid !== true) return true;
+  const fresh = TERMINAL_STATUSES.has(state.status) && isFresh(state, config.refreshDays);
+  return config.forceRefresh || !fresh;
+}
+
+function selectTasksForRun(tasks, progress, config) {
+  const runnable = tasks.filter(task => shouldRunTask(task, progress.tasks[task.key], config));
+  if (!Number.isFinite(config.maxJournals)) return runnable;
+  const limit = Math.max(0, Math.floor(config.maxJournals));
+  if (limit === 0) return [];
+  const ccf = runnable.filter(task => task.isCCF);
+  const nonCCF = runnable.filter(task => !task.isCCF);
+  const ccfQuota = Math.min(ccf.length, limit, Math.max(1, Math.floor(config.canaryCCFJournals)));
+  const selected = [...ccf.slice(0, ccfQuota), ...nonCCF.slice(0, limit - ccfQuota)];
+  if (selected.length < limit) {
+    const selectedKeys = new Set(selected.map(task => task.key));
+    selected.push(...runnable.filter(task => !selectedKeys.has(task.key)).slice(0, limit - selected.length));
+  }
+  return selected;
+}
+
+function canaryCoverage(tasks, progress) {
+  const coveredTasks = tasks.filter(task => progress.tasks[task.key].canaryAttempted === true);
+  const ccfTasks = coveredTasks.filter(task => task.isCCF);
+  const nonCCFTasks = coveredTasks.filter(task => !task.isCCF);
+  const acceptedNonCCF = nonCCFTasks.filter(task => progress.tasks[task.key].status === 'success');
+  const rejectedNonCCF = nonCCFTasks.filter(task => progress.tasks[task.key].status === 'rejected');
+  return {
+    selectedCCF: ccfTasks.length,
+    selectedNonCCF: nonCCFTasks.length,
+    acceptedNonCCF: acceptedNonCCF.length,
+    rejectedNonCCF: rejectedNonCCF.length,
+    ccfTaskKeys: ccfTasks.map(task => task.key),
+    acceptedNonCCFTaskKeys: acceptedNonCCF.map(task => task.key),
+    rejectedNonCCFTaskKeys: rejectedNonCCF.map(task => task.key),
+    adequate: ccfTasks.length > 0 && acceptedNonCCF.length > 0 && rejectedNonCCF.length > 0
+  };
 }
 
 async function runBatch(options = {}) {
@@ -294,20 +450,17 @@ async function runBatch(options = {}) {
   const progress = readJSON(config.progressFile, { schemaVersion: 1, tasks: {} });
   for (const task of tasks) {
     if (!progress.tasks[task.key]) progress.tasks[task.key] = { status: 'pending', updatedAt: now() };
-    if (task.isCCF) {
-      const matches = findStrongMatches(task, results);
-      if (matches.length === 1) results[matches[0].index] = mergePreserving(results[matches[0].index], resultEntry(task, {}));
-    }
+    if (task.isCCF) ensureCCFPlaceholder(results, task);
   }
   const request = config.request || createThrottledFetcher(config);
+  const selectedTasks = selectTasksForRun(tasks, progress, config);
+  const partialRun = Number.isFinite(config.maxJournals);
   let attempted = 0;
 
-  for (const task of tasks) {
+  for (const task of selectedTasks) {
     const state = progress.tasks[task.key];
-    const fresh = TERMINAL_STATUSES.has(state.status) && isFresh(state, config.refreshDays);
-    if (!config.forceRefresh && fresh) continue;
-    if (attempted >= config.maxJournals) break;
     attempted += 1;
+    if (partialRun) state.canaryAttempted = true;
     state.status = 'pending';
     state.updatedAt = now();
     atomicWriteJSON(config.progressFile, progress);
@@ -321,9 +474,11 @@ async function runBatch(options = {}) {
       state.candidates = resolution.candidates || [];
       state.updatedAt = now();
       if (state.reason.includes('conflict')) conflicts.push({ type: state.reason, taskKey: task.key, candidates: state.candidates });
+      if (task.isCCF) ensureCCFPlaceholder(results, task);
+      atomicWriteJSON(config.stagingFile, results);
       atomicWriteJSON(config.progressFile, progress);
       atomicWriteJSON(config.conflictFile, conflicts);
-      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: tasks.length });
+      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
       continue;
     }
 
@@ -338,7 +493,7 @@ async function runBatch(options = {}) {
       state.journalid = journalid;
       state.updatedAt = now();
       atomicWriteJSON(config.progressFile, progress);
-      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: tasks.length });
+      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
       continue;
     }
 
@@ -351,10 +506,31 @@ async function runBatch(options = {}) {
       state.journalid = journalid;
       state.updatedAt = now();
       atomicWriteJSON(config.progressFile, progress);
-      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: tasks.length });
+      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      continue;
+    }
+    const identityCheck = validateResolvedIdentity(task, detail);
+    state.identityCheck = identityCheck;
+    if (!identityCheck.valid) {
+      state.status = 'not_found';
+      state.reason = identityCheck.reason;
+      state.journalid = null;
+      state.updatedAt = now();
+      conflicts.push({
+        type: 'resolved_identity_mismatch',
+        taskKey: task.key,
+        resolutionMethod: resolution.method,
+        ...identityCheck
+      });
+      if (task.isCCF) ensureCCFPlaceholder(results, task, { detachIdentity: true });
+      atomicWriteJSON(config.stagingFile, results);
+      atomicWriteJSON(config.progressFile, progress);
+      atomicWriteJSON(config.conflictFile, conflicts);
+      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
       continue;
     }
     const decision = evaluateCatalogEntry(detail, { isCCF: task.isCCF });
+    state.partitionParserVersion = PARTITION_PARSER_VERSION;
     state.journalid = journalid;
     state.method = resolution.method;
     state.policy = decision;
@@ -365,10 +541,13 @@ async function runBatch(options = {}) {
       results = removeStrongIdentity(results, detail);
       atomicWriteJSON(config.stagingFile, results);
       atomicWriteJSON(config.progressFile, progress);
-      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: tasks.length });
+      if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
       continue;
     }
-    const saved = upsertResult(results, resultEntry(task, detail), conflicts);
+    const incoming = resultEntry(task, { ...detail, letpubMatchStatus: 'verified' });
+    const saved = task.isCCF
+      ? upsertCCFResult(results, task, incoming, conflicts)
+      : upsertResult(results, incoming, conflicts);
     if (!saved.ok) {
       state.status = 'parse_failed';
       state.reason = saved.reason;
@@ -379,20 +558,27 @@ async function runBatch(options = {}) {
     atomicWriteJSON(config.stagingFile, results);
     atomicWriteJSON(config.progressFile, progress);
     atomicWriteJSON(config.conflictFile, conflicts);
-    if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: tasks.length });
+    if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
   }
 
   const uniqueConflicts = [...new Map(conflicts.map(conflict => [JSON.stringify(conflict), conflict])).values()];
   conflicts.splice(0, conflicts.length, ...uniqueConflicts);
   const currentStates = Object.fromEntries(tasks.map(task => [task.key, progress.tasks[task.key]]));
   const counts = statusCounts(currentStates);
+  const countsClosed = Object.values(counts).reduce((sum, value) => sum + value, 0) === tasks.length;
+  const mode = partialRun ? 'partial' : 'full';
+  const coverage = mode === 'partial' ? canaryCoverage(tasks, progress) : null;
   const report = {
     schemaVersion: 1,
     generatedAt: now(),
     totalTasks: tasks.length,
     attemptedThisRun: attempted,
+    selectedTaskKeys: selectedTasks.map(task => task.key),
+    mode,
+    canaryCoverage: coverage,
     counts,
-    closed: Object.values(counts).reduce((sum, value) => sum + value, 0) === tasks.length,
+    countsClosed,
+    closed: countsClosed && counts.pending === 0,
     stagingFile: config.stagingFile,
     progressFile: config.progressFile,
     conflictCount: conflicts.length
@@ -412,6 +598,7 @@ async function main() {
   });
   console.log(JSON.stringify(result.report));
   if (result.report.counts.rate_limited > 0) process.exitCode = 2;
+  else if (result.report.mode === 'partial' && !result.report.canaryCoverage.adequate) process.exitCode = 3;
 }
 
 if (require.main === module) {
@@ -431,6 +618,8 @@ module.exports = {
   parseSearchResults,
   resolveJournal,
   runBatch,
+  selectTasksForRun,
   statusCounts,
-  upsertResult
+  upsertResult,
+  validateResolvedIdentity
 };

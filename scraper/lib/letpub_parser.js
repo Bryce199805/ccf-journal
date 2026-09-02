@@ -1,5 +1,9 @@
 const { isRateLimitedHTML, requestHTML } = require('./runtime');
 
+// Bump this when partition extraction changes in a way that requires retrying
+// entries previously rejected because no CAS partition was found.
+const PARTITION_PARSER_VERSION = 2;
+
 class LetPubRateLimitError extends Error {
   constructor(message = 'LetPub rate limit page') {
     super(message);
@@ -133,9 +137,80 @@ function parsePartitionTable(table) {
   };
 }
 
+function partitionTableFromContainer(container) {
+  for (const table of extractBalancedElements(container, 'table')) {
+    if (!/大类学科/.test(strip(table))) continue;
+    const partition = parsePartitionTable(table);
+    if (partition) return partition;
+  }
+  return parsePartitionTable(container);
+}
+
+function classifyPartition(label, partition, result) {
+  const context = strip(label);
+  if (!partition || !context) return false;
+  if (/新锐/.test(context)) {
+    result.xinrui = partition;
+    return true;
+  }
+  if (/WOS|JCR|趋势|相关期刊|预警/i.test(context)) return false;
+  const year = [...context.matchAll(/(20\d{2})\s*年?/g)].at(-1)?.[1];
+  const isCAS = /中科院|CAS|基础版|升级版|期刊分区表/i.test(context);
+  if (!isCAS || !year) return false;
+  result.casPartitions[year] = partition;
+  return true;
+}
+
+function parseLabeledPartitionCells(html, result) {
+  const source = String(html || '');
+  const lower = source.toLowerCase();
+  const markers = /新锐期刊分区表|中科院[^<]{0,80}分区|期刊分区表/gi;
+  const visitedCells = new Set();
+  let marker;
+  while ((marker = markers.exec(source))) {
+    const tdStart = lower.lastIndexOf('<td', marker.index);
+    const thStart = lower.lastIndexOf('<th', marker.index);
+    const cellStart = Math.max(tdStart, thStart);
+    if (cellStart < 0 || visitedCells.has(cellStart)) continue;
+    const openEnd = source.indexOf('>', cellStart);
+    const tag = lower.slice(cellStart + 1, cellStart + 3) === 'th' ? 'th' : 'td';
+    const cellEnd = lower.indexOf('</' + tag + '>', marker.index);
+    if (openEnd < 0 || openEnd > marker.index || cellEnd < 0) continue;
+    visitedCells.add(cellStart);
+    const label = strip(source.slice(openEnd + 1, cellEnd));
+    if (label.length > 240 || !/新锐|中科院|CAS|基础版|升级版|期刊分区表/i.test(label)) continue;
+
+    const siblingStart = lower.indexOf('<td', cellEnd + tag.length + 3);
+    if (siblingStart < 0) continue;
+    const siblingOpenEnd = source.indexOf('>', siblingStart);
+    const tableStart = lower.indexOf('<table', siblingOpenEnd);
+    if (siblingOpenEnd < 0 || tableStart < 0 || tableStart - siblingOpenEnd > 600) continue;
+    const table = extractBalancedElements(source.slice(tableStart), 'table')[0];
+    classifyPartition(label, parsePartitionTable(table), result);
+  }
+}
+
 function parseAllPartitions(html) {
-  const casPartitions = {};
-  let xinrui = null;
+  const result = { casPartitions: {}, xinrui: null };
+
+  // LetPub's live HTML contains malformed outer table nesting, so anchor on a
+  // short section-label cell and then parse the balanced inner table in its
+  // adjacent value cell.
+  parseLabeledPartitionCells(html, result);
+
+  // Current LetPub pages put the section label in the first cell of an outer
+  // row and the actual partition table inside the second cell. Walking the
+  // outer rows preserves that relationship even when the tables are nested.
+  for (const row of extractBalancedElements(html, 'tr')) {
+    const cells = topLevelCells(row);
+    if (cells.length < 2) continue;
+    const label = strip(cells[0]);
+    if (!/新锐|中科院|CAS|基础版|升级版|期刊分区表|WOS|JCR/i.test(label)) continue;
+    classifyPartition(label, partitionTableFromContainer(cells[1]), result);
+  }
+
+  // Retain support for older layouts where a heading precedes a standalone
+  // partition table instead of sharing an outer table row.
   const tables = extractBalancedElements(html, 'table');
   let searchFrom = 0;
   for (const table of tables) {
@@ -147,22 +222,16 @@ function parseAllPartitions(html) {
     const before = html.slice(Math.max(0, tableIndex - 1000), tableIndex);
     const labels = [...before.matchAll(/<(?:h[1-6]|caption|strong|b|div)\b[^>]*>([\s\S]*?)<\/(?:h[1-6]|caption|strong|b|div)>/gi)]
       .map(item => strip(item[1]))
-      .filter(label => label.length < 160 && /新锐|中科院|CAS|基础版|升级版|JCR/i.test(label));
+      .filter(label => label.length < 160 && /新锐|中科院|CAS|基础版|升级版|期刊分区表|JCR/i.test(label));
     const context = labels.at(-1) || strip(before.slice(-250));
-    if (/新锐/.test(context)) {
-      xinrui = partition;
-      continue;
-    }
-    const years = [...context.matchAll(/(20\d{2})\s*年?/g)].map(item => item[1]);
-    const year = years.at(-1);
-    if (/中科院|CAS|基础版|升级版/i.test(context) && year) casPartitions[year] = partition;
+    classifyPartition(context, partition, result);
   }
-  const latestCASYear = Object.keys(casPartitions).sort().at(-1) || null;
+  const latestCASYear = Object.keys(result.casPartitions).sort().at(-1) || null;
   return {
-    xinrui,
-    casPartitions,
+    xinrui: result.xinrui,
+    casPartitions: result.casPartitions,
     latestCASYear,
-    latestCAS: latestCASYear ? casPartitions[latestCASYear] : null
+    latestCAS: latestCASYear ? result.casPartitions[latestCASYear] : null
   };
 }
 
@@ -246,6 +315,7 @@ async function parseDetail(journalid, providedHTML = null, options = {}) {
 }
 
 module.exports = {
+  PARTITION_PARSER_VERSION,
   LetPubParseError,
   LetPubRateLimitError,
   fetchUrl,

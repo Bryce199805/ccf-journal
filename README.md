@@ -146,7 +146,7 @@ cd scraper
 DISCOVERY_MAX_PAGES=2 npm run discover:non-ccf
 npm run discover:non-ccf
 
-# 详情抓取 canary；通过后，从任务级进度继续
+# 详情 canary 会分层选择 CCF 与 Non-CCF，并要求实际出现接受和拒绝结果
 MAX_JOURNALS=10 npm run scrape
 npm run scrape
 
@@ -160,7 +160,7 @@ npm run publish:data
 发现命令支持 `DISCOVERY_MAX_PAGES`、`DISCOVERY_DELAY_MS`（默认 12000）、
 `DISCOVERY_JITTER_MS`（默认 1000）、`DISCOVERY_TIMEOUT_MS`（默认 20000）、
 `DISCOVERY_RETRIES`（默认 3）和 `DISCOVERY_BACKOFF_MS`。详情命令支持
-`MAX_JOURNALS`、`FORCE_REFRESH=1`、`REFRESH_DAYS`（默认 30）、
+`MAX_JOURNALS`、`CANARY_CCF_JOURNALS`（默认 1）、`FORCE_REFRESH=1`、`REFRESH_DAYS`（默认 30）、
 `SCRAPE_DELAY_MS`（联网执行不得低于 12000）、`SCRAPE_JITTER_MS`、
 `SCRAPE_TIMEOUT_MS`、`SCRAPE_RETRIES` 和 `SCRAPE_BACKOFF_MS`。
 `NON_CCF_FILE` 可覆盖候选输入路径；其余输入/输出路径也可使用脚本中同名的
@@ -178,12 +178,16 @@ npm run publish:data
   覆盖旧数据。
 - `output/scrape_progress.json` / `scrape_report.json`：每条任务的 `pending`、`success`、
   `rejected`、`not_found`、`parse_failed` 或 `rate_limited` 状态及闭合计数；拒绝项包含实际
-  大类、分区和原因。
+  大类、分区和原因。有限 canary 报告使用 `mode=partial`，并以 `canaryCoverage` 明确记录
+  本进度中已覆盖的 CCF、接受的 Non-CCF 和拒绝的 Non-CCF；任一类缺失时命令非零退出，
+  再次运行相同 canary 命令会继续抽取未处理任务并累计覆盖。
 - `output/identity_conflicts.json`：名称只能匹配或 journalid/ISSN/EISSN 冲突的机器可读报告。
 - `output/validation_report.json`：结构、准入、CCF 关系、身份、计数和异常下降校验结果。
 
 进程可用 `Ctrl-C` 安全中断。发现脚本按页、详情脚本按任务原子保存进度；使用相同命令重启
 即可跳过仍在刷新周期内的 `success`/`rejected` 项并继续失败或待处理项。不要删除进度文件；
+分区解析器升级后，旧版本产生的 `missing_cas_partition` 会自动重新处理一次，无需清理进度
+或对全部任务执行强制刷新。
 需要重新抓取所有任务时使用：
 
 ```bash
@@ -193,4 +197,6 @@ FORCE_REFRESH=1 npm run scrape
 预期失败类型包括临时网络/HTTP 错误、LetPub 限流或验证码、搜索无结果、仅名称可匹配、
 强身份冲突、详情结构异常和准入拒绝。限流任务会以非零退出状态提醒执行者；校验失败时
 `npm run publish:data` 退出非零且正式文件保持不变。发布还要求发现报告为完整全量状态，
-且详情报告中没有 `pending` 任务；canary 只能校验，不能发布。
+且详情报告中没有 `pending` 任务；canary 允许保留 `pending`，此时 `closed=false`，只能
+校验、不能发布。旧 journalid/ISSN 仅作为查找提示，详情名称和 ISSN/EISSN 校验不一致时会
+进入冲突报告。无法匹配 LetPub 的 CCF 仍以 CCF 全名保留，`journalid` 留空。
