@@ -67,7 +67,7 @@ CCF 推荐学术会议和期刊的在线查询工具，支持分区查询、影�
 # data/all_journals_correct.json - CCF 期刊列表
 # scraper/output/non_ccf_candidates.json - 发现脚本生成的 Non-CCF 候选
 
-# 生成 import_data.json
+# 如需脱离 Docker 本地启动后端，生成 import_data.json
 cd scraper && node import_data.js
 ```
 
@@ -90,15 +90,43 @@ npm run dev
 
 ## Docker 部署
 
-```bash
-# 1. 生成 import_data.json
-cd scraper && node import_data.js && cd ..
+服务器只需安装 Docker 和 Docker Compose，并在仓库根目录准备以下两个手动同步的数据文件：
 
-# 2. 构建并启动
-cd docker && docker compose up -d
+- `data/letpub_full.json`
+- `data/all_conferences_correct.json`
+
+随后从仓库根目录执行：
+
+```bash
+docker compose up -d --build
 ```
 
-容器内后端监听 8080 端口，配合 Nginx 反向代理提供 HTTPS 访问。
+Compose 会自动构建前端和后端、把数据转换为服务端导入格式，并在首次启动时自动生成 JWT
+签名密钥。SQLite 数据库和密钥都持久化在 `docker/data/`，更新镜像或重启容器不会丢失。
+默认监听所有网卡的 8080 端口，可直接通过 `http://服务器IP:8080` 访问。
+
+端口、监听地址和时区均为可选配置；默认值已经可以直接使用。如需修改，复制
+`.env.example` 为 `.env` 后调整即可：
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+常用维护命令：
+
+```bash
+docker compose ps
+docker compose logs -f --tail=100
+docker compose restart
+docker compose down
+```
+
+更新程序时只需拉取代码并重新执行 `docker compose up -d --build`。更新期刊数据时，替换上述
+两个 JSON 文件后执行同一命令即可。用户、收藏和笔记位于 `docker/data/ccf.db`，不会由代码或
+期刊数据自动同步；迁移服务器时可按需手动复制整个 `docker/data/` 目录。
+
+若需要域名和 HTTPS，可让宿主机 Nginx 反向代理 `127.0.0.1:8080`。
 
 ### Nginx 反向代理配置示例
 
@@ -112,7 +140,7 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
-        proxy_pass http://ccf-directory:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

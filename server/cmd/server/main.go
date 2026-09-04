@@ -40,6 +40,9 @@ func main() {
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		log.Fatalf("Failed to create data directory: %v", err)
 	}
+	if err := middleware.InitializeJWTSecret(); err != nil {
+		log.Fatalf("Failed to initialize authentication secret: %v", err)
+	}
 
 	// Open database
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_foreign_keys=1")

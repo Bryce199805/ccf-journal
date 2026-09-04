@@ -1,0 +1,14 @@
+.git
+.env
+web/node_modules
+web/dist
+docker/data
+server/data
+server/db/import_data.json
+scraper/output
+deploy/*.tar.gz
+
+# The image build only needs the two manually synchronized datasets.
+data/*
+!data/letpub_full.json
+!data/all_conferences_correct.json

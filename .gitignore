@@ -13,6 +13,8 @@ server/db/import.sql
 
 # Runtime database
 docker/data/
+.env
+deploy/*.tar.gz
 
 # Scraper logs/progress
 scraper/output/
