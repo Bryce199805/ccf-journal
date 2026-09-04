@@ -21,7 +21,7 @@ CCF 推荐学术会议和期刊的在线查询工具，支持分区查询、影�
 |---|------|
 | 前端 | React 19 + Vite 8 + TypeScript + Tailwind CSS v4 + shadcn/ui |
 | 后端 | Go 1.22 + Gin + SQLite (CGO) |
-| 爬虫 | Node.js (Puppeteer) |
+| 爬虫 | Node.js 20+（内置 HTTPS，无第三方运行时依赖） |
 | 部署 | Docker (多阶段构建) + Nginx 反向代理 |
 
 ## 项目结构
@@ -56,7 +56,10 @@ CCF 推荐学术会议和期刊的在线查询工具，支持分区查询、影�
 
 - Node.js 20+
 - Go 1.22+
-- Docker & Docker Compose
+- GCC 或 Clang（Go SQLite CGO 编译需要）
+
+如使用容器部署，则只需安装 Docker 和 Docker Compose，无需在宿主机安装 Node.js、Go 或 C
+编译器。
 
 ### 准备数据
 
@@ -184,6 +187,19 @@ npm run validate:data
 # 最终全量校验通过后，显式原子发布到 data/letpub_full.json
 npm run publish:data
 ```
+
+LetPub 的部分 WOS 数据仅在登录后可见。如需抓取这些字段，请从自己的 LetPub 登录会话中取得
+Cookie，通过环境变量临时传入，并先运行鉴权 canary 验证其有效性（不要将 Cookie 写入仓库）：
+
+```bash
+export LETPUB_COOKIE='你的 LetPub Cookie'
+npm run auth:canary
+npm run scrape
+```
+
+`auth:canary` 默认检查期刊 `3567`，可用 `LETPUB_AUTH_CANARY_JOURNALID` 覆盖。未设置
+`LETPUB_COOKIE` 时爬虫仍可匿名运行，但登录后才可见的 WOS 字段可能缺失；鉴权全量数据的
+最终校验还会检查可信的 WOS 数据来源。
 
 发现命令支持 `DISCOVERY_MAX_PAGES`、`DISCOVERY_DELAY_MS`（默认 12000）、
 `DISCOVERY_JITTER_MS`（默认 1000）、`DISCOVERY_TIMEOUT_MS`（默认 20000）、
