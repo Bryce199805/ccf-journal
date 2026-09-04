@@ -18,21 +18,23 @@ func NewEntryRepo(db *sql.DB) *EntryRepo {
 }
 
 const entryColumns = `id, type, ccf_domain, ccf_level, ccf_abbr, ccf_full,
-	ccf_publisher, ccf_url, letpub_url, journalid, name,
-	issn, eissn, publisher, country, language,
+	ccf_publisher, ccf_url, ccf_relations, letpub_url, journalid, name,
+	journal_abbr, issn, eissn, publisher, country, language,
 	periodicity, research_area, is_oa, gold_oa_ratio,
 	official_url, submission_url, sci_type,
 	impact_factor, realtime_if, five_year_if, jci_value,
 	h_index, cite_score, sjr, snip,
 	self_citation_rate, review_speed, acceptance_rate,
 	article_count, letpub_score,
-	xinrui, cas2025, cas2023, wos_zone,
-	jif, jci_json, citescore_rankings`
+	xinrui, cas2025, cas2023, wos_zone, wos_status, wos_reason,
+	jif, jci_json, citescore_rankings,
+	is_ccf, catalog_source, inclusion_reason, last_scraped_at, last_scrape_error`
 
 const listColumns = `e.id, e.type, e.ccf_domain, e.ccf_level, e.ccf_abbr, e.ccf_full,
-	e.ccf_publisher, e.ccf_url, e.letpub_url, e.issn,
+	e.ccf_publisher, e.ccf_url, e.letpub_url, e.journalid, e.name, e.journal_abbr, e.issn, e.eissn, e.publisher,
 	e.impact_factor, e.cite_score, e.h_index,
-	e.cas2025, e.xinrui, e.wos_zone, e.sci_type, e.article_count, e.letpub_score`
+	e.cas2025, e.xinrui, e.wos_zone, e.wos_status, e.wos_reason, e.sci_type, e.article_count, e.letpub_score,
+	e.is_ccf, e.catalog_source, e.inclusion_reason, e.last_scraped_at`
 
 func (r *EntryRepo) GetByID(id int) (*model.Entry, error) {
 	query := fmt.Sprintf("SELECT %s FROM entries WHERE id = ?", entryColumns)
@@ -57,21 +59,26 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		conditions = append(conditions, "e.type = ?")
 		args = append(args, q.Type)
 	}
+	if q.Catalog == "ccf" {
+		conditions = append(conditions, "e.is_ccf = 1")
+	} else if q.Catalog == "non_ccf" {
+		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0")
+	}
 	if domains := q.Domains(); len(domains) > 0 {
-		placeholders := make([]string, len(domains))
+		domainConditions := make([]string, len(domains))
 		for i, d := range domains {
-			placeholders[i] = "?"
-			args = append(args, d)
+			domainConditions[i] = "(e.ccf_domain = ? OR e.ccf_relations LIKE ? ESCAPE '\\')"
+			args = append(args, d, `%"domain":"`+escapeLike(d)+`"%`)
 		}
-		conditions = append(conditions, "e.ccf_domain IN ("+strings.Join(placeholders, ",")+")")
+		conditions = append(conditions, "("+strings.Join(domainConditions, " OR ")+")")
 	}
 	if levels := q.Levels(); len(levels) > 0 {
-		placeholders := make([]string, len(levels))
+		levelConditions := make([]string, len(levels))
 		for i, l := range levels {
-			placeholders[i] = "?"
-			args = append(args, l)
+			levelConditions[i] = "(e.ccf_level = ? OR e.ccf_relations LIKE ? ESCAPE '\\')"
+			args = append(args, l, `%"level":"`+escapeLike(l)+`"%`)
 		}
-		conditions = append(conditions, "e.ccf_level IN ("+strings.Join(placeholders, ",")+")")
+		conditions = append(conditions, "("+strings.Join(levelConditions, " OR ")+")")
 	}
 	if casZones := q.CASZones(); len(casZones) > 0 {
 		zoneConditions := make([]string, len(casZones))
@@ -81,10 +88,18 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		}
 		conditions = append(conditions, "("+strings.Join(zoneConditions, " OR ")+")")
 	}
+	if wosZones := q.WoSZones(); len(wosZones) > 0 {
+		placeholders := make([]string, len(wosZones))
+		for i, z := range wosZones {
+			placeholders[i] = "?"
+			args = append(args, strings.TrimSuffix(z, "区")+"区")
+		}
+		conditions = append(conditions, "e.wos_zone IN ("+strings.Join(placeholders, ",")+")")
+	}
 	if q.Q != "" {
-		conditions = append(conditions, "(e.ccf_abbr LIKE ? ESCAPE '\\' OR e.ccf_full LIKE ? ESCAPE '\\' OR e.ccf_publisher LIKE ? ESCAPE '\\')")
+		conditions = append(conditions, "(e.ccf_abbr LIKE ? ESCAPE '\\' OR e.ccf_full LIKE ? ESCAPE '\\' OR e.ccf_publisher LIKE ? ESCAPE '\\' OR e.name LIKE ? ESCAPE '\\' OR e.journal_abbr LIKE ? ESCAPE '\\' OR e.publisher LIKE ? ESCAPE '\\' OR e.issn LIKE ? ESCAPE '\\' OR e.eissn LIKE ? ESCAPE '\\')")
 		search := "%" + escapeLike(q.Q) + "%"
-		args = append(args, search, search, search)
+		args = append(args, search, search, search, search, search, search, search, search)
 	}
 
 	// Favorites filter
@@ -98,9 +113,9 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		}
 	}
 
-	// Top journal filter (isTop in cas2025 or xinrui JSON)
+	// Top journal filter uses the latest official CAS partition, not Xinrui.
 	if q.Top {
-		conditions = append(conditions, "(e.cas2025 LIKE '%\"isTop\":true%' OR e.xinrui LIKE '%\"isTop\":true%')")
+		conditions = append(conditions, "e.cas2025 LIKE '%\"isTop\":true%'")
 	}
 
 	// Tag filter (filter favorites by tag name in JSON)
@@ -130,13 +145,13 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	sortMap := map[string]string{
 		"impact_factor": "e.impact_factor",
 		"cite_score":    "e.cite_score",
-		"name":          "e.ccf_abbr",
+		"name":          "COALESCE(NULLIF(e.ccf_abbr, ''), NULLIF(e.journal_abbr, ''), NULLIF(e.name, ''), e.ccf_full)",
 		"article_count": "e.article_count",
 		"ccf_level":     "e.ccf_level",
 		"h_index":       "e.h_index",
 		"letpub_score":  "e.letpub_score",
 	}
-	sortCol := "e.ccf_level, e.ccf_abbr"
+	sortCol := "e.is_ccf DESC, e.ccf_level, COALESCE(NULLIF(e.ccf_abbr, ''), NULLIF(e.journal_abbr, ''), NULLIF(e.name, ''), e.ccf_full)"
 	if q.Sort != "" {
 		if col, ok := sortMap[q.Sort]; ok {
 			sortCol = col
@@ -171,8 +186,8 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		listColumns, favSubquery, whereClause, sortCol, order,
 	)
 	allArgs := make([]interface{}, 0, len(favArgs)+len(args)+2)
-	allArgs = append(allArgs, favArgs...)   // SELECT subquery params come first (? appears before WHERE)
-	allArgs = append(allArgs, args...)      // WHERE params
+	allArgs = append(allArgs, favArgs...) // SELECT subquery params come first (? appears before WHERE)
+	allArgs = append(allArgs, args...)    // WHERE params
 	allArgs = append(allArgs, q.PerPage, offset)
 
 	rows, err := r.db.Query(query, allArgs...)
@@ -188,9 +203,11 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		err := rows.Scan(
 			&item.ID, &item.Type, &item.CCFDomain, &item.CCFLevel,
 			&item.CCFAbbr, &item.CCFFull, &item.CCFPublisher, &item.CCFUrl,
-			&item.LetPubUrl, &item.ISSN, &item.ImpactFactor, &item.CiteScore,
-			&item.HIndex, &item.CAS2025, &item.Xinrui, &item.WoSZone,
+			&item.LetPubUrl, &item.JournalID, &item.Name, &item.JournalAbbr, &item.ISSN, &item.EISSN, &item.Publisher,
+			&item.ImpactFactor, &item.CiteScore,
+			&item.HIndex, &item.CAS2025, &item.Xinrui, &item.WoSZone, &item.WoSStatus, &item.WoSReason,
 			&item.SCIType, &item.ArticleCount, &item.LetPubScore,
+			&item.IsCCF, &item.CatalogSource, &item.InclusionReason, &item.LastScrapedAt,
 			&tagsJSON, &item.Note, &item.IsFavorite,
 		)
 		if err != nil {
@@ -219,6 +236,23 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	}
 	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'conference'").Scan(&stats.TotalConferences); err != nil {
 		return nil, err
+	}
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 1").Scan(&stats.CCFJournals); err != nil {
+		return nil, err
+	}
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 0").Scan(&stats.NonCCFJournals); err != nil {
+		return nil, err
+	}
+	var dataUpdatedAt sql.NullString
+	if err := r.db.QueryRow(`
+		SELECT MAX(last_scraped_at)
+		FROM entries
+		WHERE type = 'journal' AND last_scraped_at IS NOT NULL AND last_scraped_at != ''
+	`).Scan(&dataUpdatedAt); err != nil {
+		return nil, err
+	}
+	if dataUpdatedAt.Valid {
+		stats.DataUpdatedAt = &dataUpdatedAt.String
 	}
 
 	// By domain - use separate scope to avoid rows variable reuse

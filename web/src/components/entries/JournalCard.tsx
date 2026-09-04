@@ -21,6 +21,15 @@ function isTop(json: string | null): boolean {
   try { return !!JSON.parse(json).isTop } catch { return false }
 }
 
+function wosStatusLabel(status: EntryListItem['wos_status']): string {
+  if (status === 'not_indexed') return 'WOS 未收录'
+  if (status === 'partition_unavailable') return 'WOS 暂无分区'
+  if (status === 'auth_required') return 'WOS 需登录更新'
+  if (status === 'source_missing') return 'WOS 状态待确认'
+  if (status === 'detail_not_found') return 'WOS 无详情'
+  return ''
+}
+
 interface JournalCardProps {
   entry: EntryListItem
   deviceId: string
@@ -30,7 +39,10 @@ interface JournalCardProps {
 export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
   const cas = extractZone(entry.cas2025)
   const xin = extractZone(entry.xinrui)
-  const isTopJournal = isTop(entry.cas2025) || isTop(entry.xinrui)
+  const isTopJournal = isTop(entry.cas2025)
+  const displayName = entry.ccf_abbr || entry.journal_abbr || entry.name || '未命名期刊'
+  const displayFullName = entry.ccf_full || entry.name || ''
+  const displayPublisher = entry.ccf_publisher || entry.publisher || ''
 
   const [noteEditing, setNoteEditing] = useState(false)
   const updateFavTags = useUpdateFavoriteTags(deviceId)
@@ -46,15 +58,24 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
     >
       <CardContent className="p-4 pr-10 relative">
         <div className="flex items-center gap-1.5 flex-wrap mb-1">
-          <LevelBadge level={entry.ccf_level} />
-          <span className="font-semibold text-sm">{entry.ccf_abbr}</span>
+          {entry.is_ccf ? (
+            <LevelBadge level={entry.ccf_level} />
+          ) : (
+            <Badge variant="outline" className="h-[22px] px-2 text-[10px]">Non-CCF</Badge>
+          )}
+          <span className="font-semibold text-sm max-w-[16rem] truncate" title={displayName}>{displayName}</span>
           {isTopJournal && <TopBadge />}
         </div>
-        <div className="text-xs text-muted-foreground truncate mb-2">{entry.ccf_full}</div>
+        {displayFullName !== displayName && <div className="text-xs text-muted-foreground truncate mb-2">{displayFullName}</div>}
         <div className="flex items-center gap-1.5 flex-wrap mb-2">
           {cas && <><span className="text-[10px] text-muted-foreground font-medium">中科院</span><ZoneBadge zone={cas} variant="cas" /></>}
           {xin && <><span className="text-[10px] text-muted-foreground font-medium">新锐</span><ZoneBadge zone={xin} variant="xinrui" /></>}
           {entry.wos_zone && <ZoneBadge zone={`JCR${entry.wos_zone}`} variant="jcr" />}
+          {!entry.wos_zone && wosStatusLabel(entry.wos_status) && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-[20px]" title={entry.wos_reason || undefined}>
+              {wosStatusLabel(entry.wos_status)}
+            </Badge>
+          )}
           {entry.sci_type && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-[20px] font-medium">
               {entry.sci_type}
@@ -74,7 +95,7 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
               LetPub
             </a>
           )}
-          {entry.ccf_publisher && <span className="text-xs text-muted-foreground">{entry.ccf_publisher}</span>}
+          {displayPublisher && <span className="text-xs text-muted-foreground">{displayPublisher}</span>}
           {entryTags.length > 0 && entryTags.map(t => <TagBadge key={t} name={t} />)}
           {entry.note && !noteEditing && (
             <span

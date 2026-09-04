@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
+  "mode": "full",
   "totalTasks": 2,
+  "countsClosed": true,
   "closed": true,
   "counts": {
     "pending": 0,

@@ -31,25 +31,35 @@ export interface EntryListItem {
   ccf_full: string
   ccf_publisher: string
   ccf_url: string
+  ccf_relations?: string | null
   letpub_url: string | null
+  journalid: string | null
+  name: string | null
+  journal_abbr: string | null
   issn: string | null
+  eissn: string | null
+  publisher: string | null
   impact_factor: number | null
   cite_score: number | null
   h_index: number | null
   cas2025: string | null
   xinrui: string | null
   wos_zone: string | null
+  wos_status: 'available' | 'not_indexed' | 'partition_unavailable' | 'source_missing' | 'auth_required' | 'detail_not_found' | null
+  wos_reason: string | null
   sci_type: string | null
   article_count: number | null
   letpub_score: number | null
+  is_ccf: boolean
+  catalog_source: string
+  inclusion_reason: string
+  last_scraped_at: string | null
   is_favorite: boolean
   tags: string[]
   note: string
 }
 
 export interface Entry extends EntryListItem {
-  eissn: string | null
-  publisher: string | null
   country: string | null
   language: string | null
   periodicity: string | null
@@ -70,8 +80,6 @@ export interface Entry extends EntryListItem {
   jif: string | null
   jci_json: string | null
   citescore_rankings: string | null
-  journalid: number | null
-  name: string | null
 }
 
 export interface PaginatedResponse {
@@ -88,6 +96,9 @@ export interface StatsResponse {
   by_domain: Record<string, number>
   by_level: Record<string, number>
   by_cas_zone: Record<string, number>
+  ccf_journals: number
+  non_ccf_journals: number
+  data_updated_at: string | null
 }
 
 export interface EntryDetailResponse {
@@ -107,9 +118,11 @@ export interface FavoritesResponse {
 
 export interface FilterState {
   type: 'journal' | 'conference'
+  catalog: 'all' | 'ccf' | 'non_ccf'
   domains: string[]
   levels: string[]
   casZones: string[]
+  wosZones: string[]
   query: string
   sort: string
   order: 'asc' | 'desc'

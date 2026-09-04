@@ -25,9 +25,11 @@ const queryClient = new QueryClient({
 
 const DEFAULT_FILTER: FilterState = {
   type: 'journal',
+  catalog: 'all',
   domains: [],
   levels: [],
   casZones: [],
+  wosZones: [],
   query: '',
   sort: '',
   order: 'desc',

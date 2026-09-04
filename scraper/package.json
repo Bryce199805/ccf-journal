@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "test": "node --test --experimental-test-isolation=none lib/*.test.js *.test.js",
+    "auth:canary": "node auth_canary.js",
     "discover:non-ccf": "node discover_non_ccf.js",
     "scrape": "node batch_scrape.js",
     "validate:data": "node validate_data.js",

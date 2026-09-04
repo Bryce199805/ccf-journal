@@ -17,6 +17,7 @@ interface FilterBarProps {
 
 export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags, deviceId }: FilterBarProps) {
   const isJournal = filter.type === 'journal'
+  const showCCFFilters = !isJournal || filter.catalog !== 'non_ccf'
 
   return (
     <div className="border-b bg-card/70">
@@ -45,15 +46,38 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => {
-                onFilterChange({ type: 'conference', page: 1, casZones: [], sort: '' })
+                onFilterChange({ type: 'conference', catalog: 'all', page: 1, casZones: [], wosZones: [], topOnly: false, sort: '' })
               }}
             >
               会议
             </button>
           </div>
 
+          {isJournal && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">目录</span>
+              {([
+                ['all', '全部'],
+                ['ccf', 'CCF'],
+                ['non_ccf', 'Non-CCF'],
+              ] as const).map(([key, label]) => (
+                <FilterChip
+                  key={key}
+                  label={label}
+                  active={filter.catalog === key}
+                  onClick={() => onFilterChange({
+                    catalog: key,
+                    domains: key === 'non_ccf' ? [] : filter.domains,
+                    levels: key === 'non_ccf' ? [] : filter.levels,
+                    page: 1,
+                  })}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Domain chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          {showCCFFilters && <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">领域</span>
             {DOMAINS.map(d => (
               <FilterChip
@@ -68,10 +92,10 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
                 }}
               />
             ))}
-          </div>
+          </div>}
 
           {/* Level chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          {showCCFFilters && <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">等级</span>
             {LEVELS.map(l => (
               <FilterChip
@@ -86,12 +110,12 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
                 }}
               />
             ))}
-          </div>
+          </div>}
 
           {/* CAS zone chips + TOP filter */}
           {isJournal && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">分区</span>
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">中科院</span>
               {ZONES.map(z => (
                 <FilterChip
                   key={z.key}
@@ -107,10 +131,29 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
               ))}
               <span className="mx-1 text-muted-foreground/30">|</span>
               <FilterChip
-                label="TOP"
+                label="中科院 TOP"
                 active={filter.topOnly}
                 onClick={() => onFilterChange({ topOnly: !filter.topOnly, page: 1 })}
               />
+            </div>
+          )}
+
+          {isJournal && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase shrink-0">JCR</span>
+              {ZONES.map(z => (
+                <FilterChip
+                  key={z.key}
+                  label={z.label}
+                  active={filter.wosZones.includes(z.key)}
+                  onClick={() => {
+                    const wosZones = filter.wosZones.includes(z.key)
+                      ? filter.wosZones.filter(x => x !== z.key)
+                      : [...filter.wosZones, z.key]
+                    onFilterChange({ wosZones, page: 1 })
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -120,7 +163,7 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
           <div className="flex-1 relative">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="搜索名称、简称、出版社…"
+              placeholder="搜索名称、简称、ISSN、出版社…"
               className="h-9 pl-8 text-xs"
               value={filter.query}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}

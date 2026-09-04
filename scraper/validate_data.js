@@ -6,6 +6,25 @@ const { normalizeISSN, normalizeName } = require('./lib/identity');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const OUTPUT_DIR = path.join(__dirname, 'output');
+const WOS_STATUSES = new Set([
+  'available',
+  'not_indexed',
+  'partition_unavailable',
+  'source_missing',
+  'auth_required',
+  'detail_not_found'
+]);
+
+function validLink(value, { allowMailto = false } = {}) {
+  if (!value) return true;
+  try {
+    const url = new URL(String(value));
+    return ['http:', 'https:'].includes(url.protocol)
+      || (allowMailto && url.protocol === 'mailto:' && Boolean(url.pathname));
+  } catch {
+    return false;
+  }
+}
 
 function relationKey(relation) {
   return [
@@ -47,33 +66,99 @@ function validateDataset(input, context = {}) {
   const ccfSource = context.ccfSource || {};
   const baseline = context.baseline || [];
   const scrapeReport = context.scrapeReport || null;
+  const partialMode = scrapeReport?.mode === 'partial';
   const maxDropRatio = context.maxDropRatio ?? 0.2;
+  const authenticatedFull = !partialMode && scrapeReport?.detailAccessMode === 'authenticated';
   if (!Array.isArray(input)) {
     return { ok: false, errors: [{ code: 'invalid_root', message: 'dataset root must be an array' }], warnings, stats: {} };
   }
 
   const journalIDs = new Map();
+  const baselineJournalIDCounts = new Map();
+  for (const entry of baseline) {
+    if (!entry.journalid) continue;
+    const id = String(entry.journalid);
+    baselineJournalIDCounts.set(id, (baselineJournalIDCounts.get(id) || 0) + 1);
+  }
   const serials = new Map();
+  const names = new Map();
   let ccfCount = 0;
   let nonCCFCount = 0;
   for (const [index, entry] of input.entries()) {
-    for (const field of ['journalid', 'name', 'type', 'isCCF']) {
+    for (const field of ['name', 'type', 'isCCF']) {
       if (entry[field] === undefined || entry[field] === null || entry[field] === '') {
         errors.push({ code: 'missing_required_field', index, field });
       }
     }
+    if (entry.isCCF !== true && !entry.journalid) {
+      errors.push({ code: 'missing_required_field', index, field: 'journalid' });
+    }
     if (entry.type !== 'journal') errors.push({ code: 'invalid_type', index, actual: entry.type });
+    if (/\b(?:conference|symposium|workshop)\b/i.test(entry.ccfFull || entry.name || '')) {
+      errors.push({
+        code: 'conference_in_journal_catalog',
+        index,
+        name: entry.ccfFull || entry.name,
+        ccfAbbr: entry.ccfAbbr || ''
+      });
+    }
+    if (!validLink(entry.officialUrl)) {
+      errors.push({ code: 'invalid_url', index, field: 'officialUrl', value: entry.officialUrl });
+    }
+    if (!validLink(entry.submissionUrl, { allowMailto: true })) {
+      errors.push({ code: 'invalid_url', index, field: 'submissionUrl', value: entry.submissionUrl });
+    }
+    if (authenticatedFull && entry.journalid) {
+      if (entry.scrapeSchemaVersion !== scrapeReport.detailParserVersion) {
+        errors.push({
+          code: 'stale_scrape_schema',
+          index,
+          journalid: entry.journalid,
+          actual: entry.scrapeSchemaVersion ?? null,
+          expected: scrapeReport.detailParserVersion ?? null
+        });
+      }
+      if (!WOS_STATUSES.has(entry.wosStatus)) {
+        errors.push({ code: 'missing_wos_status', index, journalid: entry.journalid });
+      } else if (entry.wosStatus === 'available' && !/^[1-4]区$/.test(entry.wosZone || '')) {
+        errors.push({ code: 'inconsistent_wos_status', index, journalid: entry.journalid, status: entry.wosStatus, zone: entry.wosZone || '' });
+      } else if (entry.wosStatus !== 'available' && entry.wosZone) {
+        errors.push({ code: 'inconsistent_wos_status', index, journalid: entry.journalid, status: entry.wosStatus, zone: entry.wosZone });
+      }
+      if (['source_missing', 'auth_required'].includes(entry.wosStatus)) {
+        errors.push({ code: 'unresolved_wos_status', index, journalid: entry.journalid, status: entry.wosStatus });
+      }
+    }
     if (entry.isCCF === true) ccfCount += 1;
     else if (entry.isCCF === false) {
       nonCCFCount += 1;
+      if (entry.journalAbbrSource === 'letpub_search') {
+        errors.push({ code: 'deprecated_letpub_abbreviation', index, journalid: entry.journalid });
+      }
+      if (entry.journalAbbrSource === 'generated'
+        && normalizeName(entry.journalAbbr) === normalizeName(entry.name)) {
+        errors.push({ code: 'journal_abbr_needs_review', index, journalid: entry.journalid, name: entry.name });
+      }
       const decision = evaluateCatalogEntry(entry);
       if (!decision.accepted) errors.push({ code: 'ineligible_non_ccf', index, journalid: entry.journalid, ...decision });
     } else {
       errors.push({ code: 'invalid_is_ccf', index, actual: entry.isCCF });
     }
     const id = entry.journalid ? String(entry.journalid) : '';
+    const normalizedName = normalizeName(entry.name || entry.ccfFull);
+    if (normalizedName) {
+      if (!names.has(normalizedName)) names.set(normalizedName, []);
+      names.get(normalizedName).push({ index, journalid: id, isCCF: entry.isCCF });
+    }
     if (id) {
-      if (journalIDs.has(id)) errors.push({ code: 'duplicate_journalid', journalid: id, indexes: [journalIDs.get(id), index] });
+      if (journalIDs.has(id)) {
+        const issue = { code: 'duplicate_journalid', journalid: id, indexes: [journalIDs.get(id), index] };
+        if (partialMode && (baselineJournalIDCounts.get(id) || 0) > 1) {
+          warnings.push({ ...issue, code: 'preexisting_duplicate_journalid' });
+        } else {
+          errors.push(issue);
+        }
+      }
       else journalIDs.set(id, index);
     }
     for (const field of ['issn', 'eissn']) {
@@ -91,20 +176,65 @@ function validateDataset(input, context = {}) {
     const identities = new Set(uses.map(use => use.journalid || 'index:' + use.index));
     if (identities.size > 1) errors.push({ code: 'issn_identity_conflict', serial, uses });
   }
+  for (const [name, uses] of names) {
+    const journalIdentities = new Set(uses.map(use => use.journalid).filter(Boolean));
+    if (journalIdentities.size > 1) {
+      errors.push({ code: 'duplicate_normalized_name', name, uses });
+    }
+    if (uses.some(use => use.isCCF === true) && uses.some(use => use.isCCF === false)) {
+      errors.push({ code: 'ccf_non_ccf_name_conflict', name, uses });
+    }
+  }
+
+  const nonCCFEntries = input.filter(entry => entry.isCCF === false);
+  const wosStatusCounts = Object.fromEntries([...WOS_STATUSES].map(status => [
+    status,
+    input.filter(entry => entry.wosStatus === status).length
+  ]));
+  const metadataThresholds = {
+    journalAbbr: 0.9,
+    publisher: 0.8,
+    country: 0.8,
+    language: 0.8,
+    impactFactor: 0.75,
+    citeScore: 0.7
+  };
+  const metadataCompleteness = Object.fromEntries(Object.entries(metadataThresholds).map(([field, threshold]) => {
+    const present = nonCCFEntries.filter(entry => String(entry[field] || '').trim()).length;
+    const ratio = nonCCFEntries.length ? present / nonCCFEntries.length : 1;
+    if (!partialMode && nonCCFEntries.length >= 10 && ratio < threshold) {
+      errors.push({
+        code: 'metadata_completeness_below_threshold',
+        field,
+        present,
+        total: nonCCFEntries.length,
+        ratio,
+        threshold
+      });
+    }
+    return [field, { present, total: nonCCFEntries.length, ratio, threshold }];
+  }));
 
   const expected = expectedCCFRelations(ccfSource);
+  const expectedKeys = new Set(expected.map(relationKey));
   const actualKeys = new Set(actualCCFRelations(input).map(relationKey));
   const baselineKeys = new Set(actualCCFRelations(baseline.map(entry => ({
     ...entry,
     isCCF: entry.isCCF ?? true
   }))).map(relationKey));
-  const lostBaselineRelations = [...baselineKeys].filter(key => !actualKeys.has(key));
+  const lostBaselineRelations = [...baselineKeys].filter(key => expectedKeys.has(key) && !actualKeys.has(key));
   if (lostBaselineRelations.length) errors.push({
     code: 'lost_baseline_ccf_relations',
     count: lostBaselineRelations.length,
     relationKeys: lostBaselineRelations
   });
   const missingRelations = expected.filter(relation => !actualKeys.has(relationKey(relation)));
+  const unexpectedRelations = actualCCFRelations(input).filter(relation => !expectedKeys.has(relationKey(relation)));
+  if (unexpectedRelations.length) errors.push({
+    code: 'unexpected_ccf_relations',
+    count: unexpectedRelations.length,
+    relations: unexpectedRelations
+  });
   const pendingTasks = Number(scrapeReport?.counts?.pending || 0);
   if (missingRelations.length) {
     const issue = {
@@ -119,8 +249,37 @@ function validateDataset(input, context = {}) {
   if (scrapeReport) {
     const counts = scrapeReport.counts || {};
     const counted = Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
-    if (counted !== scrapeReport.totalTasks || scrapeReport.closed !== true) {
+    const countsClosed = counted === scrapeReport.totalTasks;
+    const expectedClosed = countsClosed && Number(counts.pending || 0) === 0;
+    if (authenticatedFull && !Number.isInteger(scrapeReport.detailParserVersion)) {
+      errors.push({ code: 'missing_detail_parser_version' });
+    }
+    if (!countsClosed) {
       errors.push({ code: 'task_counts_not_closed', totalTasks: scrapeReport.totalTasks, counted, counts });
+    }
+    if (scrapeReport.countsClosed !== undefined && scrapeReport.countsClosed !== countsClosed) {
+      errors.push({
+        code: 'invalid_counts_closed_flag',
+        expectedCountsClosed: countsClosed,
+        actualCountsClosed: scrapeReport.countsClosed
+      });
+    }
+    if (scrapeReport.closed !== expectedClosed) {
+      errors.push({
+        code: 'invalid_closed_flag',
+        expectedClosed,
+        actualClosed: scrapeReport.closed,
+        pending: Number(counts.pending || 0)
+      });
+    }
+    if (!partialMode && !expectedClosed) {
+      errors.push({ code: 'incomplete_full_run', counts });
+    }
+    if (partialMode && scrapeReport.canaryCoverage?.adequate !== true) {
+      errors.push({
+        code: 'incomplete_canary_coverage',
+        canaryCoverage: scrapeReport.canaryCoverage || null
+      });
     }
   } else {
     warnings.push({ code: 'missing_scrape_report' });
@@ -146,7 +305,9 @@ function validateDataset(input, context = {}) {
       expectedCCFRelations: expected.length,
       actualCCFRelations: actualKeys.size,
       uniqueJournalIDs: journalIDs.size,
-      identityConflicts: errors.filter(error => /conflict|duplicate/.test(error.code)).length
+      identityConflicts: errors.filter(error => /conflict|duplicate/.test(error.code)).length,
+      metadataCompleteness,
+      wosStatusCounts
     }
   };
 }
@@ -210,6 +371,10 @@ function runValidation(options = {}) {
     ...result
   };
   if (result.ok && options.publish) {
+    if (readJSON(options.scrapeReport, {})?.mode === 'partial') {
+      report.ok = false;
+      report.errors.push({ code: 'cannot_publish_partial_run' });
+    }
     if (discoveryReport?.sourceComplete !== true) {
       report.ok = false;
       report.errors.push({ code: 'cannot_publish_without_complete_discovery' });

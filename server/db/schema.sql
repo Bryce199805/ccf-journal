@@ -9,11 +9,13 @@ CREATE TABLE IF NOT EXISTS entries (
     ccf_full TEXT NOT NULL,            -- 全称
     ccf_publisher TEXT DEFAULT '',      -- 出版社/机构
     ccf_url TEXT DEFAULT '',           -- CCF官网链接
+    ccf_relations TEXT,                -- 完整CCF多领域关系 JSON
 
     -- LetPub fields (NULL for conferences)
     letpub_url TEXT,                   -- LetPub详情页URL
     journalid TEXT,                    -- LetPub journal ID
     name TEXT,                         -- LetPub期刊名
+    journal_abbr TEXT,                 -- LetPub检索列表中的中立期刊缩写
     issn TEXT,
     eissn TEXT,
     publisher TEXT,                    -- LetPub出版社
@@ -45,9 +47,18 @@ CREATE TABLE IF NOT EXISTS entries (
     cas2025 TEXT,                      -- 中科院2025分区 JSON
     cas2023 TEXT,                      -- 中科院2023分区 JSON
     wos_zone TEXT,                     -- WOS JCR分区
+    wos_status TEXT,                   -- available/not_indexed/partition_unavailable/...
+    wos_reason TEXT,                   -- WOS状态的机器可读原因
     jif TEXT,                          -- JIF学科排名 JSON array
     jci_json TEXT,                     -- JCI学科排名 JSON array
     citescore_rankings TEXT,           -- CiteScore排名 JSON array
+
+    -- Catalog/update metadata. CCF is one catalog, not the journal identity.
+    is_ccf INTEGER NOT NULL DEFAULT 1,
+    catalog_source TEXT NOT NULL DEFAULT 'ccf',
+    inclusion_reason TEXT NOT NULL DEFAULT 'CCF推荐目录',
+    last_scraped_at DATETIME,
+    last_scrape_error TEXT,
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

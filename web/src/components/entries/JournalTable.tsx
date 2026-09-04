@@ -2,6 +2,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { ZoneBadge, LevelBadge, TopBadge } from '@/components/shared/ZoneBadge'
+import { Badge } from '@/components/ui/badge'
 import { TagBadge } from '@/components/tags/TagBadge'
 import { FavoriteStar } from './FavoriteStar'
 import { fmt } from '@/lib/utils'
@@ -47,19 +48,25 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
           {entries.map(e => {
             const cas = extractZone(e.cas2025)
             const xin = extractZone(e.xinrui)
-            const top = isTop(e.cas2025) || isTop(e.xinrui)
+            const top = isTop(e.cas2025)
+            const displayName = e.ccf_abbr || e.journal_abbr || e.name || '未命名期刊'
+            const displayFullName = e.ccf_full || e.name || ''
             return (
               <TableRow
                 key={e.id}
                 className="cursor-pointer"
                 onClick={() => onSelect(e.id)}
               >
-                <TableCell className="text-center"><LevelBadge level={e.ccf_level} /></TableCell>
-                <TableCell>
-                  <span className="font-medium">{e.ccf_abbr}</span>
-                  {top && <TopBadge className="ml-1" />}
+                <TableCell className="text-center">
+                  {e.is_ccf ? <LevelBadge level={e.ccf_level} /> : <Badge variant="outline" className="text-[9px] px-1">Non-CCF</Badge>}
                 </TableCell>
-                <TableCell className="text-muted-foreground max-w-[320px] truncate">{e.ccf_full}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="font-medium block max-w-[12rem] truncate" title={displayName}>{displayName}</span>
+                    {top && <TopBadge className="shrink-0" />}
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground max-w-[320px] truncate">{displayFullName}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{e.ccf_domain}</TableCell>
                 <TableCell className="text-center">{cas ? <ZoneBadge zone={cas} variant="cas" /> : '-'}</TableCell>
                 <TableCell className="text-center">{xin ? <ZoneBadge zone={xin} variant="xinrui" /> : '-'}</TableCell>

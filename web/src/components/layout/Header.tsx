@@ -4,6 +4,15 @@ import { useTheme } from '@/lib/theme-provider'
 import { useStats } from '@/hooks/use-stats'
 import type { FilterState } from '@/api/types'
 
+function formatDataDate(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10)
+  return new Intl.DateTimeFormat('en-GB', {
+    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Shanghai',
+  }).format(date)
+}
+
 interface HeaderProps {
   filter: FilterState
   favCount: number
@@ -19,6 +28,7 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
   const { theme, toggleTheme } = useTheme()
   const { data: stats } = useStats()
   const isJournal = filter.type === 'journal'
+  const dataUpdatedDate = formatDataDate(stats?.data_updated_at)
 
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -31,6 +41,9 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
             <h1 className="text-base font-bold leading-tight">CCF 推荐目录</h1>
             <span className="text-[11px] text-muted-foreground">
               {stats ? `${stats.total_journals} 期刊 / ${stats.total_conferences} 会议` : ''}
+              {dataUpdatedDate && (
+                <span title={`最近一次数据更新：${stats?.data_updated_at}`}> · 数据更新 {dataUpdatedDate}</span>
+              )}
             </span>
           </div>
         </div>

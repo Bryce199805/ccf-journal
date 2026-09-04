@@ -3,6 +3,7 @@ const { isRateLimitedHTML, requestHTML } = require('./runtime');
 // Bump this when partition extraction changes in a way that requires retrying
 // entries previously rejected because no CAS partition was found.
 const PARTITION_PARSER_VERSION = 2;
+const DETAIL_PARSER_VERSION = 4;
 
 class LetPubRateLimitError extends Error {
   constructor(message = 'LetPub rate limit page') {
@@ -79,17 +80,105 @@ function tableCellPairs(html) {
   return pairs;
 }
 
+function elementContentAt(html, start, tag) {
+  const source = String(html || '');
+  const token = new RegExp('<' + tag + '\\b[^>]*>|<\\/' + tag + '>', 'gi');
+  token.lastIndex = start;
+  const opening = token.exec(source);
+  if (!opening || opening.index !== start || opening[0].startsWith('</')) return null;
+  const contentStart = token.lastIndex;
+  let depth = 1;
+  let match;
+  while ((match = token.exec(source))) {
+    if (match[0].startsWith('</')) depth -= 1;
+    else depth += 1;
+    if (depth === 0) {
+      return { raw: source.slice(contentStart, match.index), end: token.lastIndex };
+    }
+  }
+  return null;
+}
+
+function siblingCellPairs(html) {
+  const source = String(html || '');
+  const lower = source.toLowerCase();
+  const pairs = [];
+  const closing = /<\/t[dh]>/gi;
+  let match;
+  while ((match = closing.exec(source))) {
+    const tdStart = lower.lastIndexOf('<td', match.index);
+    const thStart = lower.lastIndexOf('<th', match.index);
+    const labelStart = Math.max(tdStart, thStart);
+    if (labelStart < 0) continue;
+    const labelTag = lower.startsWith('<th', labelStart) ? 'th' : 'td';
+    const labelOpeningEnd = source.indexOf('>', labelStart);
+    if (labelOpeningEnd < 0 || labelOpeningEnd > match.index) continue;
+    const nestedCell = Math.max(
+      lower.lastIndexOf('<td', match.index - 1),
+      lower.lastIndexOf('<th', match.index - 1)
+    );
+    if (nestedCell > labelStart) continue;
+    const label = strip(source.slice(labelOpeningEnd + 1, match.index));
+    if (!label || label.length > 500) continue;
+    const sibling = /\s*<t[dh]\b[^>]*>/iy;
+    sibling.lastIndex = closing.lastIndex;
+    const siblingOpening = sibling.exec(source);
+    if (!siblingOpening) continue;
+    const valueStart = siblingOpening.index + siblingOpening[0].search(/<t[dh]/i);
+    const valueTag = lower.startsWith('<th', valueStart) ? 'th' : 'td';
+    const value = elementContentAt(source, valueStart, valueTag);
+    if (value) pairs.push([label, value.raw]);
+  }
+  return pairs;
+}
+
 function nextCellMatching(html, pattern) {
-  for (const [label, rawValue] of tableCellPairs(html)) {
+  for (const [label, rawValue] of [...siblingCellPairs(html), ...tableCellPairs(html)]) {
     pattern.lastIndex = 0;
     if (pattern.test(label)) return strip(rawValue);
   }
   return '';
 }
 
+function nextCellRawMatching(html, pattern) {
+  for (const [label, rawValue] of [...siblingCellPairs(html), ...tableCellPairs(html)]) {
+    pattern.lastIndex = 0;
+    if (pattern.test(label)) return rawValue;
+  }
+  return '';
+}
+
 function nextCell(html, label) {
   const escaped = label.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-  return nextCellMatching(html, new RegExp('^' + escaped + '(?:[：:]|\\s)*$', 'i'));
+  return nextCellMatching(html, new RegExp('^' + escaped + '(?:[：:]|\\s|$)', 'i'));
+}
+
+function nextCellRaw(html, label) {
+  const escaped = label.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return nextCellRawMatching(html, new RegExp('^' + escaped + '(?:[：:]|\\s|$)', 'i'));
+}
+
+function extractExternalLink(raw, { allowEmail = false } = {}) {
+  const source = decodeHTML(String(raw || ''));
+  const candidates = [
+    ...[...source.matchAll(/href=["']([^"']+)["']/gi)].map(match => match[1]),
+    ...[...source.matchAll(/https?:\/\/[^\s"'<>]+/gi)].map(match => match[0])
+  ];
+  for (const candidate of candidates) {
+    try {
+      const parsed = new URL(candidate.trim());
+      if (!['http:', 'https:'].includes(parsed.protocol)) continue;
+      if (parsed.hostname === 'letpub.com.cn' || parsed.hostname.endsWith('.letpub.com.cn')) continue;
+      return parsed.toString();
+    } catch {
+      // Ignore malformed links and continue looking in the same value cell.
+    }
+  }
+  if (allowEmail) {
+    const email = strip(source).match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
+    if (email) return 'mailto:' + email[0];
+  }
+  return '';
 }
 
 function visibleZone(cell) {
@@ -258,6 +347,50 @@ function parseJCR(html) {
   return result;
 }
 
+function classifyWOSAvailability(html, parsedJCR) {
+  const source = String(html || '');
+  if (parsedJCR.wosZone) return { wosStatus: 'available', wosReason: 'partition_present' };
+  if (/此期刊未被最新的JCR期刊引证报告收录/i.test(source)) {
+    return { wosStatus: 'not_indexed', wosReason: 'not_in_latest_jcr' };
+  }
+  if (/注册或登录后[\s\S]{0,500}(?:查看)?WOS分区等级/i.test(source)) {
+    return { wosStatus: 'auth_required', wosReason: 'login_gate' };
+  }
+  if (/WOS分区等级[：:]?[\s\S]{0,300}?(?:0\s*区|暂无按学科分区信息)/i.test(source)) {
+    return { wosStatus: 'partition_unavailable', wosReason: 'no_partition_data' };
+  }
+  return { wosStatus: 'source_missing', wosReason: 'wos_section_absent' };
+}
+
+function parseScopusMetrics(html) {
+  const result = { citeScore: '', sjr: '', snip: '', citeScoreRankings: [] };
+  const header = String(html || '').match(
+    /<th\b[^>]*>\s*CiteScore\s*<\/th>\s*<th\b[^>]*>\s*SJR\s*<\/th>\s*<th\b[^>]*>\s*SNIP\s*<\/th>[\s\S]*?<\/tr>\s*<tr\b[^>]*>([\s\S]*?)<\/tr>/i
+  );
+  if (!header) return result;
+  const cells = topLevelCells('<tr>' + header[1] + '</tr>').map(strip);
+  result.citeScore = firstNum(cells[0]);
+  result.sjr = firstNum(cells[1]);
+  result.snip = firstNum(cells[2]);
+  const rankingHeader = String(html).indexOf('>CiteScore排名</th>');
+  if (rankingHeader >= 0) {
+    const rankingTableStart = String(html).indexOf('<table', rankingHeader);
+    const rankingTable = rankingTableStart >= 0
+      ? extractBalancedElements(String(html).slice(rankingTableStart), 'table')[0]
+      : '';
+    for (const row of extractBalancedElements(rankingTable, 'tr').slice(1)) {
+      const rankingCells = topLevelCells(row).map(strip);
+      if (rankingCells.length < 3 || !/大类|小类/.test(rankingCells[0])) continue;
+      result.citeScoreRankings.push({
+        category: rankingCells[0],
+        zone: rankingCells[1],
+        rank: rankingCells[2]
+      });
+    }
+  }
+  return result;
+}
+
 function parseDetailHTML(journalid, html, { fetchedAt = new Date().toISOString() } = {}) {
   if (isRateLimitedHTML(html)) throw new LetPubRateLimitError();
   if (!html || !/(期刊名字|期刊ISSN|E-ISSN|中科院|影响因子)/.test(html)) {
@@ -280,30 +413,42 @@ function parseDetailHTML(journalid, html, { fetchedAt = new Date().toISOString()
     researchArea: nextCell(html, '涉及的研究方向'),
     isOA: nextCell(html, '是否OA开放访问'),
     goldOARatio: firstPct(nextCell(html, 'Gold OA文章占比')),
-    officialUrl: nextCell(html, '期刊官方网站').split(/\s/)[0],
-    submissionUrl: nextCell(html, '期刊投稿网址').split(/\s/)[0],
+    officialUrl: extractExternalLink(nextCellRaw(html, '期刊官方网站')),
+    submissionUrl: extractExternalLink(nextCellRaw(html, '期刊投稿网址'), { allowEmail: true }),
     impactFactor: firstNum(nextCellMatching(html, /最新影响因子/)),
     realtimeIF: firstNum(nextCell(html, '实时影响因子').replace(/^.*?[：:]/, '')),
     selfCitationRate: firstPct(nextCellMatching(html, /自引率/)),
     fiveYearIF: firstNum(nextCell(html, '五年影响因子')),
     jciValue: firstNum(nextCell(html, 'JCI期刊引文指标')),
     hIndex: firstNum(nextCellMatching(html, /h-index/i)),
-    citeScore: firstNum(nextCell(html, 'CiteScore')),
-    sjr: firstNum(nextCell(html, 'SJR')),
-    snip: firstNum(nextCell(html, 'SNIP')),
+    citeScore: firstNum(nextCellMatching(html, /^CiteScore(?:\s|$)/i)),
+    sjr: firstNum(nextCellMatching(html, /^SJR(?:\s|$)/i)),
+    snip: firstNum(nextCellMatching(html, /^SNIP(?:\s|$)/i)),
     citeScoreRankings: [],
     reviewSpeed: nextCell(html, '平均审稿速度').replace(/网友分享经验[：:]?\s*/, '').trim(),
     acceptanceRate: nextCell(html, '平均录用比例').replace(/网友分享经验[：:]?\s*/, '').trim(),
     articleCount: firstNum(nextCellMatching(html, /年文章数/))
   };
+  if (!data.impactFactor) {
+    const titleIF = String(html).match(/<title\b[^>]*>[\s\S]*?影响因子\s*([\d.]+)\s*分/i);
+    data.impactFactor = titleIF ? titleIF[1] : '';
+  }
+  Object.assign(data, Object.fromEntries(
+    Object.entries(parseScopusMetrics(html)).filter(([, value]) => value)
+  ));
   const sci = nextCell(html, 'SCI收录类型');
   data.sciType = ['SCIE', 'SSCI', 'ESCI'].find(type => sci.includes(type)) || '';
+  if (!data.sciType) {
+    const currentJCR = String(html).match(/被最新的JCR期刊\s*(SCIE|SSCI|ESCI)\s*收录/i);
+    data.sciType = currentJCR ? currentJCR[1].toUpperCase() : '';
+  }
   const scoreMatch = html.match(/LetPub评分[\s\S]{0,500}?font-size\s*:\s*24px[^>]*>([\d.]+)/i);
   data.letpubScore = scoreMatch ? scoreMatch[1] : '';
   const partitions = parseAllPartitions(html);
   Object.assign(data, partitions);
   for (const [year, partition] of Object.entries(partitions.casPartitions)) data['cas' + year] = partition;
-  Object.assign(data, parseJCR(html));
+  const jcr = parseJCR(html);
+  Object.assign(data, jcr, classifyWOSAvailability(html, jcr));
   if (!data.name && !data.issn && !data.eissn) throw new LetPubParseError('detail page identity fields are missing');
   return data;
 }
@@ -315,14 +460,18 @@ async function parseDetail(journalid, providedHTML = null, options = {}) {
 }
 
 module.exports = {
+  DETAIL_PARSER_VERSION,
   PARTITION_PARSER_VERSION,
   LetPubParseError,
   LetPubRateLimitError,
   fetchUrl,
+  classifyWOSAvailability,
+  extractExternalLink,
   parseAllPartitions,
   parseDetail,
   parseDetailHTML,
   parsePartitionTable,
+  parseScopusMetrics,
   extractBalancedElements,
   strip
 };

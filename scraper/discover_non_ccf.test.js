@@ -7,6 +7,14 @@ const { parseSearchPage, runDiscovery } = require('./discover_non_ccf');
 
 const fixtures = path.join(__dirname, 'fixtures', 'search');
 const fixture = name => fs.readFileSync(path.join(fixtures, name), 'utf8');
+const singleScope = [{ id: 'test', sort: 'relevance', order: 'desc' }];
+
+function searchPage(currentPage, totalPages, entries) {
+  const rows = entries.map(entry =>
+    `<tr><td>${entry.issn}</td><td><a href="index.php?journalid=${entry.id}&page=journalapp&view=detail">${entry.name}</a><font>${entry.name}</font></td></tr>`
+  ).join('');
+  return `<html><body>当前第${currentPage}页，共${totalPages}页<table>${rows}</table></body></html>`;
+}
 
 test('parses dynamic pages, identity fields, detail URL and source page', () => {
   const parsed = parseSearchPage(fixture('page1.html'), 1);
@@ -40,6 +48,7 @@ test('checkpoints failed pages, resumes them, deduplicates, and is idempotent', 
   };
   const first = await runDiscovery({
     ...files,
+    scopes: singleScope,
     delayMs: 0,
     jitterMs: 0,
     retries: 1,
@@ -50,13 +59,14 @@ test('checkpoints failed pages, resumes them, deduplicates, and is idempotent', 
     })
   });
   assert.equal(first.report.complete, false);
-  assert.deepEqual(first.report.failedPages, [2]);
+  assert.deepEqual(first.report.failedPages, ['test:2']);
   assert.equal(fs.existsSync(files.candidatesFile), false);
   assert.equal(JSON.parse(fs.readFileSync(files.partialFile)).length, 2);
 
   const calls = [];
   const resumed = await runDiscovery({
     ...files,
+    scopes: singleScope,
     delayMs: 0,
     jitterMs: 0,
     retries: 1,
@@ -74,6 +84,7 @@ test('checkpoints failed pages, resumes them, deduplicates, and is idempotent', 
   let unexpectedFetch = false;
   const repeated = await runDiscovery({
     ...files,
+    scopes: singleScope,
     delayMs: 0,
     jitterMs: 0,
     sleepImpl: async () => {},
@@ -84,4 +95,77 @@ test('checkpoints failed pages, resumes them, deduplicates, and is idempotent', 
   });
   assert.equal(repeated.candidates.length, 3);
   assert.equal(unexpectedFetch, false);
+});
+
+test('bidirectional ISSN scans cover a source larger than its page cap', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ccf-discovery-bidirectional-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const files = {
+    candidatesFile: path.join(directory, 'candidates.json'),
+    partialFile: path.join(directory, 'partial.json'),
+    progressFile: path.join(directory, 'progress.json'),
+    reportFile: path.join(directory, 'report.json')
+  };
+  const pages = {
+    asc: {
+      1: [['1', '0001-0001'], ['2', '0001-0002']],
+      2: [['3', '0001-0003'], ['4', '0001-0004']]
+    },
+    desc: {
+      1: [['6', '0001-0006'], ['5', '0001-0005']],
+      2: [['4', '0001-0004'], ['3', '0001-0003']]
+    }
+  };
+  const result = await runDiscovery({
+    ...files,
+    maxSourcePages: 2,
+    delayMs: 0,
+    jitterMs: 0,
+    retries: 1,
+    sleepImpl: async () => {},
+    fetchImpl: async url => {
+      const parsedURL = new URL(url);
+      const order = parsedURL.searchParams.get('searchsortorder');
+      const page = Number(parsedURL.searchParams.get('currentsearchpage'));
+      const entries = pages[order][page].map(([id, issn]) => ({ id, issn, name: 'Journal ' + id }));
+      return { statusCode: 200, body: searchPage(page, 3, entries) };
+    }
+  });
+  assert.equal(result.report.sourceComplete, true);
+  assert.equal(result.report.candidateCount, 6);
+  assert.equal(result.report.minimumExpected, 5);
+  assert.equal(result.report.scopes.issn_asc.scannedPages, 2);
+  assert.equal(result.report.scopes.issn_desc.scannedPages, 2);
+  assert.equal(new Set(result.candidates.map(entry => entry.journalid)).size, 6);
+});
+
+test('rejects a page when LetPub clamps it to a different response page', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ccf-discovery-page-mismatch-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const files = {
+    candidatesFile: path.join(directory, 'candidates.json'),
+    partialFile: path.join(directory, 'partial.json'),
+    progressFile: path.join(directory, 'progress.json'),
+    reportFile: path.join(directory, 'report.json')
+  };
+  const result = await runDiscovery({
+    ...files,
+    scopes: singleScope,
+    delayMs: 0,
+    jitterMs: 0,
+    retries: 1,
+    sleepImpl: async () => {},
+    fetchImpl: async url => {
+      const requested = Number(new URL(url).searchParams.get('currentsearchpage'));
+      const responsePage = requested === 2 ? 1 : requested;
+      return {
+        statusCode: 200,
+        body: searchPage(responsePage, 2, [{ id: String(requested), issn: '0001-000' + requested, name: 'Journal ' + requested }])
+      };
+    }
+  });
+  assert.equal(result.report.complete, false);
+  assert.deepEqual(result.report.failedPages, ['test:2']);
+  assert.equal(result.progress.scopes.test.pages[2].failureType, 'page_mismatch');
+  assert.equal(fs.existsSync(files.candidatesFile), false);
 });

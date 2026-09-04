@@ -18,7 +18,7 @@ func (r *FavoriteRepo) Add(deviceID string, userID *int, entryID int, tags []str
 	if userID != nil {
 		_, err := r.db.Exec(
 			"INSERT OR IGNORE INTO favorites (device_id, user_id, entry_id, tags) VALUES (?, ?, ?, ?)",
-			"", *userID, entryID, string(tagsJSON),
+			accountDeviceID(*userID), *userID, entryID, string(tagsJSON),
 		)
 		return err
 	}
@@ -223,7 +223,7 @@ func (r *FavoriteRepo) MergeDeviceFavorites(tx *sql.Tx, deviceID string, userID 
 		if count == 0 {
 			_, err := tx.Exec(
 				"UPDATE favorites SET user_id = ?, device_id = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?",
-				userID, "", deviceID, f.entryID,
+				userID, accountDeviceID(userID), deviceID, f.entryID,
 			)
 			if err != nil {
 				return err

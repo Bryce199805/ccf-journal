@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"database/sql"
 	"ccf-directory/internal/model"
+	"database/sql"
 )
 
 type NoteRepo struct {
@@ -23,7 +23,7 @@ func (r *NoteRepo) Upsert(deviceID string, userID *int, entryID int, content str
 			   content = excluded.content,
 			   updated_at = CURRENT_TIMESTAMP,
 			   user_id = excluded.user_id`,
-			deviceID, *userID, entryID, content,
+			accountDeviceID(*userID), *userID, entryID, content,
 		)
 		return err
 	}
@@ -209,7 +209,7 @@ func (r *NoteRepo) MergeDeviceNotes(tx *sql.Tx, deviceID string, userID int) err
 		if err == sql.ErrNoRows {
 			_, err := tx.Exec(
 				"UPDATE notes SET user_id = ?, device_id = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?",
-				userID, "", deviceID, n.entryID,
+				userID, accountDeviceID(userID), deviceID, n.entryID,
 			)
 			if err != nil {
 				return err

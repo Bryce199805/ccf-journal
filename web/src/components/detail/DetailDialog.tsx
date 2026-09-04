@@ -1,6 +1,7 @@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
 import { LevelBadge, ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { ActionButtons } from './ActionButtons'
 import { Loader2, ExternalLink } from 'lucide-react'
@@ -11,6 +12,24 @@ import type { Entry, CASPartition, JIFRanking, CiteScoreRanking } from '@/api/ty
 function parseCAS(json: string | null): CASPartition | null {
   if (!json) return null
   try { return JSON.parse(json) } catch { return null }
+}
+
+function wosStatusLabel(status: Entry['wos_status']): string {
+  if (status === 'not_indexed') return '未被最新 JCR 收录'
+  if (status === 'partition_unavailable') return '已识别 WOS 区域，但暂无分区数据'
+  if (status === 'auth_required') return '需要登录后重新抓取'
+  if (status === 'source_missing') return 'LetPub 页面缺少 WOS 信息，状态待确认'
+  if (status === 'detail_not_found') return 'LetPub 未找到详情记录'
+  return ''
+}
+
+function formatDataDate(value: string | null): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('en-GB', {
+    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Shanghai',
+  }).format(date)
 }
 
 interface DetailDialogProps {
@@ -32,7 +51,7 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
       >
         <DialogHeader className="pb-3">
           <DialogTitle className="text-lg font-bold">
-            {isLoading ? '加载中...' : entry?.ccf_full || entry?.ccf_abbr || ''}
+            {isLoading ? '加载中...' : entry?.ccf_full || entry?.name || entry?.ccf_abbr || ''}
           </DialogTitle>
         </DialogHeader>
 
@@ -78,7 +97,10 @@ function JournalDetail({ entry }: { entry: Entry }) {
   const cas2025 = parseCAS(entry.cas2025)
   const cas2023 = parseCAS(entry.cas2023)
   const xinrui = parseCAS(entry.xinrui)
-  const isTopJournal = cas2025?.isTop || xinrui?.isTop
+  const isTopJournal = cas2025?.isTop
+  const displayName = entry.ccf_abbr || entry.journal_abbr || entry.name || '未命名期刊'
+  const displayFullName = entry.ccf_full || entry.name || ''
+  const displayPublisher = entry.ccf_publisher || entry.publisher || ''
 
   const jifRankings = parseJIF(entry.jif)
   const citeScoreRankings = parseCiteScore(entry.citescore_rankings)
@@ -89,19 +111,28 @@ function JournalDetail({ entry }: { entry: Entry }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <LevelBadge level={entry.ccf_level} />
-            <span className="text-xs text-muted-foreground">{entry.ccf_domain}</span>
-            <span className="font-bold text-lg">{entry.ccf_abbr}</span>
+            {entry.is_ccf ? (
+              <LevelBadge level={entry.ccf_level} />
+            ) : (
+              <Badge variant="outline" className="h-[22px] px-2 text-[10px]">Non-CCF</Badge>
+            )}
+            {entry.is_ccf && entry.ccf_domain && <span className="text-xs text-muted-foreground">{entry.ccf_domain}</span>}
+            <span className="font-bold text-lg">{displayName}</span>
             {isTopJournal && <TopBadge />}
             {entry.wos_zone && <ZoneBadge zone={`JCR${entry.wos_zone}`} variant="jcr" />}
+            {!entry.wos_zone && wosStatusLabel(entry.wos_status) && (
+              <span className="text-xs text-muted-foreground" title={entry.wos_reason || undefined}>
+                WOS：{wosStatusLabel(entry.wos_status)}
+              </span>
+            )}
             {entry.sci_type && (
               <span className="inline-flex items-center h-[20px] px-2 rounded text-[10px] font-medium bg-secondary text-secondary-foreground">
                 {entry.sci_type}
               </span>
             )}
           </div>
-          <div className="text-sm text-muted-foreground">{entry.ccf_full}</div>
-          {entry.ccf_publisher && <div className="text-xs text-muted-foreground mt-0.5">{entry.ccf_publisher}</div>}
+          {displayFullName !== displayName && <div className="text-sm text-muted-foreground">{displayFullName}</div>}
+          {displayPublisher && <div className="text-xs text-muted-foreground mt-0.5">{displayPublisher}</div>}
         </div>
         <div className="grid grid-cols-4 gap-2 shrink-0">
           <MetricCard label="IF" value={entry.impact_factor != null ? fmt(entry.impact_factor) : null} color="blue" />
@@ -155,6 +186,7 @@ function JournalDetail({ entry }: { entry: Entry }) {
           <InfoField label="研究方向" value={entry.research_area} />
           <InfoField label="SJR" value={entry.sjr != null ? entry.sjr.toFixed(2) : undefined} />
           <InfoField label="SNIP" value={entry.snip != null ? entry.snip.toFixed(2) : undefined} />
+          <InfoField label="数据更新时间" value={formatDataDate(entry.last_scraped_at)} />
         </div>
       </div>
 

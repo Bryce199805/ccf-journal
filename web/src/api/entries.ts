@@ -4,9 +4,11 @@ import type { PaginatedResponse, EntryDetailResponse, FilterState } from './type
 export function fetchEntries(f: FilterState, deviceId: string) {
   return apiGet<PaginatedResponse>('/entries', {
     type: f.type,
+    catalog: f.catalog === 'all' ? undefined : f.catalog,
     domain: f.domains.length > 0 ? f.domains.join(',') : undefined,
     level: f.levels.length > 0 ? f.levels.join(',') : undefined,
     cas_zone: f.casZones.length > 0 ? f.casZones.join(',') : undefined,
+    wos_zone: f.wosZones.length > 0 ? f.wosZones.join(',') : undefined,
     q: f.query || undefined,
     sort: f.sort || undefined,
     order: f.sort ? f.order : undefined,

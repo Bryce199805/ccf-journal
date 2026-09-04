@@ -8,18 +8,30 @@ const {
 } = require('./lib/runtime');
 const { evaluateCatalogEntry, isFresh } = require('./lib/catalog_policy');
 const { findStrongMatches, normalizeISSN, normalizeName, strongMatch } = require('./lib/identity');
-const { PARTITION_PARSER_VERSION, parseDetailHTML } = require('./lib/letpub_parser');
+const { DETAIL_PARSER_VERSION, PARTITION_PARSER_VERSION, parseDetailHTML } = require('./lib/letpub_parser');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 const TERMINAL_STATUSES = new Set(['success', 'rejected']);
+const CACHEABLE_STATUSES = new Set(['success', 'rejected', 'not_found']);
 const ALL_STATUSES = ['pending', 'success', 'rejected', 'not_found', 'parse_failed', 'rate_limited'];
+const IDENTITY_MATCHER_VERSION = 3;
+const FETCHED_SNAPSHOT_FIELDS = new Set([
+  'letpubUrl', 'fetchedAt', 'publisher', 'country', 'language', 'periodicity',
+  'researchArea', 'isOA', 'goldOARatio', 'officialUrl', 'submissionUrl',
+  'impactFactor', 'realtimeIF', 'selfCitationRate', 'fiveYearIF', 'jciValue',
+  'hIndex', 'citeScore', 'sjr', 'snip', 'citeScoreRankings', 'reviewSpeed',
+  'acceptanceRate', 'articleCount', 'sciType', 'letpubScore', 'xinrui',
+  'casPartitions', 'latestCASYear', 'latestCAS', 'wosZone', 'wosStatus',
+  'wosReason', 'jif', 'jci'
+]);
 
 function defaultConfig(env = process.env) {
   return {
     ccfFile: env.CCF_SOURCE_FILE || path.join(DATA_DIR, 'all_journals_correct.json'),
     legacyIdentityFile: env.LEGACY_IDENTITY_FILE || path.join(DATA_DIR, 'all_letpub_data.json'),
     candidatesFile: env.NON_CCF_FILE || env.DISCOVERY_CANDIDATES_FILE || path.join(OUTPUT_DIR, 'non_ccf_candidates.json'),
+    abbrOverridesFile: env.JOURNAL_ABBR_OVERRIDES_FILE || path.join(__dirname, 'journal_abbr_overrides.json'),
     baselineFile: env.BASELINE_FILE || path.join(DATA_DIR, 'letpub_full.json'),
     stagingFile: env.STAGING_FILE || path.join(OUTPUT_DIR, 'letpub_full.staging.json'),
     progressFile: env.SCRAPE_PROGRESS_FILE || path.join(OUTPUT_DIR, 'scrape_progress.json'),
@@ -33,7 +45,10 @@ function defaultConfig(env = process.env) {
     jitterMs: Number(env.SCRAPE_JITTER_MS || 1000),
     timeoutMs: Number(env.SCRAPE_TIMEOUT_MS || 20000),
     retries: Number(env.SCRAPE_RETRIES || 3),
-    backoffMs: Number(env.SCRAPE_BACKOFF_MS || env.SCRAPE_DELAY_MS || 12000)
+    backoffMs: Number(env.SCRAPE_BACKOFF_MS || env.SCRAPE_DELAY_MS || 12000),
+    maxConsecutiveRateLimits: Number(env.MAX_CONSECUTIVE_RATE_LIMITS || 3),
+    cookie: env.LETPUB_COOKIE || '',
+    detailAccessMode: env.LETPUB_COOKIE ? 'authenticated' : 'anonymous'
   };
 }
 
@@ -85,6 +100,9 @@ function buildTasks(ccfSource, candidates, legacyIdentities = {}) {
       isCCF: false,
       full: candidate.full || '',
       abbr: candidate.abbr || '',
+      journalAbbr: candidate.journalAbbr || candidate.abbr || '',
+      journalAbbrSource: candidate.journalAbbrSource || (candidate.abbr ? 'letpub_search' : ''),
+      journalAbbrSourceUrl: candidate.journalAbbrSourceUrl || '',
       issn: normalizeISSN(candidate.issn),
       eissn: normalizeISSN(candidate.eissn),
       journalid: candidate.journalid ? String(candidate.journalid) : '',
@@ -98,7 +116,27 @@ function buildTasks(ccfSource, candidates, legacyIdentities = {}) {
 
 function hydrateKnownIdentity(task, baseline) {
   if (task.journalid) return task;
-  const matches = findStrongMatches(task, baseline);
+  if (task.isCCF) {
+    const catalogMatches = [...new Map(baseline
+      .filter(entry => entry.journalid && matchesCCFCatalog(entry, task))
+      .map(entry => [String(entry.journalid), entry])).values()];
+    if (catalogMatches.length === 1) {
+      const entry = catalogMatches[0];
+      return {
+        ...task,
+        journalid: String(entry.journalid),
+        issn: task.issn || normalizeISSN(entry.issn),
+        eissn: task.eissn || normalizeISSN(entry.eissn)
+      };
+    }
+  }
+  const matches = [...new Map(findStrongMatches(task, baseline).map(match => {
+    const entry = match.entry;
+    const identity = entry.journalid
+      ? 'journalid:' + String(entry.journalid)
+      : 'serial:' + [normalizeISSN(entry.issn), normalizeISSN(entry.eissn)].filter(Boolean).sort().join('|');
+    return [identity, match];
+  })).values()];
   if (matches.length === 1) {
     const entry = matches[0].entry;
     return {
@@ -133,6 +171,57 @@ function normalizeBaseline(entries) {
   });
 }
 
+const ABBREVIATION_STOP_WORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the', 'to', 'with']);
+const PRESERVED_ACRONYMS = new Set(['CAAI', 'EPJ', 'IACR', 'ISA', 'OA', 'VLDB']);
+
+function constructJournalAbbreviation(fullName) {
+  const words = String(fullName || '').match(/[A-Za-z0-9]+/g) || [];
+  if (words.length <= 1) return words[0] || '';
+  return words.flatMap(word => {
+    const lower = word.toLowerCase();
+    if (ABBREVIATION_STOP_WORDS.has(lower)) return [];
+    if (PRESERVED_ACRONYMS.has(word.toUpperCase())) return [word.toUpperCase()];
+    return [word[0].toUpperCase()];
+  }).join('');
+}
+
+function resolveCandidateJournalAbbreviations(candidates, overrides = {}) {
+  return candidates.map(candidate => {
+    const override = overrides[String(candidate.journalid || '')];
+    if (override?.abbr) {
+      return {
+        ...candidate,
+        journalAbbr: override.abbr,
+        journalAbbrSource: override.source || 'curated',
+        journalAbbrSourceUrl: override.sourceUrl || ''
+      };
+    }
+    return {
+      ...candidate,
+      journalAbbr: constructJournalAbbreviation(candidate.full),
+      journalAbbrSource: 'generated',
+      journalAbbrSourceUrl: ''
+    };
+  });
+}
+
+function applyCandidateJournalAbbreviations(entries, candidates) {
+  const byJournalID = new Map(candidates
+    .filter(candidate => candidate.journalid && candidate.journalAbbr)
+    .map(candidate => [String(candidate.journalid), candidate]));
+  return entries.map(entry => {
+    if (entry.isCCF || !entry.journalid) return entry;
+    const candidate = byJournalID.get(String(entry.journalid));
+    if (!candidate) return entry;
+    return {
+      ...entry,
+      journalAbbr: candidate.journalAbbr,
+      journalAbbrSource: candidate.journalAbbrSource,
+      journalAbbrSourceUrl: candidate.journalAbbrSourceUrl
+    };
+  });
+}
+
 function matchesCCFCatalog(entry, task) {
   if (!task.isCCF) return false;
   const taskFull = normalizeName(task.full);
@@ -154,8 +243,47 @@ function ccfPlaceholder(task) {
     name: task.full,
     issn: '',
     eissn: '',
-    letpubMatchStatus: 'unmatched'
+    letpubMatchStatus: 'unmatched',
+    wosStatus: 'detail_not_found',
+    wosReason: 'letpub_detail_not_found'
   });
+}
+
+function pruneRemovedCCFCatalogEntries(entries, ccfTasks) {
+  const current = new Map(ccfTasks.map(task => [
+    normalizeName(task.full) + '|' + normalizeName(task.abbr),
+    task
+  ]));
+  const kept = [];
+  for (const entry of entries) {
+    if (entry.isCCF !== true) {
+      kept.push(entry);
+      continue;
+    }
+    const relations = (entry.ccfRelations?.length ? entry.ccfRelations : [{
+      full: entry.ccfFull,
+      abbr: entry.ccfAbbr,
+      domain: entry.ccfDomain,
+      level: entry.ccfLevel,
+      publisher: entry.ccfPublisher,
+      url: entry.ccfUrl
+    }]).filter(relation => current.has(
+      normalizeName(relation.full) + '|' + normalizeName(relation.abbr)
+    ));
+    if (!relations.length) continue;
+    const first = relations[0];
+    kept.push({
+      ...entry,
+      ccfRelations: relations,
+      ccfDomain: first.domain || '',
+      ccfLevel: first.level || '',
+      ccfAbbr: first.abbr || '',
+      ccfFull: first.full || '',
+      ccfPublisher: first.publisher || '',
+      ccfUrl: first.url || ''
+    });
+  }
+  return kept;
 }
 
 function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
@@ -165,6 +293,13 @@ function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
   if (indexes.length === 0) {
     const strongMatches = findStrongMatches(task, results);
     if (strongMatches.length === 1) indexes = [strongMatches[0].index];
+  }
+  if (indexes.length === 0) {
+    const namedMatches = results
+      .map((entry, index) => ({ entry, index }))
+      .filter(item => item.entry.isCCF === true
+        && normalizeName(item.entry.name || item.entry.ccfFull) === normalizeName(task.full));
+    if (namedMatches.length === 1) indexes = [namedMatches[0].index];
   }
   const placeholder = ccfPlaceholder(task);
   if (indexes.length === 0) {
@@ -177,7 +312,11 @@ function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
   } else {
     results[index] = mergePreserving(results[index], resultEntry(task, {}));
     if (!results[index].name) results[index].name = task.full;
-    if (!results[index].journalid) results[index].letpubMatchStatus = 'unmatched';
+    if (!results[index].journalid) {
+      results[index].letpubMatchStatus = 'unmatched';
+      results[index].wosStatus = 'detail_not_found';
+      results[index].wosReason = 'letpub_detail_not_found';
+    }
   }
   return index;
 }
@@ -191,8 +330,9 @@ function validateResolvedIdentity(task, detail) {
   const comparableSerials = expectedSerials.size > 0 && actualSerials.size > 0;
   const serialMatches = comparableSerials
     && [...expectedSerials].some(serial => actualSerials.has(serial));
+  const nameCompatible = nameMatches || catalogNamesCompatible(task, detail, serialMatches);
   const reasons = [];
-  if (task.isCCF && expectedName && !nameMatches) reasons.push('name_mismatch');
+  if (task.isCCF && expectedName && !nameCompatible) reasons.push('name_mismatch');
   if (comparableSerials && !serialMatches) reasons.push('serial_mismatch');
   return {
     valid: reasons.length === 0,
@@ -211,6 +351,7 @@ function validateResolvedIdentity(task, detail) {
       journalid: detail.journalid || null
     },
     nameMatches,
+    nameCompatible,
     serialMatches: comparableSerials ? serialMatches : null
   };
 }
@@ -241,7 +382,8 @@ function createThrottledFetcher(config) {
       backoffMs: config.backoffMs,
       jitterMs: config.jitterMs,
       random,
-      sleepImpl
+      sleepImpl,
+      cookie: config.cookie
     });
   };
 }
@@ -281,10 +423,135 @@ function mergePreserving(existing, incoming) {
   return merged;
 }
 
+function mergeFetchedSnapshot(existing, incoming) {
+  const merged = mergePreserving(existing, incoming);
+  for (const field of FETCHED_SNAPSHOT_FIELDS) {
+    if (Object.hasOwn(incoming || {}, field)) merged[field] = incoming[field];
+  }
+  return merged;
+}
+
+function serialsOf(entry) {
+  return new Set([normalizeISSN(entry?.issn), normalizeISSN(entry?.eissn)].filter(Boolean));
+}
+
+function aliasNamesMatch(left, right) {
+  const a = normalizeName(left?.name || left?.full || left?.ccfFull);
+  const b = normalizeName(right?.name || right?.full || right?.ccfFull);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [shorter, longer] = a.length < b.length ? [a, b] : [b, a];
+  const suffix = longer.startsWith(shorter + ' ') ? longer.slice(shorter.length + 1) : '';
+  return /^[A-Z]{2,10}$/.test(suffix);
+}
+
+function catalogNamesCompatible(left, right, serialMatches = false) {
+  const a = normalizeName(left?.name || left?.full || left?.ccfFull);
+  const b = normalizeName(right?.name || right?.full || right?.ccfFull);
+  if (!a || !b) return false;
+  if (a === b || aliasNamesMatch(left, right)) return true;
+  if (!serialMatches) return false;
+  const withoutArticle = value => value.replace(/^THE /, '');
+  if (withoutArticle(a) === withoutArticle(b)) return true;
+  if (withoutArticle(a).startsWith(withoutArticle(b) + ' ')
+    || withoutArticle(b).startsWith(withoutArticle(a) + ' ')) return true;
+  const aTokens = new Set(withoutArticle(a).split(' '));
+  const bTokens = new Set(withoutArticle(b).split(' '));
+  const common = [...aTokens].filter(token => bTokens.has(token)).length;
+  return common >= 3 && common / Math.min(aTokens.size, bTokens.size) >= 0.6;
+}
+
+function serialAliasMatch(left, right) {
+  const leftSerials = serialsOf(left);
+  const rightSerials = serialsOf(right);
+  return aliasNamesMatch(left, right)
+    && [...leftSerials].some(serial => rightSerials.has(serial));
+}
+
+function mergeJournalAliases(canonical, alias) {
+  const canonicalID = canonical.journalid ? String(canonical.journalid) : '';
+  const aliasIDs = [
+    ...(canonical.letpubJournalidAliases || []),
+    ...(alias.letpubJournalidAliases || []),
+    alias.journalid ? String(alias.journalid) : ''
+  ].filter(id => id && id !== canonicalID);
+  const merged = {
+    ...mergePreserving(alias, canonical),
+    letpubJournalidAliases: [...new Set(aliasIDs)]
+  };
+  const serials = [canonical.issn, canonical.eissn, alias.issn, alias.eissn]
+    .map(normalizeISSN)
+    .filter(Boolean);
+  merged.issn = normalizeISSN(canonical.issn) || serials[0] || '';
+  const canonicalEISSN = normalizeISSN(canonical.eissn);
+  merged.eissn = canonicalEISSN && canonicalEISSN !== merged.issn
+    ? canonicalEISSN
+    : serials.find(serial => serial !== merged.issn) || '';
+  return merged;
+}
+
+function normalizedExternalURL(value) {
+  try {
+    const url = new URL(String(value || ''));
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return (url.hostname + url.pathname).replace(/\/+$/, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function sameTitleSourceAliasMatch(left, right) {
+  const sameTitle = normalizeName(left?.name) && normalizeName(left?.name) === normalizeName(right?.name);
+  const leftURL = normalizedExternalURL(left?.officialUrl);
+  const rightURL = normalizedExternalURL(right?.officialUrl);
+  return Boolean(sameTitle && leftURL && leftURL === rightURL);
+}
+
+function aliasQuality(entry) {
+  return Number(Boolean(entry?.isCCF)) * 100
+    + Number(Boolean(entry?.wosZone)) * 10
+    + Number(Array.isArray(entry?.jif) && entry.jif.length > 0) * 5
+    + Number(Array.isArray(entry?.jci) && entry.jci.length > 0) * 5
+    + Number(Boolean(entry?.sciType));
+}
+
+function consolidateJournalAliases(entries, conflicts = []) {
+  const results = [...entries];
+  for (let left = 0; left < results.length; left += 1) {
+    for (let right = results.length - 1; right > left; right -= 1) {
+      const serialAlias = serialAliasMatch(results[left], results[right]);
+      const titleSourceAlias = sameTitleSourceAliasMatch(results[left], results[right]);
+      if (!serialAlias && !titleSourceAlias) continue;
+      const canonicalIndex = aliasQuality(results[right]) > aliasQuality(results[left]) ? right : left;
+      const aliasIndex = canonicalIndex === left ? right : left;
+      const canonical = results[canonicalIndex];
+      const alias = results[aliasIndex];
+      const merged = mergeJournalAliases(canonical, alias);
+      conflicts.push({
+        type: titleSourceAlias ? 'letpub_title_source_alias_merged' : 'letpub_journalid_alias_merged',
+        canonicalJournalid: merged.journalid || null,
+        aliasJournalid: alias.journalid || null,
+        serials: [...serialsOf(merged)]
+      });
+      results.splice(aliasIndex, 1);
+      if (aliasIndex === left) {
+        results[right - 1] = merged;
+        left -= 1;
+        break;
+      }
+      results[left] = merged;
+    }
+  }
+  return results;
+}
+
 function resultEntry(task, detail) {
   if (!task.isCCF) {
     return {
       ...detail,
+      journalAbbr: task.journalAbbr || task.abbr || '',
+      journalAbbrSource: task.journalAbbrSource || (task.abbr ? 'letpub_search' : ''),
+      journalAbbrSourceUrl: task.journalAbbrSourceUrl || '',
       type: 'journal',
       isCCF: false,
       catalogSource: 'cas-computer-science-1-2',
@@ -321,8 +588,22 @@ function upsertResult(results, incoming, conflicts) {
   }
   if (matches.length === 1) {
     const index = matches[0].index;
-    results[index] = mergePreserving(results[index], incoming);
+    results[index] = mergeFetchedSnapshot(results[index], incoming);
     return { ok: true, index, method: matches[0].match.method };
+  }
+  const aliasMatches = results
+    .map((entry, index) => ({ entry, index }))
+    .filter(item => serialAliasMatch(incoming, item.entry));
+  if (aliasMatches.length === 1) {
+    const index = aliasMatches[0].index;
+    results[index] = mergeFetchedSnapshot(mergeJournalAliases(results[index], incoming), incoming);
+    conflicts.push({
+      type: 'letpub_journalid_alias_merged',
+      canonicalJournalid: results[index].journalid || null,
+      aliasJournalid: incoming.journalid || null,
+      serials: [...serialsOf(results[index])]
+    });
+    return { ok: true, index, method: 'serial_alias' };
   }
   const name = normalizeName(incoming.name || incoming.ccfFull);
   const nameMatches = results
@@ -353,9 +634,28 @@ function upsertCCFResult(results, task, incoming, conflicts) {
     return { ok: false, reason: 'ccf_catalog_conflict' };
   }
   if (indexes.length === 1) {
-    const index = indexes[0];
-    results[index] = mergePreserving(results[index], incoming);
-    return { ok: true, index, method: 'ccf_catalog' };
+    let index = indexes[0];
+    const duplicateIndexes = results
+      .map((entry, entryIndex) => ({ entry, entryIndex }))
+      .filter(item => item.entryIndex !== index
+        && item.entry.isCCF === false
+        && normalizeName(item.entry.name) === normalizeName(task.full))
+      .map(item => item.entryIndex);
+    let merged = mergeFetchedSnapshot(results[index], incoming);
+    for (const duplicateIndex of duplicateIndexes) {
+      merged = mergeFetchedSnapshot(mergePreserving(results[duplicateIndex], merged), incoming);
+      conflicts.push({
+        type: 'named_non_ccf_promoted_to_ccf',
+        taskKey: task.key,
+        journalid: merged.journalid || null
+      });
+    }
+    results[index] = merged;
+    for (const duplicateIndex of duplicateIndexes.sort((a, b) => b - a)) {
+      results.splice(duplicateIndex, 1);
+      if (duplicateIndex < index) index -= 1;
+    }
+    return { ok: true, index, method: duplicateIndexes.length ? 'ccf_name_promotion' : 'ccf_catalog' };
   }
   results.push(incoming);
   return { ok: true, index: results.length - 1, method: 'append_ccf' };
@@ -372,13 +672,20 @@ function statusCounts(tasks) {
 }
 
 function shouldRunTask(task, state, config) {
+  if (state.status === 'success' && state.detailParserVersion !== DETAIL_PARSER_VERSION) return true;
+  if (
+    state.status === 'success'
+    && config.detailAccessMode === 'authenticated'
+    && state.detailAccessMode !== 'authenticated'
+  ) return true;
+  if (state.status === 'not_found' && state.identityMatcherVersion !== IDENTITY_MATCHER_VERSION) return true;
   if (
     state.status === 'rejected'
     && state.reason === 'missing_cas_partition'
     && state.partitionParserVersion !== PARTITION_PARSER_VERSION
   ) return true;
   if (TERMINAL_STATUSES.has(state.status) && state.identityCheck?.valid !== true) return true;
-  const fresh = TERMINAL_STATUSES.has(state.status) && isFresh(state, config.refreshDays);
+  const fresh = CACHEABLE_STATUSES.has(state.status) && isFresh(state, config.refreshDays);
   return config.forceRefresh || !fresh;
 }
 
@@ -422,19 +729,47 @@ async function runBatch(options = {}) {
   const now = config.now || (() => new Date().toISOString());
   const ccfSource = readJSON(config.ccfFile, null);
   if (!ccfSource) throw new Error('CCF source file is missing: ' + config.ccfFile);
-  const candidates = readJSON(config.candidatesFile, []);
+  const candidateOverrides = readJSON(config.abbrOverridesFile, {});
+  const candidates = resolveCandidateJournalAbbreviations(
+    readJSON(config.candidatesFile, []),
+    candidateOverrides
+  );
   const legacyIdentities = readJSON(config.legacyIdentityFile, {});
   const baseline = normalizeBaseline(readJSON(config.baselineFile, []));
-  let results = normalizeBaseline(readJSON(config.stagingFile, baseline));
   const conflicts = readJSON(config.conflictFile, []);
+  let results = consolidateJournalAliases(
+    normalizeBaseline(readJSON(config.stagingFile, baseline)),
+    conflicts
+  );
   const rawTasks = buildTasks(ccfSource, candidates, legacyIdentities);
-  const hydratedTasks = rawTasks.map(task => hydrateKnownIdentity(task, baseline));
+  results = applyCandidateJournalAbbreviations(results, candidates);
+  const identitySources = [...baseline, ...results];
+  const hydratedTasks = rawTasks.map(task => hydrateKnownIdentity(task, identitySources));
   const ccfTasks = hydratedTasks.filter(task => task.isCCF);
+  results = pruneRemovedCCFCatalogEntries(results, ccfTasks);
+  const legacyCCFIdentities = ccfTasks.map(task => ({ ...task }));
+  const namedCCFOwners = new Map();
+  for (const candidate of hydratedTasks.filter(task => !task.isCCF)) {
+    const matches = ccfTasks.filter(ccf => normalizeName(ccf.full) === normalizeName(candidate.full));
+    if (matches.length !== 1) continue;
+    const owner = matches[0];
+    owner.journalid = candidate.journalid || owner.journalid;
+    owner.issn = candidate.issn || owner.issn;
+    owner.eissn = candidate.eissn || owner.eissn;
+    namedCCFOwners.set(candidate.key, owner);
+  }
   const tasks = hydratedTasks.filter(task => {
     if (task.isCCF) return true;
-    const strongCCF = ccfTasks.find(ccf => strongMatch(task, ccf).matched);
+    const strongCCF = [...ccfTasks, ...legacyCCFIdentities].find(ccf =>
+      strongMatch(task, ccf).matched || serialAliasMatch(task, ccf)
+    );
     if (strongCCF) {
       conflicts.push({ type: 'candidate_is_ccf', taskKey: task.key, ccfTaskKey: strongCCF.key });
+      return false;
+    }
+    const namedOwner = namedCCFOwners.get(task.key);
+    if (namedOwner) {
+      conflicts.push({ type: 'candidate_is_ccf_name', taskKey: task.key, ccfTaskKey: namedOwner.key });
       return false;
     }
     const namedCCF = ccfTasks.filter(ccf => normalizeName(ccf.full) === normalizeName(task.full));
@@ -456,6 +791,14 @@ async function runBatch(options = {}) {
   const selectedTasks = selectTasksForRun(tasks, progress, config);
   const partialRun = Number.isFinite(config.maxJournals);
   let attempted = 0;
+  let consecutiveRateLimits = 0;
+  let haltedReason = null;
+  const recordOutcome = status => {
+    consecutiveRateLimits = status === 'rate_limited' ? consecutiveRateLimits + 1 : 0;
+    if (consecutiveRateLimits < config.maxConsecutiveRateLimits) return false;
+    haltedReason = 'consecutive_rate_limits';
+    return true;
+  };
 
   for (const task of selectedTasks) {
     const state = progress.tasks[task.key];
@@ -473,12 +816,16 @@ async function runBatch(options = {}) {
       state.reason = resolution.reason || state.status;
       state.candidates = resolution.candidates || [];
       state.updatedAt = now();
+      if (state.status === 'not_found' && state.reason !== 'network_error') {
+        state.identityMatcherVersion = IDENTITY_MATCHER_VERSION;
+      }
       if (state.reason.includes('conflict')) conflicts.push({ type: state.reason, taskKey: task.key, candidates: state.candidates });
       if (task.isCCF) ensureCCFPlaceholder(results, task);
       atomicWriteJSON(config.stagingFile, results);
       atomicWriteJSON(config.progressFile, progress);
       atomicWriteJSON(config.conflictFile, conflicts);
       if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      if (recordOutcome(state.status)) break;
       continue;
     }
 
@@ -494,6 +841,7 @@ async function runBatch(options = {}) {
       state.updatedAt = now();
       atomicWriteJSON(config.progressFile, progress);
       if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      if (recordOutcome(state.status)) break;
       continue;
     }
 
@@ -507,10 +855,12 @@ async function runBatch(options = {}) {
       state.updatedAt = now();
       atomicWriteJSON(config.progressFile, progress);
       if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      if (recordOutcome(state.status)) break;
       continue;
     }
     const identityCheck = validateResolvedIdentity(task, detail);
     state.identityCheck = identityCheck;
+    state.identityMatcherVersion = IDENTITY_MATCHER_VERSION;
     if (!identityCheck.valid) {
       state.status = 'not_found';
       state.reason = identityCheck.reason;
@@ -527,10 +877,13 @@ async function runBatch(options = {}) {
       atomicWriteJSON(config.progressFile, progress);
       atomicWriteJSON(config.conflictFile, conflicts);
       if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      recordOutcome(state.status);
       continue;
     }
     const decision = evaluateCatalogEntry(detail, { isCCF: task.isCCF });
     state.partitionParserVersion = PARTITION_PARSER_VERSION;
+    state.detailParserVersion = DETAIL_PARSER_VERSION;
+    state.detailAccessMode = config.detailAccessMode;
     state.journalid = journalid;
     state.method = resolution.method;
     state.policy = decision;
@@ -542,9 +895,14 @@ async function runBatch(options = {}) {
       atomicWriteJSON(config.stagingFile, results);
       atomicWriteJSON(config.progressFile, progress);
       if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+      recordOutcome(state.status);
       continue;
     }
-    const incoming = resultEntry(task, { ...detail, letpubMatchStatus: 'verified' });
+    const incoming = resultEntry(task, {
+      ...detail,
+      letpubMatchStatus: 'verified',
+      scrapeSchemaVersion: DETAIL_PARSER_VERSION
+    });
     const saved = task.isCCF
       ? upsertCCFResult(results, task, incoming, conflicts)
       : upsertResult(results, incoming, conflicts);
@@ -559,8 +917,10 @@ async function runBatch(options = {}) {
     atomicWriteJSON(config.progressFile, progress);
     atomicWriteJSON(config.conflictFile, conflicts);
     if (config.onProgress) config.onProgress({ key: task.key, status: state.status, attempted, total: selectedTasks.length });
+    recordOutcome(state.status);
   }
 
+  results = consolidateJournalAliases(results, conflicts);
   const uniqueConflicts = [...new Map(conflicts.map(conflict => [JSON.stringify(conflict), conflict])).values()];
   conflicts.splice(0, conflicts.length, ...uniqueConflicts);
   const currentStates = Object.fromEntries(tasks.map(task => [task.key, progress.tasks[task.key]]));
@@ -578,10 +938,15 @@ async function runBatch(options = {}) {
     canaryCoverage: coverage,
     counts,
     countsClosed,
-    closed: countsClosed && counts.pending === 0,
+    closed: countsClosed && counts.pending === 0 && counts.parse_failed === 0 && counts.rate_limited === 0,
+    haltedEarly: Boolean(haltedReason),
+    haltedReason,
+    consecutiveRateLimits,
     stagingFile: config.stagingFile,
     progressFile: config.progressFile,
-    conflictCount: conflicts.length
+    conflictCount: conflicts.length,
+    detailAccessMode: config.detailAccessMode,
+    detailParserVersion: DETAIL_PARSER_VERSION
   };
   atomicWriteJSON(config.stagingFile, results);
   atomicWriteJSON(config.progressFile, progress);
@@ -610,16 +975,24 @@ if (require.main === module) {
 
 module.exports = {
   ALL_STATUSES,
+  applyCandidateJournalAbbreviations,
+  constructJournalAbbreviation,
   buildTasks,
   ccfRelations,
   defaultConfig,
   mergePreserving,
+  mergeFetchedSnapshot,
+  consolidateJournalAliases,
   normalizeBaseline,
   parseSearchResults,
+  pruneRemovedCCFCatalogEntries,
+  resolveCandidateJournalAbbreviations,
   resolveJournal,
   runBatch,
   selectTasksForRun,
   statusCounts,
+  serialAliasMatch,
+  sameTitleSourceAliasMatch,
   upsertResult,
   validateResolvedIdentity
 };
