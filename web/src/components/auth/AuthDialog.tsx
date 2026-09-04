@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -20,7 +20,10 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    if (loading || !username || !password) return
+
     setError('')
     setLoading(true)
     try {
@@ -47,6 +50,7 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
         </DialogHeader>
         <div className="flex rounded-lg border p-0.5 bg-muted/50 mb-4">
           <button
+            type="button"
             className={`flex-1 px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
               tab === 'login' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -55,6 +59,7 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
             登录
           </button>
           <button
+            type="button"
             className={`flex-1 px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
               tab === 'register' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -63,7 +68,7 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
             注册
           </button>
         </div>
-        <div className="space-y-3">
+        <form className="space-y-3" onSubmit={handleSubmit}>
           <Input
             placeholder="用户名"
             value={username}
@@ -78,11 +83,11 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
             autoComplete={tab === 'register' ? 'new-password' : 'current-password'}
           />
           {error && <div className="text-xs text-destructive">{error}</div>}
-          <Button className="w-full" onClick={handleSubmit} disabled={loading || !username || !password}>
+          <Button className="w-full" type="submit" disabled={loading || !username || !password}>
             {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {tab === 'login' ? '登录' : '注册'}
           </Button>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   )
