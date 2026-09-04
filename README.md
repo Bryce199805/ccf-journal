@@ -40,9 +40,9 @@ CCF 推荐学术会议和期刊的在线查询工具，支持分区查询、影�
 ├── web/              # React 前端
 │   ├── src/
 │   └── public/
-├── docker/           # Docker 部署
-│   ├── Dockerfile
-│   └── docker-compose.yml
+├── compose.yaml      # 默认 Docker Compose 部署入口
+├── docker/
+│   └── Dockerfile    # 多阶段镜像构建
 └── data/             # 数据文件
     ├── all_journals_correct.json
     ├── all_conferences_correct.json
