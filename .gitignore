@@ -1,11 +1,18 @@
 # Dependencies
 web/node_modules/
 
+# Python cache
+__pycache__/
+*.py[cod]
+
 # Build output
 web/dist/
 
 # Data (not public)
-data/
+data/*
+!data/all_journals_correct.json
+!data/ccf_catalog_meta.json
+!data/journal_identity_corrections.json
 
 # Generated data
 server/db/import_data.json
@@ -29,7 +36,12 @@ scraper/output/
 Thumbs.db
 
 # Planning docs
-docs/
+docs/*
+!docs/ccf-catalog-update.md
+!docs/data-audit-catalog.md
+!docs/data-audit-public-identities.md
+!docs/data-audit-public-review.md
+!docs/data-audit-progress.md
 
 # SSL / domain info
 *.pem
