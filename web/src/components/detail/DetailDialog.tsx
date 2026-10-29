@@ -1,26 +1,21 @@
+import { useRef } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { RequestError } from '@/components/shared/RequestError'
 import { Badge } from '@/components/ui/badge'
 import { LevelBadge, ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { ActionButtons } from './ActionButtons'
 import { Loader2, ExternalLink } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
 import { fmt } from '@/lib/utils'
+import { wosStatusLabel } from '@/lib/wos'
+import { CCFGrade, CCFRelations } from '@/components/shared/CCFRelations'
 import type { Entry, CASPartition, JIFRanking, CiteScoreRanking } from '@/api/types'
 
 function parseCAS(json: string | null): CASPartition | null {
   if (!json) return null
   try { return JSON.parse(json) } catch { return null }
-}
-
-function wosStatusLabel(status: Entry['wos_status']): string {
-  if (status === 'not_indexed') return '未被最新 JCR 收录'
-  if (status === 'partition_unavailable') return '已识别 WOS 区域，但暂无分区数据'
-  if (status === 'auth_required') return '需要登录后重新抓取'
-  if (status === 'source_missing') return 'LetPub 页面缺少 WOS 信息，状态待确认'
-  if (status === 'detail_not_found') return 'LetPub 未找到详情记录'
-  return ''
 }
 
 function formatDataDate(value: string | null): string | null {
@@ -40,22 +35,26 @@ interface DetailDialogProps {
 }
 
 export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDialogProps) {
-  const { data, isLoading } = useEntryDetail(entryId, deviceId)
+  const previousFocus = useRef<HTMLElement | null>(null)
+  const { data, isLoading, isError, isFetching, refetch } = useEntryDetail(entryId, deviceId)
   const entry = data?.entry as Entry | undefined
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[60vw] w-[60vw] sm:max-w-[60vw] max-h-[92vh] overflow-y-auto p-5 gap-0"
+        className="detail-surface grid-cols-1 w-full max-w-[calc(100%-2rem)] sm:max-w-5xl max-h-[90dvh] overflow-y-auto p-4 sm:p-6 gap-0"
+        onOpenAutoFocus={() => { previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null }}
+        onCloseAutoFocus={event => { if (previousFocus.current?.isConnected) { event.preventDefault(); previousFocus.current.focus() } }}
         showCloseButton={true}
+        aria-describedby={undefined}
       >
-        <DialogHeader className="pb-3">
-          <DialogTitle className="text-lg font-bold">
-            {isLoading ? '加载中...' : entry?.ccf_full || entry?.name || entry?.ccf_abbr || ''}
+        <DialogHeader className="min-w-0 pb-3 text-left">
+          <DialogTitle className="text-lg font-bold leading-relaxed [overflow-wrap:anywhere] pr-9">
+            {isLoading ? '加载中...' : entry?.ccf_full || entry?.name || entry?.ccf_abbr || '条目详情'}
           </DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
+        {isError ? <RequestError message="详情加载失败，请重试。" onRetry={() => void refetch()} pending={isFetching} /> : isLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
@@ -78,8 +77,7 @@ function ConferenceDetail({ entry }: { entry: Entry }) {
         <LevelBadge level={entry.ccf_level} />
         <span className="font-semibold">{entry.ccf_abbr}</span>
       </div>
-      <div className="text-sm text-muted-foreground">{entry.ccf_full}</div>
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div><span className="text-muted-foreground">领域：</span>{entry.ccf_domain}</div>
         <div><span className="text-muted-foreground">出版社：</span>{entry.ccf_publisher || '-'}</div>
       </div>
@@ -98,43 +96,44 @@ function JournalDetail({ entry }: { entry: Entry }) {
   const cas2023 = parseCAS(entry.cas2023)
   const xinrui = parseCAS(entry.xinrui)
   const isTopJournal = cas2025?.isTop
-  const displayName = entry.ccf_abbr || entry.journal_abbr || entry.name || '未命名期刊'
+  const displayName = entry.ccf_abbr || entry.journal_abbr || entry.ccf_full || entry.name || '未命名期刊'
   const displayFullName = entry.ccf_full || entry.name || ''
   const displayPublisher = entry.ccf_publisher || entry.publisher || ''
 
   const jifRankings = parseJIF(entry.jif)
+  const jciRankings = parseJIF(entry.jci_json)
   const citeScoreRankings = parseCiteScore(entry.citescore_rankings)
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-5 [overflow-wrap:anywhere]">
       {/* Row 1: Identity + Metrics */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             {entry.is_ccf ? (
-              <LevelBadge level={entry.ccf_level} />
+              <CCFGrade entry={entry} />
             ) : (
-              <Badge variant="outline" className="h-[22px] px-2 text-[10px]">Non-CCF</Badge>
+              <Badge variant="outline" className="h-[22px] px-2 text-xs">{entry.catalog_source === 'historical_ccf' ? '历史 CCF' : 'Non-CCF'}</Badge>
             )}
-            {entry.is_ccf && entry.ccf_domain && <span className="text-xs text-muted-foreground">{entry.ccf_domain}</span>}
-            <span className="font-bold text-lg">{displayName}</span>
+            {displayName !== displayFullName && <span className="font-bold text-lg">{displayName}</span>}
             {isTopJournal && <TopBadge />}
             {entry.wos_zone && <ZoneBadge zone={`JCR${entry.wos_zone}`} variant="jcr" />}
             {!entry.wos_zone && wosStatusLabel(entry.wos_status) && (
               <span className="text-xs text-muted-foreground" title={entry.wos_reason || undefined}>
-                WOS：{wosStatusLabel(entry.wos_status)}
+                JCR：{wosStatusLabel(entry.wos_status)}
               </span>
             )}
             {entry.sci_type && (
-              <span className="inline-flex items-center h-[20px] px-2 rounded text-[10px] font-medium bg-secondary text-secondary-foreground">
+              <span className="inline-flex items-center h-[20px] px-2 rounded text-xs font-medium bg-secondary text-secondary-foreground">
                 {entry.sci_type}
               </span>
             )}
           </div>
-          {displayFullName !== displayName && <div className="text-sm text-muted-foreground">{displayFullName}</div>}
           {displayPublisher && <div className="text-xs text-muted-foreground mt-0.5">{displayPublisher}</div>}
+          {entry.is_ccf && <div className="mt-2"><CCFRelations entry={entry} /></div>}
+          {entry.is_ccf && !entry.journalid && <p className="text-xs text-muted-foreground mt-2">已收录 CCF 目录，期刊指标待补充</p>}
         </div>
-        <div className="grid grid-cols-4 gap-2 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full lg:w-auto lg:shrink-0">
           <MetricCard label="IF" value={entry.impact_factor != null ? fmt(entry.impact_factor) : null} color="blue" />
           <MetricCard label="5年IF" value={entry.five_year_if != null ? fmt(entry.five_year_if) : null} color="indigo" />
           <MetricCard label="实时IF" value={entry.realtime_if != null ? fmt(entry.realtime_if) : null} color="cyan" />
@@ -146,10 +145,26 @@ function JournalDetail({ entry }: { entry: Entry }) {
         </div>
       </div>
 
+      {entry.wos_reason && <details className="rounded-lg border p-3 text-sm">
+        <summary className="cursor-pointer font-medium">JCR 数据说明</summary>
+        <p className="mt-2 leading-relaxed text-muted-foreground">{entry.wos_reason}</p>
+      </details>}
+
       {/* Partition table */}
       <div>
         <SectionLabel>分区对比</SectionLabel>
-        <table className="w-full text-sm border-collapse border rounded-lg overflow-hidden">
+        <div className="space-y-3 sm:hidden">
+          {([{ label: '新锐 2026', data: xinrui, variant: 'xinrui' }, { label: '中科院 2025', data: cas2025, variant: 'cas' }, { label: '中科院 2023', data: cas2023, variant: 'cas' }] as const).map(({ label, data, variant }) => (
+            <section key={label} className="rounded-lg border p-3">
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">{label}{data?.isTop && <TopBadge />}</h3>
+              {data ? <dl className="space-y-3 text-sm">
+                <div><dt className="mb-1 text-xs text-muted-foreground">大类学科 / 分区</dt><dd className="flex items-start gap-2"><span className="min-w-0 flex-1">{data.bigCategory || '暂无学科'}</span>{data.bigZone && <ZoneBadge zone={data.bigZone} variant={variant} />}</dd></div>
+                <div><dt className="mb-1 text-xs text-muted-foreground">小类学科 / 分区</dt><dd className="flex items-start gap-2"><span className="min-w-0 flex-1">{data.smallCategory || '暂无学科'}</span>{data.smallZone && <ZoneBadge zone={data.smallZone} variant={variant} />}</dd></div>
+              </dl> : <p className="text-sm text-muted-foreground">暂无数据</p>}
+            </section>
+          ))}
+        </div>
+        <div className="hidden min-w-0 overflow-x-auto sm:block" tabIndex={0} role="region" aria-label="分区对比表格"><table className="min-w-[36rem] w-full text-sm border-collapse border rounded-lg">
           <thead>
             <tr className="bg-muted/50">
               <th className="py-1.5 px-3 text-left font-medium text-muted-foreground w-28">版本</th>
@@ -165,13 +180,13 @@ function JournalDetail({ entry }: { entry: Entry }) {
             <PartRow label="中科院 2025" p={cas2025} variant="cas" />
             <PartRow label="中科院 2023" p={cas2023} variant="cas" />
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {/* Journal info - table layout for compactness */}
       <div>
         <SectionLabel>期刊信息</SectionLabel>
-        <div className="grid grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
           <InfoField label="ISSN" value={entry.issn} />
           <InfoField label="eISSN" value={entry.eissn} />
           <InfoField label="出版商" value={entry.publisher} />
@@ -211,6 +226,16 @@ function JournalDetail({ entry }: { entry: Entry }) {
           />
         </div>
       )}
+      {jciRankings.length > 0 && (
+        <div>
+          <SectionLabel>JCI 学科排名</SectionLabel>
+          <RankingTable
+            headers={['学科', '分区', '排名']}
+            rows={jciRankings.map(r => [r.subject || '-', r.quartile || '-', r.rank || '-'])}
+            zones={jciRankings.map(r => r.quartile)}
+          />
+        </div>
+      )}
 
       {/* Actions */}
       <ActionButtons
@@ -224,24 +249,14 @@ function JournalDetail({ entry }: { entry: Entry }) {
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs font-semibold text-muted-foreground mb-2">{children}</div>
+  return <div className="section-label text-sm font-semibold mb-3">{children}</div>
 }
 
 function MetricCard({ label, value, color }: { label: string; value: string | null; color: string }) {
-  const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
-    emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    violet: 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
-    orange: 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
-    cyan: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300',
-    indigo: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
-    pink: 'bg-pink-50 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300',
-    amber: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-  }
   return (
-    <div className={`min-w-[4.5rem] px-3 py-2.5 rounded-lg text-center ${colorMap[color] ?? 'bg-muted'}`}>
-      <div className="text-sm font-bold tabular-nums leading-snug">{value ?? '—'}</div>
-      <div className="text-[11px] mt-0.5 opacity-75 leading-tight">{label}</div>
+    <div data-tone={color} data-empty={value == null} className="metric-tile min-w-0 px-3 py-3 text-center">
+      <div className="text-lg font-semibold tabular-nums leading-snug">{value ?? '—'}</div>
+      <div className="text-xs mt-1 leading-tight">{label}</div>
     </div>
   )
 }
@@ -268,17 +283,17 @@ function PartRow({ label, p, variant }: { label: string; p: CASPartition | null;
 function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
   return (
-    <div className="flex items-baseline gap-1.5 text-sm">
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="font-medium truncate">{value}</span>
+    <div className="min-w-0 flex items-baseline gap-3 text-sm leading-relaxed">
+      <span className="w-24 text-muted-foreground shrink-0">{label}</span>
+      <span className="min-w-0 flex-1 font-medium whitespace-pre-wrap [overflow-wrap:anywhere]" title={value}>{value}</span>
     </div>
   )
 }
 
 function RankingTable({ headers, rows, zones }: { headers: string[]; rows: string[][]; zones: (string | undefined)[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse border rounded-lg overflow-hidden">
+    <div className="min-w-0 overflow-x-auto" tabIndex={0} role="region" aria-label="可横向滚动的数据表格">
+      <table className="min-w-[24rem] w-full text-sm border-collapse border rounded-lg">
         <thead>
           <tr className="bg-muted/50">
             {headers.map((h, i) => (

@@ -36,7 +36,7 @@ export function TagBadge({ name, color, className }: TagBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center h-[18px] px-1.5 rounded text-[10px] font-medium',
+        'inline-flex min-w-0 max-w-full items-center whitespace-normal [overflow-wrap:anywhere] min-h-6 px-1.5 py-0.5 rounded text-xs font-medium',
         resolved?.bg, resolved?.text,
         className,
       )}

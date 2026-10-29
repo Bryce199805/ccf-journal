@@ -91,6 +91,7 @@ export interface PaginatedResponse {
 }
 
 export interface StatsResponse {
+  journal_catalog?: { edition: string; publishedAt: string; officialAnnouncement: string }
   total_journals: number
   total_conferences: number
   by_domain: Record<string, number>

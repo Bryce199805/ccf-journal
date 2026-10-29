@@ -9,7 +9,7 @@ interface JournalCardGridProps {
 
 export function JournalCardGrid({ entries, deviceId, onSelect }: JournalCardGridProps) {
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {entries.map(e => (
         <JournalCard key={e.id} entry={e} deviceId={deviceId} onClick={() => onSelect(e.id)} />
       ))}

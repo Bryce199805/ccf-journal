@@ -44,7 +44,7 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent aria-describedby={undefined} className="max-w-[calc(100%-2rem)] sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{tab === 'login' ? '登录' : '注册'}</DialogTitle>
         </DialogHeader>
@@ -70,6 +70,7 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
         </div>
         <form className="space-y-3" onSubmit={handleSubmit}>
           <Input
+            aria-label="用户名"
             placeholder="用户名"
             value={username}
             onChange={e => setUsername(e.target.value)}
@@ -77,12 +78,13 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
           />
           <Input
             type="password"
+            aria-label="密码"
             placeholder="密码"
             value={password}
             onChange={e => setPassword(e.target.value)}
             autoComplete={tab === 'register' ? 'new-password' : 'current-password'}
           />
-          {error && <div className="text-xs text-destructive">{error}</div>}
+          {error && <div role="alert" className="text-xs text-destructive">{error}</div>}
           <Button className="w-full" type="submit" disabled={loading || !username || !password}>
             {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {tab === 'login' ? '登录' : '注册'}

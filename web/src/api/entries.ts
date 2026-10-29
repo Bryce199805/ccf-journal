@@ -17,7 +17,7 @@ export function fetchEntries(f: FilterState, deviceId: string) {
     device_id: deviceId,
     favorites: f.favOnly ? '1' : undefined,
     top: f.topOnly ? '1' : undefined,
-    tag: f.tag || undefined,
+    tag: f.favOnly ? f.tag || undefined : undefined,
   })
 }
 

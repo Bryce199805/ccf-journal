@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/lib/theme-provider'
 import { useDeviceId } from '@/hooks/use-device-id'
@@ -12,6 +12,8 @@ import { EntryList } from '@/components/entries/EntryList'
 import { DetailDialog } from '@/components/detail/DetailDialog'
 import { AuthDialog } from '@/components/auth/AuthDialog'
 import { TagManager } from '@/components/tags/TagManager'
+import { DEFAULT_FILTER } from '@/lib/filter-state'
+import { useFilterState } from '@/hooks/use-filter-state'
 import type { FilterState } from '@/api/types'
 
 const queryClient = new QueryClient({
@@ -23,28 +25,10 @@ const queryClient = new QueryClient({
   },
 })
 
-const DEFAULT_FILTER: FilterState = {
-  type: 'journal',
-  catalog: 'all',
-  domains: [],
-  levels: [],
-  casZones: [],
-  wosZones: [],
-  query: '',
-  sort: '',
-  order: 'desc',
-  page: 1,
-  perPage: 20,
-  favOnly: false,
-  topOnly: false,
-  layout: 'card',
-  tag: '',
-}
-
 function AppContent() {
   const deviceId = useDeviceId()
   const { user, isAuthenticated, login, register, logout } = useAuth()
-  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
+  const [filter, setFilter] = useFilterState()
   const [detailId, setDetailId] = useState<number | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
@@ -53,17 +37,26 @@ function AppContent() {
   const debouncedQuery = useDebounce(filter.query, 300)
   const filterWithDebounce = { ...filter, query: debouncedQuery }
 
-  const { data, isLoading } = useEntries(filterWithDebounce, deviceId)
+  const { data, isLoading, isFetching, isError, refetch } = useEntries(filterWithDebounce, deviceId)
+  useEffect(() => {
+    if (data?.page != null) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+  }, [data?.page])
   const { data: favData } = useFavorites(deviceId)
   const favCount = favData?.entry_ids?.length ?? 0
 
   const updateFilter = useCallback((updates: Partial<FilterState>) => {
     setFilter(prev => ({ ...prev, ...updates }))
-  }, [])
+  }, [setFilter])
+
+  const resetFilters = useCallback(() => {
+    setFilter(prev => ({ ...DEFAULT_FILTER, type: prev.type, layout: prev.layout, favOnly: prev.favOnly }))
+  }, [setFilter])
 
   const handleSearchChange = useCallback((query: string) => {
-    setFilter(prev => ({ ...prev, query, page: 1 }))
-  }, [])
+    setFilter(prev => ({ ...prev, query, page: 1 }), true)
+  }, [setFilter])
 
   const handleSelect = useCallback((id: number) => {
     setDetailId(id)
@@ -81,8 +74,8 @@ function AppContent() {
         favCount={favCount}
         isAuthenticated={isAuthenticated}
         username={user?.username ?? null}
-        onToggleFav={() => updateFilter({ favOnly: !filter.favOnly, page: 1 })}
-        onToggleLayout={layout => updateFilter({ layout, page: 1 })}
+        onToggleFav={() => updateFilter({ favOnly: !filter.favOnly, tag: '', page: 1 })}
+        onToggleLayout={layout => updateFilter({ layout })}
         onLoginClick={() => setAuthOpen(true)}
         onLogout={logout}
       />
@@ -91,6 +84,7 @@ function AppContent() {
         onFilterChange={updateFilter}
         onSearchChange={handleSearchChange}
         onManageTags={() => setTagManagerOpen(true)}
+        onReset={resetFilters}
         deviceId={deviceId}
       />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
@@ -102,6 +96,11 @@ function AppContent() {
           filter={filter}
           deviceId={deviceId}
           isLoading={isLoading}
+          isFetching={isFetching || filter.query !== debouncedQuery}
+          isError={isError}
+          onRetry={() => void refetch()}
+          onReset={resetFilters}
+          onBrowse={() => updateFilter({ ...DEFAULT_FILTER, type: filter.type, layout: filter.layout })}
           onSelect={handleSelect}
           onPageChange={p => updateFilter({ page: p })}
         />

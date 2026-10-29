@@ -1,34 +1,38 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { ThemeContext, type Theme, type ResolvedTheme } from './theme-context'
 
-type Theme = 'light' | 'dark'
-
-interface ThemeCtx {
-  theme: Theme
-  toggleTheme: () => void
+function savedTheme(): Theme {
+  try {
+    const value = localStorage.getItem('ccf_theme')
+    if (value === 'light' || value === 'dark') return value
+  } catch { /* Theme switching still works when storage is unavailable. */ }
+  return 'system'
 }
-
-const ThemeContext = createContext<ThemeCtx>({ theme: 'light', toggleTheme: () => {} })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('ccf_theme')
-    return (saved === 'dark' || saved === 'light') ? saved : 'light'
-  })
+  const [theme, setTheme] = useState<Theme>(savedTheme)
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  const resolvedTheme = theme === 'system' ? systemTheme : theme
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('ccf_theme', theme)
-  }, [theme])
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const update = () => setSystemTheme(media.matches ? 'dark' : 'light')
+    media.addEventListener('change', update)
+    const sync = (event: StorageEvent) => { if (event.key === 'ccf_theme' || event.key === null) setTheme(savedTheme()) }
+    window.addEventListener('storage', sync)
+    return () => { media.removeEventListener('change', update); window.removeEventListener('storage', sync) }
+  }, [])
 
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
+    document.documentElement.style.colorScheme = resolvedTheme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0c1424' : '#f3f6fb')
+  }, [resolvedTheme])
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  )
-}
+  const selectTheme = (value: Theme) => {
+    setTheme(value)
+    try { localStorage.setItem('ccf_theme', value) } catch { /* Optional persistence. */ }
+  }
 
-export function useTheme() {
-  return useContext(ThemeContext)
+  return <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme: selectTheme }}>{children}</ThemeContext.Provider>
 }

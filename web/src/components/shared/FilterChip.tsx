@@ -10,8 +10,9 @@ export function FilterChip({ label, active, onClick }: FilterChipProps) {
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        'inline-flex items-center px-3 py-1 rounded-md text-xs font-medium cursor-pointer select-none transition-all',
+        'inline-flex max-w-full min-h-10 items-center whitespace-normal [overflow-wrap:anywhere] px-3 py-2 sm:min-h-0 sm:py-1 rounded-md text-xs font-medium cursor-pointer select-none transition-all',
         'border',
         active
           ? 'bg-primary text-primary-foreground border-primary shadow-sm'

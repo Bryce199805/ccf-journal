@@ -11,8 +11,32 @@ interface ConferenceListProps {
 
 export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
   return (
-    <Card className="py-0">
-      <table className="w-full text-sm">
+    <>
+      <div className="grid gap-3 md:hidden">
+        {entries.map(e => (
+          <Card key={e.id} className="journal-card min-w-0 gap-3 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <LevelBadge level={e.ccf_level} />
+              <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} className="h-10 w-10 p-2" />
+            </div>
+            <div className="min-w-0 space-y-1 [overflow-wrap:anywhere]">
+              <h2 className="text-base font-semibold leading-snug">{e.ccf_abbr || e.ccf_full}</h2>
+              {e.ccf_full !== e.ccf_abbr && <p className="text-sm leading-relaxed text-muted-foreground">{e.ccf_full}</p>}
+            </div>
+            <dl className="space-y-2 border-t pt-3 text-sm leading-relaxed">
+              {([['领域', e.ccf_domain], ['出版社', e.ccf_publisher], ['备注', e.note]] as const).map(([label, value]) => value && (
+                <div key={label} className="flex gap-3">
+                  <dt className="w-12 shrink-0 text-muted-foreground">{label}</dt>
+                  <dd className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            {e.ccf_url && <a href={e.ccf_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1 text-sm text-primary hover:underline">DBLP <ExternalLink className="h-4 w-4" /></a>}
+          </Card>
+        ))}
+      </div>
+      <Card className="hidden min-w-0 overflow-x-auto py-0 md:block">
+      <table className="data-table w-full text-sm">
         <thead>
           <tr className="border-b text-left">
             <th className="py-2 px-3 w-14 text-center font-medium text-muted-foreground text-xs">等级</th>
@@ -52,5 +76,6 @@ export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
         </tbody>
       </table>
     </Card>
+    </>
   )
 }

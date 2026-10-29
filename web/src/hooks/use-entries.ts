@@ -6,7 +6,10 @@ export function useEntries(f: FilterState, deviceId: string) {
   return useQuery({
     queryKey: ['entries', f, deviceId],
     queryFn: () => fetchEntries(f, deviceId),
-    placeholderData: (prev: PaginatedResponse | undefined) => prev,
+    placeholderData: (prev: PaginatedResponse | undefined, query) => {
+      const previousFilter = query?.queryKey[1] as FilterState | undefined
+      return previousFilter?.type === f.type ? prev : undefined
+    },
   })
 }
 

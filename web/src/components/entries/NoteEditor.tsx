@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useUpsertNote } from '@/hooks/use-notes'
-import { Check, X } from 'lucide-react'
+import { Check, X, Loader2 } from 'lucide-react'
 
 interface NoteEditorProps {
   entryId: number
@@ -11,62 +11,53 @@ interface NoteEditorProps {
 
 export function NoteEditor({ entryId, deviceId, initialContent, onDone }: NoteEditorProps) {
   const [content, setContent] = useState(initialContent)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const saving = useRef(false)
   const upsert = useUpsertNote(deviceId)
 
+  useEffect(() => { inputRef.current?.focus() }, [])
   useEffect(() => {
-    setContent(initialContent)
-  }, [initialContent])
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus()
+    const input = inputRef.current
+    if (input) {
+      input.style.height = 'auto'
+      input.style.height = `${Math.min(input.scrollHeight, 240)}px`
     }
-  }, [])
+  }, [content])
 
   const handleSave = () => {
-    const trimmed = content.trim()
-    upsert.mutate(
-      { entryId, content: trimmed },
-      {
-        onSuccess: () => onDone?.(),
-      },
-    )
-  }
-
-  const handleCancel = () => {
-    setContent(initialContent)
-    onDone?.()
+    if (saving.current) return
+    saving.current = true
+    upsert.mutate({ entryId, content: content.trim() }, {
+      onSuccess: () => onDone?.(),
+      onSettled: () => { saving.current = false },
+    })
   }
 
   return (
-    <div className="flex items-center gap-1.5 mt-1.5" onClick={e => e.stopPropagation()}>
-      <input
+    <div className="mt-1.5 space-y-2" onClick={e => e.stopPropagation()}>
+      <textarea
         ref={inputRef}
-        type="text"
+        aria-label="备注内容"
         value={content}
+        disabled={upsert.isPending}
         onChange={e => setContent(e.target.value)}
         onKeyDown={e => {
-          if (e.key === 'Enter') handleSave()
-          if (e.key === 'Escape') handleCancel()
+          if (e.nativeEvent.isComposing || e.keyCode === 229) return
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSave() }
+          if (e.key === 'Escape') { e.stopPropagation(); if (!saving.current) onDone?.() }
         }}
-        placeholder="添加备注..."
-        className="flex-1 h-6 text-xs bg-muted/50 border rounded px-2 focus:outline-none focus:ring-1 focus:ring-primary"
+        placeholder="记录研究方向、投稿计划等…"
+        className="min-h-20 w-full resize-y rounded-md border bg-muted/30 px-3 py-2 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary sm:text-sm"
         maxLength={200}
       />
-      <button
-        onClick={handleSave}
-        className="p-0.5 rounded hover:bg-muted text-primary"
-        disabled={upsert.isPending}
-      >
-        <Check className="h-3.5 w-3.5" />
-      </button>
-      <button
-        onClick={handleCancel}
-        className="p-0.5 rounded hover:bg-muted text-muted-foreground"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      {upsert.isError && <p role="alert" className="text-sm text-destructive">保存失败，内容已保留，请重试。</p>}
+      <div className="flex items-center gap-2">
+        <span className="mr-auto text-xs tabular-nums text-muted-foreground">{content.length}/200</span>
+        <button aria-label="取消编辑备注" onClick={() => onDone?.()} disabled={upsert.isPending} className="inline-flex min-h-10 items-center gap-1 rounded-md px-3 text-sm hover:bg-muted disabled:opacity-50"><X className="h-4 w-4" />取消</button>
+        <button aria-label="保存备注" onClick={handleSave} disabled={upsert.isPending} className="inline-flex min-h-10 items-center gap-1 rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50">
+          {upsert.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{upsert.isPending ? '保存中' : '保存'}
+        </button>
+      </div>
     </div>
   )
 }

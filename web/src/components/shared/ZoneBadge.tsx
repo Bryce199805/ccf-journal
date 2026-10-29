@@ -29,11 +29,11 @@ export function ZoneBadge({ zone, variant = 'default', className }: ZoneBadgePro
   }
 
   // Display text: show the zone label cleanly
-  const displayText = zone.replace('中科院', '').replace('新锐', '')
+  const displayText = variant === 'jcr' && n ? `JCR Q${n}` : zone.replace('中科院', '').replace('新锐', '')
 
   return (
     <span className={cn(
-      'inline-flex items-center justify-center h-[22px] px-2 rounded text-[11px] font-bold tracking-wide',
+      'inline-flex items-center justify-center min-h-6 shrink-0 px-2 py-0.5 rounded-md text-xs font-bold tracking-wide',
       colorClass,
       className
     )}>
@@ -45,17 +45,18 @@ export function ZoneBadge({ zone, variant = 'default', className }: ZoneBadgePro
 interface LevelBadgeProps {
   level: string
   className?: string
+  label?: string
 }
 
-export function LevelBadge({ level, className }: LevelBadgeProps) {
+export function LevelBadge({ level, className, label }: LevelBadgeProps) {
   const colorClass = level === 'A' ? 'level-a' : level === 'B' ? 'level-b' : level === 'C' ? 'level-c' : ''
   return (
     <span className={cn(
-      'inline-flex items-center justify-center h-[22px] min-w-[1.75rem] px-2 rounded text-[11px] font-bold tracking-wide',
+      'inline-flex items-center justify-center min-h-6 shrink-0 min-w-[1.75rem] px-2 py-0.5 rounded-md text-xs font-bold tracking-wide',
       colorClass,
       className
     )}>
-      {level}
+      {label ?? level}
     </span>
   )
 }
@@ -67,7 +68,7 @@ interface TopBadgeProps {
 export function TopBadge({ className }: TopBadgeProps) {
   return (
     <span className={cn(
-      'inline-flex items-center justify-center h-[18px] px-1.5 rounded text-[9px] font-extrabold tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white',
+      'inline-flex items-center justify-center badge-top min-h-6 shrink-0 px-1.5 rounded-md text-[10px] font-bold tracking-wide',
       className
     )}>
       TOP

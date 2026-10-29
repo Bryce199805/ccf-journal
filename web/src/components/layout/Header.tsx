@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
-import { Sun, Moon, Star, LayoutGrid, Table2, User, LogOut } from 'lucide-react'
-import { useTheme } from '@/lib/theme-provider'
+import { BookOpen, Star, LayoutGrid, Table2, User, LogOut } from 'lucide-react'
+import { ThemePicker } from './ThemePicker'
 import { useStats } from '@/hooks/use-stats'
 import type { FilterState } from '@/api/types'
 
@@ -25,44 +25,53 @@ interface HeaderProps {
 }
 
 export function Header({ filter, favCount, isAuthenticated, username, onToggleFav, onToggleLayout, onLoginClick, onLogout }: HeaderProps) {
-  const { theme, toggleTheme } = useTheme()
   const { data: stats } = useStats()
   const isJournal = filter.type === 'journal'
   const dataUpdatedDate = formatDataDate(stats?.data_updated_at)
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
-            C
+    <header className="site-header sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-16 flex flex-wrap items-center justify-between gap-3 py-3 sm:flex-nowrap sm:py-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="brand-mark flex shrink-0 w-9 h-9 rounded-xl bg-primary items-center justify-center text-primary-foreground text-sm font-bold">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
-            <h1 className="text-base font-bold leading-tight">CCF 推荐目录</h1>
-            <span className="text-[11px] text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="text-base font-bold leading-tight tracking-tight">CCF 推荐目录</h1>
+            <span className="text-xs text-muted-foreground">
               {stats ? `${stats.total_journals} 期刊 / ${stats.total_conferences} 会议` : ''}
               {dataUpdatedDate && (
-                <span title={`最近一次数据更新：${stats?.data_updated_at}`}> · 数据更新 {dataUpdatedDate}</span>
+                <span className="hidden md:inline" title={`最近一次数据更新：${stats?.data_updated_at}`}> · 数据更新 {dataUpdatedDate}</span>
               )}
             </span>
+            {isJournal && stats?.journal_catalog && (
+              <a href={stats.journal_catalog.officialAnnouncement} target="_blank" rel="noopener noreferrer"
+                className="hidden sm:block text-xs text-muted-foreground hover:underline">
+                期刊目录：CCF {stats.journal_catalog.edition} · {stats.journal_catalog.publishedAt} · {stats.ccf_journals} 本
+              </a>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-between gap-1 sm:w-auto sm:justify-end sm:gap-2">
           {isJournal && (
-            <div className="flex rounded-md border p-0.5">
+            <div className="flex rounded-lg border bg-muted/60 p-0.5">
               <Button
                 variant={filter.layout === 'card' ? 'secondary' : 'ghost'}
                 size="icon"
-                className="h-7 w-7"
+                className="h-10 w-10 sm:h-8 sm:w-8"
                 onClick={() => onToggleLayout('card')}
+                aria-label="卡片视图"
+                aria-pressed={filter.layout === 'card'}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
                 variant={filter.layout === 'table' ? 'secondary' : 'ghost'}
                 size="icon"
-                className="h-7 w-7"
+                className="h-10 w-10 sm:h-8 sm:w-8"
                 onClick={() => onToggleLayout('table')}
+                aria-label="表格视图"
+                aria-pressed={filter.layout === 'table'}
               >
                 <Table2 className="h-4 w-4" />
               </Button>
@@ -70,20 +79,18 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
           )}
           {isAuthenticated ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground hidden sm:inline">{username}</span>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLogout}>
+              <span className="max-w-28 truncate text-xs text-muted-foreground hidden sm:inline">{username}</span>
+              <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8" onClick={onLogout} aria-label="退出登录">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLoginClick}>
+            <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8" onClick={onLoginClick} aria-label="登录或注册">
               <User className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+          <ThemePicker />
+          <Button asChild variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8">
             <a
               href="https://github.com/Bryce199805/ccf-journal"
               target="_blank"
@@ -99,8 +106,10 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
           <Button
             variant={filter.favOnly ? 'default' : 'outline'}
             size="sm"
-            className="h-8 gap-1.5 text-xs"
+            className="h-10 gap-1.5 text-xs sm:h-8"
             onClick={onToggleFav}
+            aria-pressed={filter.favOnly}
+            aria-label="收藏"
           >
             <Star className="h-3.5 w-3.5" fill={filter.favOnly ? 'currentColor' : 'none'} />
             <span className="hidden sm:inline">收藏</span>
