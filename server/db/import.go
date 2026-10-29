@@ -11,8 +11,70 @@ import (
 
 // ImportData represents the data to import
 type ImportData struct {
-	Journals    []JournalImport    `json:"journals"`
-	Conferences []ConferenceImport `json:"conferences"`
+	JournalCatalog           json.RawMessage             `json:"journalCatalog"`
+	JournalCatalogComplete   bool                        `json:"journalCatalogComplete"`
+	Journals                 []JournalImport             `json:"journals"`
+	Conferences              []ConferenceImport          `json:"conferences"`
+	RetiredJournalIdentities []JournalIdentityRetirement `json:"retiredJournalIdentities"`
+}
+
+// A verified predecessor must be detached before title-based lookup of its successor.
+// This updates catalog metadata only; entry IDs, metrics and personal references stay intact.
+type JournalIdentityRetirement struct {
+	JournalID     string `json:"journalid"`
+	ISSN          string `json:"issn"`
+	ExpectedName  string `json:"expectedName"`
+	LegacyFull    string `json:"legacyFull"`
+	SuccessorFull string `json:"successorFull"`
+	SuccessorISSN string `json:"successorIssn"`
+	Reason        string `json:"reason"`
+}
+
+func retireJournalIdentities(tx *sql.Tx, data ImportData) error {
+	if len(data.RetiredJournalIdentities) > 0 && !data.JournalCatalogComplete {
+		return fmt.Errorf("journal identity retirement requires a complete catalog")
+	}
+	for _, retired := range data.RetiredJournalIdentities {
+		if retired.JournalID == "" || retired.ISSN == "" || retired.ExpectedName == "" ||
+			retired.LegacyFull == "" || retired.SuccessorFull == "" || retired.SuccessorISSN == "" {
+			return fmt.Errorf("incomplete journal identity retirement")
+		}
+		replacementExists := false
+		for _, journal := range data.Journals {
+			if journal.CCFFull == retired.SuccessorFull && journal.JournalID != retired.JournalID &&
+				(journal.IsCCF == nil || *journal.IsCCF) &&
+				(journal.ISSN == retired.SuccessorISSN || journal.EISSN == retired.SuccessorISSN) {
+				replacementExists = true
+				break
+			}
+		}
+		if !replacementExists {
+			return fmt.Errorf("missing verified successor identity for %s", retired.LegacyFull)
+		}
+		result, err := tx.Exec(`UPDATE entries SET is_ccf = 0, ccf_relations = NULL,
+			catalog_source = 'historical_ccf', inclusion_reason = ?, ccf_full = ?,
+			updated_at = CURRENT_TIMESTAMP
+			WHERE type = 'journal' AND journalid = ? AND issn = ? AND name = ?`,
+			retired.Reason, retired.LegacyFull, retired.JournalID, retired.ISSN, retired.ExpectedName)
+		if err != nil {
+			return err
+		}
+		count, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			var unresolved int
+			if err := tx.QueryRow(`SELECT count(*) FROM entries WHERE type = 'journal'
+				AND journalid = ? AND ccf_full = ?`, retired.JournalID, retired.SuccessorFull).Scan(&unresolved); err != nil {
+				return err
+			}
+			if unresolved > 0 {
+				return fmt.Errorf("predecessor snapshot does not match retirement for %s", retired.SuccessorFull)
+			}
+		}
+	}
+	return nil
 }
 
 type JournalImport struct {
@@ -190,9 +252,14 @@ func findExistingJournalID(tx *sql.Tx, j JournalImport) (int, error) {
 		{"journalid", j.JournalID},
 		{"issn", j.ISSN},
 		{"eissn", j.EISSN},
+		{"ccf_full", j.CCFFull},
 		{"ccf_abbr", j.CCFAbbr},
 	}
 	for _, lookup := range lookups {
+		// Acronyms are not unique across the complete catalog (for example CC/CL).
+		if lookup.column == "ccf_abbr" && j.CCFFull != "" {
+			continue
+		}
 		if lookup.value == "" || lookup.value == "-" {
 			continue
 		}
@@ -225,6 +292,20 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		return err
 	}
 	defer tx.Rollback()
+	if err := retireJournalIdentities(tx, importData); err != nil {
+		return err
+	}
+	if importData.JournalCatalogComplete {
+		if len(importData.Journals) == 0 {
+			return fmt.Errorf("empty complete journal catalog")
+		}
+		if _, err := tx.Exec("CREATE TEMP TABLE IF NOT EXISTS ccf_import_seen (id INTEGER PRIMARY KEY)"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec("DELETE FROM temp.ccf_import_seen"); err != nil {
+			return err
+		}
+	}
 
 	insertColumns := entryImportColumns
 	insertPlaceholders := strings.TrimSuffix(strings.Repeat("?,", len(insertColumns)), ",")
@@ -257,8 +338,14 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		args := journalImportArgs(j)
 		var execErr error
 		if id == 0 {
-			_, execErr = insertStmt.Exec(args...)
+			var result sql.Result
+			result, execErr = insertStmt.Exec(args...)
 			if execErr == nil {
+				insertID, idErr := result.LastInsertId()
+				if idErr != nil {
+					return idErr
+				}
+				id = int(insertID)
 				inserted++
 			}
 		} else {
@@ -270,6 +357,10 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		}
 		if execErr != nil {
 			importErrors = append(importErrors, fmt.Sprintf("journal %s: %v", j.CCFAbbr, execErr))
+		} else if importData.JournalCatalogComplete && (j.IsCCF == nil || *j.IsCCF) {
+			if _, err := tx.Exec("INSERT OR IGNORE INTO temp.ccf_import_seen(id) VALUES (?)", id); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -297,6 +388,19 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		}
 	}
 
+	// Preserve IDs, favorites and notes for titles removed from a complete snapshot.
+	if importData.JournalCatalogComplete {
+		_, err = tx.Exec(`UPDATE entries SET is_ccf = 0, ccf_relations = NULL,
+			catalog_source = 'historical_ccf', inclusion_reason = '未列入当前CCF期刊目录'
+			WHERE type = 'journal' AND is_ccf = 1 AND id NOT IN (SELECT id FROM temp.ccf_import_seen)`)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec("DROP TABLE temp.ccf_import_seen"); err != nil {
+			return err
+		}
+	}
+
 	if len(importErrors) > 0 {
 		log.Printf("Import had %d errors:", len(importErrors))
 		for _, e := range importErrors {
@@ -305,6 +409,11 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		return fmt.Errorf("catalog sync aborted with %d errors", len(importErrors))
 	}
 
+	if len(importData.JournalCatalog) > 0 {
+		if _, err := tx.Exec("INSERT INTO catalog_metadata(key, value) VALUES ('journal_catalog', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", string(importData.JournalCatalog)); err != nil {
+			return err
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return err
 	}

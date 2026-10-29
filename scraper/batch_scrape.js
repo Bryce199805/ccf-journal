@@ -6,16 +6,18 @@ const {
   readJSON,
   sleep
 } = require('./lib/runtime');
-const { evaluateCatalogEntry, isFresh } = require('./lib/catalog_policy');
+const catalogPolicy = require('./lib/catalog_policy');
+const { evaluateCatalogEntry, isFresh } = catalogPolicy;
+const POLICY_VERSION = catalogPolicy.POLICY_VERSION || 1;
 const { findStrongMatches, normalizeISSN, normalizeName, strongMatch } = require('./lib/identity');
-const { DETAIL_PARSER_VERSION, PARTITION_PARSER_VERSION, parseDetailHTML } = require('./lib/letpub_parser');
+const { DETAIL_PARSER_VERSION, PARTITION_PARSER_VERSION, parseDetailHTML, strip } = require('./lib/letpub_parser');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 const TERMINAL_STATUSES = new Set(['success', 'rejected']);
 const CACHEABLE_STATUSES = new Set(['success', 'rejected', 'not_found']);
 const ALL_STATUSES = ['pending', 'success', 'rejected', 'not_found', 'parse_failed', 'rate_limited'];
-const IDENTITY_MATCHER_VERSION = 3;
+const IDENTITY_MATCHER_VERSION = 7;
 const FETCHED_SNAPSHOT_FIELDS = new Set([
   'letpubUrl', 'fetchedAt', 'publisher', 'country', 'language', 'periodicity',
   'researchArea', 'isOA', 'goldOARatio', 'officialUrl', 'submissionUrl',
@@ -32,14 +34,19 @@ function defaultConfig(env = process.env) {
     legacyIdentityFile: env.LEGACY_IDENTITY_FILE || path.join(DATA_DIR, 'all_letpub_data.json'),
     candidatesFile: env.NON_CCF_FILE || env.DISCOVERY_CANDIDATES_FILE || path.join(OUTPUT_DIR, 'non_ccf_candidates.json'),
     abbrOverridesFile: env.JOURNAL_ABBR_OVERRIDES_FILE || path.join(__dirname, 'journal_abbr_overrides.json'),
+    ccfTitleAliasesFile: env.CCF_TITLE_ALIASES_FILE || path.join(__dirname, 'ccf_title_aliases.json'),
+    ccfIdentityHintsFile: env.CCF_IDENTITY_HINTS_FILE || path.join(__dirname, 'ccf_identity_hints.json'),
     baselineFile: env.BASELINE_FILE || path.join(DATA_DIR, 'letpub_full.json'),
     stagingFile: env.STAGING_FILE || path.join(OUTPUT_DIR, 'letpub_full.staging.json'),
     progressFile: env.SCRAPE_PROGRESS_FILE || path.join(OUTPUT_DIR, 'scrape_progress.json'),
     reportFile: env.SCRAPE_REPORT_FILE || path.join(OUTPUT_DIR, 'scrape_report.json'),
     conflictFile: env.IDENTITY_CONFLICT_FILE || path.join(OUTPUT_DIR, 'identity_conflicts.json'),
+    identityQuarantineFile: env.IDENTITY_QUARANTINE_FILE || path.join(OUTPUT_DIR, 'ccf_identity_quarantine.json'),
     maxJournals: env.MAX_JOURNALS ? Number(env.MAX_JOURNALS) : Infinity,
     canaryCCFJournals: Number(env.CANARY_CCF_JOURNALS || 1),
     forceRefresh: env.FORCE_REFRESH === '1',
+    ccfOnly: env.CCF_ONLY === '1',
+    nonCcfOnly: env.NON_CCF_ONLY === '1',
     refreshDays: Number(env.REFRESH_DAYS || 30),
     delayMs: Number(env.SCRAPE_DELAY_MS || 12000),
     jitterMs: Number(env.SCRAPE_JITTER_MS || 1000),
@@ -72,9 +79,15 @@ function ccfRelations(source) {
   return grouped;
 }
 
-function buildTasks(ccfSource, candidates, legacyIdentities = {}) {
+function buildTasks(ccfSource, candidates, legacyIdentities = {}, ccfTitleAliases = [], ccfIdentityHints = []) {
   const grouped = ccfRelations(ccfSource);
   const tasks = [];
+  const aliasesByOfficialFull = new Map((ccfTitleAliases || []).map(alias => [
+    normalizeName(alias.officialFull), alias
+  ]));
+  const hintsByOfficialFull = new Map((ccfIdentityHints || []).map(hint => [
+    normalizeName(hint.officialFull), hint
+  ]));
   const abbrCounts = new Map();
   for (const relations of grouped.values()) {
     const key = normalizeName(relations[0].abbr);
@@ -82,15 +95,32 @@ function buildTasks(ccfSource, candidates, legacyIdentities = {}) {
   }
   for (const [groupKey, relations] of grouped) {
     const primary = relations[0];
-    const legacy = abbrCounts.get(normalizeName(primary.abbr)) === 1 ? legacyIdentities[primary.abbr] || {} : {};
+    const legacyCandidate = legacyIdentities[primary.abbr] || {};
+    const legacyTitleMatches = ['name', 'full', 'ccfFull'].some(field =>
+      normalizeName(legacyCandidate[field]) === normalizeName(primary.full));
+    const legacy = abbrCounts.get(normalizeName(primary.abbr)) === 1 && legacyTitleMatches
+      ? legacyCandidate : {};
+    const titleAlias = aliasesByOfficialFull.get(normalizeName(primary.full));
+    const verifiedIdentity = titleAlias?.letpubIdentity || {};
+    const identityHint = hintsByOfficialFull.get(normalizeName(primary.full)) || {};
+    const authoritativeIdentity = titleAlias ? verifiedIdentity
+      : identityHint.officialFull ? identityHint : legacy;
     tasks.push({
       key: 'ccf:' + groupKey,
       isCCF: true,
       full: primary.full,
       abbr: primary.abbr,
-      issn: normalizeISSN(legacy.issn),
-      eissn: normalizeISSN(legacy.eissn),
-      journalid: legacy.journalid ? String(legacy.journalid) : '',
+      issn: normalizeISSN(authoritativeIdentity.issn),
+      eissn: normalizeISSN(authoritativeIdentity.eissn),
+      journalid: authoritativeIdentity.journalid ? String(authoritativeIdentity.journalid) : '',
+      identityAliases: [...new Set([
+        titleAlias?.legacyFull,
+        verifiedIdentity.name,
+        identityHint.publisherTitle
+      ].filter(Boolean))],
+      hasAuthoritativeIdentity: Boolean(titleAlias || identityHint.officialFull),
+      identitySourceUrl: identityHint.sourceUrl || identityHint.catalogUrl
+        || titleAlias?.officialSource?.ccfUrl || verifiedIdentity.officialUrl || '',
       ccfRelations: relations
     });
   }
@@ -118,7 +148,8 @@ function hydrateKnownIdentity(task, baseline) {
   if (task.journalid) return task;
   if (task.isCCF) {
     const catalogMatches = [...new Map(baseline
-      .filter(entry => entry.journalid && matchesCCFCatalog(entry, task))
+      .filter(entry => entry.journalid && matchesCCFCatalog(entry, task)
+        && (!task.hasAuthoritativeIdentity || strongMatch(task, entry).matched))
       .map(entry => [String(entry.journalid), entry])).values()];
     if (catalogMatches.length === 1) {
       const entry = catalogMatches[0];
@@ -164,6 +195,9 @@ function normalizeBaseline(entries) {
       ...entry,
       type: entry.type || 'journal',
       isCCF,
+      issn: normalizeISSN(entry.issn),
+      eissn: normalizeISSN(entry.eissn),
+      wosZone: entry.wosStatus && entry.wosStatus !== 'available' ? '' : (entry.wosZone || ''),
       journalid: entry.journalid ? String(entry.journalid) : '',
       name: entry.name || (isCCF ? entry.ccfFull || ccfRelations[0]?.full || '' : ''),
       ccfRelations
@@ -225,15 +259,17 @@ function applyCandidateJournalAbbreviations(entries, candidates) {
 function matchesCCFCatalog(entry, task) {
   if (!task.isCCF) return false;
   const taskFull = normalizeName(task.full);
-  const taskAbbr = normalizeName(task.abbr);
   const relations = entry.ccfRelations?.length ? entry.ccfRelations : [{
     full: entry.ccfFull,
     abbr: entry.ccfAbbr
   }];
-  return relations.some(relation =>
-    normalizeName(relation.full) === taskFull
-    && normalizeName(relation.abbr) === taskAbbr
-  );
+  const aliasNames = new Set((task.identityAliases || []).map(normalizeName));
+  return relations.some(relation => normalizeName(relation.full) === taskFull
+    || aliasNames.has(normalizeName(relation.full)));
+}
+
+function ccfSearchTitle(fullName) {
+  return String(fullName || '').replace(/\s*[（(]\s*(?:原|formerly(?:\s+known\s+as)?|previously\s+known\s+as)[\s\S]*$/i, '').trim();
 }
 
 function ccfPlaceholder(task) {
@@ -241,8 +277,9 @@ function ccfPlaceholder(task) {
     journalid: '',
     letpubUrl: '',
     name: task.full,
-    issn: '',
-    eissn: '',
+    issn: task.hasAuthoritativeIdentity ? task.issn || '' : '',
+    eissn: task.hasAuthoritativeIdentity ? task.eissn || '' : '',
+    identitySourceUrl: task.hasAuthoritativeIdentity ? task.identitySourceUrl || '' : '',
     letpubMatchStatus: 'unmatched',
     wosStatus: 'detail_not_found',
     wosReason: 'letpub_detail_not_found'
@@ -250,26 +287,34 @@ function ccfPlaceholder(task) {
 }
 
 function pruneRemovedCCFCatalogEntries(entries, ccfTasks) {
-  const current = new Map(ccfTasks.map(task => [
-    normalizeName(task.full) + '|' + normalizeName(task.abbr),
-    task
-  ]));
+  const current = new Map();
+  for (const task of ccfTasks) {
+    current.set(normalizeName(task.full), task);
+    for (const alias of task.identityAliases || []) current.set(normalizeName(alias), task);
+  }
   const kept = [];
   for (const entry of entries) {
     if (entry.isCCF !== true) {
       kept.push(entry);
       continue;
     }
-    const relations = (entry.ccfRelations?.length ? entry.ccfRelations : [{
+    const oldRelations = entry.ccfRelations?.length ? entry.ccfRelations : [{
       full: entry.ccfFull,
       abbr: entry.ccfAbbr,
       domain: entry.ccfDomain,
       level: entry.ccfLevel,
       publisher: entry.ccfPublisher,
       url: entry.ccfUrl
-    }]).filter(relation => current.has(
-      normalizeName(relation.full) + '|' + normalizeName(relation.abbr)
-    ));
+    }];
+    const currentTask = oldRelations.map(relation => current.get(normalizeName(relation.full))).find(Boolean);
+    const relations = currentTask?.ccfRelations || (currentTask ? [{
+      full: currentTask.full,
+      abbr: currentTask.abbr,
+      domain: currentTask.ccfDomain || '',
+      level: currentTask.level || '',
+      publisher: currentTask.publisher || '',
+      url: currentTask.url || ''
+    }] : []);
     if (!relations.length) continue;
     const first = relations[0];
     kept.push({
@@ -309,8 +354,12 @@ function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
   const index = indexes[0];
   if (detachIdentity) {
     results[index] = placeholder;
+  } else if (results[index].journalid) {
+    const ccfFields = ['ccfRelations', 'ccfDomain', 'ccfLevel', 'ccfAbbr', 'ccfFull', 'ccfPublisher', 'ccfUrl'];
+    results[index] = { ...results[index], isCCF: true,
+      ...Object.fromEntries(ccfFields.map(field => [field, placeholder[field]])) };
   } else {
-    results[index] = mergePreserving(results[index], resultEntry(task, {}));
+    results[index] = mergePreserving(results[index], placeholder);
     if (!results[index].name) results[index].name = task.full;
     if (!results[index].journalid) {
       results[index].letpubMatchStatus = 'unmatched';
@@ -321,12 +370,44 @@ function ensureCCFPlaceholder(results, task, { detachIdentity = false } = {}) {
   return index;
 }
 
+function quarantineMismatchedCCFEntries(results, task, conflicts, identityQuarantine, timestamp) {
+  if (!task.isCCF || !task.hasAuthoritativeIdentity) return results;
+  const expected = [...new Set([normalizeISSN(task.issn), normalizeISSN(task.eissn)].filter(Boolean))];
+  if (!expected.length) return results;
+  return results.filter(entry => {
+    if (!matchesCCFCatalog(entry, task)) return true;
+    const actual = [...serialsOf(entry)];
+    if (!actual.length || expected.some(serial => actual.includes(serial))) return true;
+    conflicts.push({
+      type: 'authoritative_ccf_serial_mismatch_quarantined',
+      taskKey: task.key,
+      expectedSerials: expected,
+      actualSerials: actual,
+      journalid: entry.journalid || null
+    });
+    identityQuarantine.push({
+      taskKey: task.key,
+      quarantinedAt: timestamp,
+      reason: 'authoritative_ccf_serial_mismatch',
+      expectedOfficialFull: task.full,
+      expectedSerials: expected,
+      actualSerials: actual,
+      snapshot: entry
+    });
+    return false;
+  });
+}
+
 function validateResolvedIdentity(task, detail) {
   const expectedName = normalizeName(task.full);
   const actualName = normalizeName(detail.name);
   const expectedSerials = new Set([normalizeISSN(task.issn), normalizeISSN(task.eissn)].filter(Boolean));
   const actualSerials = new Set([normalizeISSN(detail.issn), normalizeISSN(detail.eissn)].filter(Boolean));
-  const nameMatches = Boolean(expectedName && actualName && expectedName === actualName);
+  const nameMatches = Boolean(expectedName && actualName && (
+    expectedName === actualName
+    || (task.isCCF && normalizeName(ccfSearchTitle(task.full)) === actualName)
+    || (task.isCCF && (task.identityAliases || []).some(alias => normalizeName(alias) === actualName))
+  ));
   const comparableSerials = expectedSerials.size > 0 && actualSerials.size > 0;
   const serialMatches = comparableSerials
     && [...expectedSerials].some(serial => actualSerials.has(serial));
@@ -359,9 +440,31 @@ function validateResolvedIdentity(task, detail) {
 function parseSearchResults(html) {
   const results = [];
   for (const match of String(html || '').matchAll(/journalid=(\d+)[^>]*>([^<]*)<\/a>/gi)) {
-    results.push({ journalid: String(match[1]), name: match[2].trim() });
+    results.push({ journalid: String(match[1]), name: strip(match[2]) });
   }
   return results;
+}
+
+async function verifyAmbiguousCandidates(task, ids, request) {
+  if (!task.hasAuthoritativeIdentity || ids.length > 5) return null;
+  const matches = [];
+  for (const journalid of ids) {
+    const response = await request(`https://www.letpub.com.cn/index.php?journalid=${journalid}&page=journalapp&view=detail`);
+    if (!response.ok) {
+      if (response.terminalKind || response.kind === 'rate_limited') {
+        return { ok: false, status: response.kind === 'rate_limited' || response.terminalKind === 'rate_limited'
+          ? 'rate_limited' : 'not_found', reason: response.terminalKind || response.kind, candidates: ids };
+      }
+      continue;
+    }
+    try {
+      const detail = parseDetailHTML(journalid, response.body, { fetchedAt: new Date().toISOString() });
+      if (validateResolvedIdentity(task, detail).valid) matches.push({ journalid, response });
+    } catch { /* An unparsable candidate cannot verify identity. */ }
+  }
+  if (matches.length !== 1) return null;
+  return { ok: true, journalid: matches[0].journalid, method: 'verified_detail_candidate',
+    prefetchedResponse: matches[0].response };
 }
 
 function createThrottledFetcher(config) {
@@ -394,16 +497,39 @@ async function resolveJournal(task, request) {
     if (!value) continue;
     const url = 'https://www.letpub.com.cn/index.php?page=journalapp&view=search&searchissn=' + encodeURIComponent(value);
     const response = await request(url);
-    if (!response.ok) return { ok: false, status: response.kind === 'rate_limited' ? 'rate_limited' : 'not_found', reason: response.kind };
+    if (!response.ok) return { ok: false,
+      status: response.kind === 'rate_limited' ? 'rate_limited'
+        : ['network_error', 'server_error'].includes(response.kind) ? 'parse_failed' : 'not_found',
+      reason: response.kind };
     const ids = [...new Set(parseSearchResults(response.body).map(entry => entry.journalid))];
     if (ids.length === 1) return { ok: true, journalid: ids[0], method: field };
-    if (ids.length > 1) return { ok: false, status: 'not_found', reason: 'identity_conflict', candidates: ids };
+    if (ids.length > 1) {
+      const verified = await verifyAmbiguousCandidates(task, ids, request);
+      if (verified) return verified;
+      return { ok: false, status: 'not_found', reason: 'identity_conflict', candidates: ids };
+    }
   }
   if (task.full) {
-    const url = 'https://www.letpub.com.cn/index.php?page=journalapp&view=search&searchname=' + encodeURIComponent(task.full);
+    const searchTitle = task.isCCF ? ccfSearchTitle(task.full) : task.full;
+    const url = 'https://www.letpub.com.cn/index.php?page=journalapp&view=search&searchname=' + encodeURIComponent(searchTitle);
     const response = await request(url);
-    if (!response.ok) return { ok: false, status: response.kind === 'rate_limited' ? 'rate_limited' : 'not_found', reason: response.kind };
+    if (!response.ok) return { ok: false,
+      status: response.kind === 'rate_limited' ? 'rate_limited'
+        : ['network_error', 'server_error'].includes(response.kind) ? 'parse_failed' : 'not_found',
+      reason: response.kind };
     const candidates = parseSearchResults(response.body);
+    // A search result with an exact official title is a safe lead, not a
+    // verified identity. Fetch the detail page and let validateResolvedIdentity
+    // confirm its title (and serials when available) before saving any data.
+    const exactTitleIds = [...new Set(candidates
+      .filter(candidate => normalizeName(candidate.name) === normalizeName(searchTitle))
+      .map(candidate => candidate.journalid))];
+    if (exactTitleIds.length === 1) {
+      return { ok: true, journalid: exactTitleIds[0], method: 'exact_title_candidate' };
+    }
+    if (exactTitleIds.length > 1) {
+      return { ok: false, status: 'not_found', reason: 'identity_conflict', candidates: exactTitleIds };
+    }
     return {
       ok: false,
       status: 'not_found',
@@ -554,8 +680,8 @@ function resultEntry(task, detail) {
       journalAbbrSourceUrl: task.journalAbbrSourceUrl || '',
       type: 'journal',
       isCCF: false,
-      catalogSource: 'cas-computer-science-1-2',
-      inclusionReason: '中科院计算机科学大类1/2区',
+      catalogSource: 'cas-computer-science-1-3',
+      inclusionReason: '中科院计算机科学大类1/2/3区',
       ccfRelations: []
     };
   }
@@ -633,29 +759,38 @@ function upsertCCFResult(results, task, incoming, conflicts) {
     });
     return { ok: false, reason: 'ccf_catalog_conflict' };
   }
+  const duplicateIndexes = results
+    .map((entry, entryIndex) => ({ entry, entryIndex }))
+    .filter(item => item.entry.isCCF === false && safeRecordIdentityMatch(incoming, item.entry))
+    .map(item => item.entryIndex);
+  if (duplicateIndexes.length > 1) {
+    conflicts.push({ type: 'ccf_non_ccf_identity_conflict', taskKey: task.key, matchedIndexes: duplicateIndexes });
+    return { ok: false, reason: 'ccf_non_ccf_identity_conflict' };
+  }
   if (indexes.length === 1) {
     let index = indexes[0];
-    const duplicateIndexes = results
-      .map((entry, entryIndex) => ({ entry, entryIndex }))
-      .filter(item => item.entryIndex !== index
-        && item.entry.isCCF === false
-        && normalizeName(item.entry.name) === normalizeName(task.full))
-      .map(item => item.entryIndex);
+    const promotedIndexes = duplicateIndexes.filter(duplicateIndex => duplicateIndex !== index);
     let merged = mergeFetchedSnapshot(results[index], incoming);
-    for (const duplicateIndex of duplicateIndexes) {
+    for (const duplicateIndex of promotedIndexes) {
       merged = mergeFetchedSnapshot(mergePreserving(results[duplicateIndex], merged), incoming);
       conflicts.push({
-        type: 'named_non_ccf_promoted_to_ccf',
+        type: 'ccf_identity_promoted_from_non_ccf',
         taskKey: task.key,
         journalid: merged.journalid || null
       });
     }
     results[index] = merged;
-    for (const duplicateIndex of duplicateIndexes.sort((a, b) => b - a)) {
+    for (const duplicateIndex of promotedIndexes.sort((a, b) => b - a)) {
       results.splice(duplicateIndex, 1);
       if (duplicateIndex < index) index -= 1;
     }
-    return { ok: true, index, method: duplicateIndexes.length ? 'ccf_name_promotion' : 'ccf_catalog' };
+    return { ok: true, index, method: promotedIndexes.length ? 'ccf_identity_promotion' : 'ccf_catalog' };
+  }
+  if (duplicateIndexes.length === 1) {
+    const index = duplicateIndexes[0];
+    results[index] = mergeFetchedSnapshot(mergePreserving(results[index], incoming), incoming);
+    conflicts.push({ type: 'ccf_identity_promoted_from_non_ccf', taskKey: task.key, journalid: incoming.journalid || null });
+    return { ok: true, index, method: 'ccf_identity_promotion' };
   }
   results.push(incoming);
   return { ok: true, index: results.length - 1, method: 'append_ccf' };
@@ -665,6 +800,19 @@ function removeStrongIdentity(results, target) {
   return results.filter(entry => !strongMatch(entry, target).matched);
 }
 
+function safeRecordIdentityMatch(left, right) {
+  const leftId = left?.journalid ? String(left.journalid) : '';
+  const rightId = right?.journalid ? String(right.journalid) : '';
+  const leftSerials = serialsOf(left);
+  const rightSerials = serialsOf(right);
+  const serialMatch = [...leftSerials].some(serial => rightSerials.has(serial));
+  if (leftId && rightId && leftId !== rightId) return false;
+  if (leftId && rightId && leftId === rightId) {
+    return !leftSerials.size || !rightSerials.size || serialMatch;
+  }
+  return serialMatch;
+}
+
 function statusCounts(tasks) {
   const counts = Object.fromEntries(ALL_STATUSES.map(status => [status, 0]));
   for (const task of Object.values(tasks)) counts[task.status] = (counts[task.status] || 0) + 1;
@@ -672,13 +820,27 @@ function statusCounts(tasks) {
 }
 
 function shouldRunTask(task, state, config) {
+  if (config.forceTaskKeys?.includes(task.key)) return true;
+  if (state.status === 'not_found' && ['network_error', 'server_error'].includes(state.reason)) return true;
+  if (task.isCCF && task.hasAuthoritativeIdentity && state.status === 'success'
+    && state.identityCheck?.actual
+    && !validateResolvedIdentity(task, state.identityCheck.actual).valid) return true;
   if (state.status === 'success' && state.detailParserVersion !== DETAIL_PARSER_VERSION) return true;
   if (
     state.status === 'success'
     && config.detailAccessMode === 'authenticated'
     && state.detailAccessMode !== 'authenticated'
+    && !(config.nonCcfOnly && isFresh(state, config.refreshDays))
   ) return true;
   if (state.status === 'not_found' && state.identityMatcherVersion !== IDENTITY_MATCHER_VERSION) return true;
+  if (
+    state.status === 'rejected'
+    && !task.isCCF
+    && state.reason === 'cas_big_zone_not_1_or_2'
+    && state.policy?.actualBigCategory === '计算机科学'
+    && state.policy?.actualBigZone === '3区'
+    && state.catalogPolicyVersion !== POLICY_VERSION
+  ) return true;
   if (
     state.status === 'rejected'
     && state.reason === 'missing_cas_partition'
@@ -690,7 +852,11 @@ function shouldRunTask(task, state, config) {
 }
 
 function selectTasksForRun(tasks, progress, config) {
-  const runnable = tasks.filter(task => shouldRunTask(task, progress.tasks[task.key], config));
+  let runnable = tasks.filter(task => shouldRunTask(task, progress.tasks[task.key], config));
+  const forcedOrder = new Map((config.forceTaskKeys || []).map((key, index) => [key, index]));
+  if (forcedOrder.size) runnable = runnable.sort((left, right) =>
+    (forcedOrder.get(left.key) ?? Number.MAX_SAFE_INTEGER)
+      - (forcedOrder.get(right.key) ?? Number.MAX_SAFE_INTEGER));
   if (!Number.isFinite(config.maxJournals)) return runnable;
   const limit = Math.max(0, Math.floor(config.maxJournals));
   if (limit === 0) return [];
@@ -719,7 +885,8 @@ function canaryCoverage(tasks, progress) {
     ccfTaskKeys: ccfTasks.map(task => task.key),
     acceptedNonCCFTaskKeys: acceptedNonCCF.map(task => task.key),
     rejectedNonCCFTaskKeys: rejectedNonCCF.map(task => task.key),
-    adequate: ccfTasks.length > 0 && acceptedNonCCF.length > 0 && rejectedNonCCF.length > 0
+    adequate: nonCCFTasks.length > 0 && acceptedNonCCF.length > 0
+      && (ccfTasks.length === 0 || rejectedNonCCF.length > 0)
   };
 }
 
@@ -730,23 +897,40 @@ async function runBatch(options = {}) {
   const ccfSource = readJSON(config.ccfFile, null);
   if (!ccfSource) throw new Error('CCF source file is missing: ' + config.ccfFile);
   const candidateOverrides = readJSON(config.abbrOverridesFile, {});
-  const candidates = resolveCandidateJournalAbbreviations(
+  const titleAliasDocument = readJSON(config.ccfTitleAliasesFile, { aliases: [] });
+  const identityHintsDocument = readJSON(config.ccfIdentityHintsFile, { items: [] });
+  const candidates = config.ccfOnly ? [] : resolveCandidateJournalAbbreviations(
     readJSON(config.candidatesFile, []),
     candidateOverrides
   );
+  const historicalCandidates = (titleAliasDocument.excludedHistoricalCandidates || [])
+    .filter(record => record.candidateRejectedAsCurrent === true);
+  const historicalIds = new Set(historicalCandidates
+    .map(record => String(record.candidateLetPubJournalid || '')).filter(Boolean));
+  const historicalSerials = new Set(historicalCandidates
+    .flatMap(record => [record.historicalISSN, record.historicalEISSN])
+    .map(normalizeISSN).filter(Boolean));
+  const excludedHistoricalCandidateTaskKeys = [];
   const legacyIdentities = readJSON(config.legacyIdentityFile, {});
   const baseline = normalizeBaseline(readJSON(config.baselineFile, []));
   const conflicts = readJSON(config.conflictFile, []);
+  const identityQuarantine = readJSON(config.identityQuarantineFile, []);
   let results = consolidateJournalAliases(
     normalizeBaseline(readJSON(config.stagingFile, baseline)),
     conflicts
   );
-  const rawTasks = buildTasks(ccfSource, candidates, legacyIdentities);
+  const rawTasks = buildTasks(
+    ccfSource,
+    candidates,
+    legacyIdentities,
+    titleAliasDocument.aliases || [],
+    identityHintsDocument.items || []
+  );
   results = applyCandidateJournalAbbreviations(results, candidates);
   const identitySources = [...baseline, ...results];
   const hydratedTasks = rawTasks.map(task => hydrateKnownIdentity(task, identitySources));
   const ccfTasks = hydratedTasks.filter(task => task.isCCF);
-  results = pruneRemovedCCFCatalogEntries(results, ccfTasks);
+  if (!config.nonCcfOnly) results = pruneRemovedCCFCatalogEntries(results, ccfTasks);
   const legacyCCFIdentities = ccfTasks.map(task => ({ ...task }));
   const namedCCFOwners = new Map();
   for (const candidate of hydratedTasks.filter(task => !task.isCCF)) {
@@ -758,8 +942,13 @@ async function runBatch(options = {}) {
     owner.eissn = candidate.eissn || owner.eissn;
     namedCCFOwners.set(candidate.key, owner);
   }
-  const tasks = hydratedTasks.filter(task => {
+  const eligibleTasks = hydratedTasks.filter(task => {
     if (task.isCCF) return true;
+    if (historicalIds.has(String(task.journalid || ''))
+      || [task.issn, task.eissn].map(normalizeISSN).some(serial => serial && historicalSerials.has(serial))) {
+      excludedHistoricalCandidateTaskKeys.push(task.key);
+      return false;
+    }
     const strongCCF = [...ccfTasks, ...legacyCCFIdentities].find(ccf =>
       strongMatch(task, ccf).matched || serialAliasMatch(task, ccf)
     );
@@ -782,9 +971,45 @@ async function runBatch(options = {}) {
     }
     return true;
   });
+  const tasks = config.nonCcfOnly
+    ? eligibleTasks.filter(task => !task.isCCF)
+    : eligibleTasks;
   const progress = readJSON(config.progressFile, { schemaVersion: 1, tasks: {} });
   for (const task of tasks) {
+    if (!progress.tasks[task.key] && task.isCCF) {
+      const priorNames = [task.full, ...(task.identityAliases || [])].map(normalizeName);
+      const priorKeys = Object.keys(progress.tasks).filter(key => priorNames.some(name =>
+        key.startsWith('ccf:' + name + '|')
+      ));
+      if (priorKeys.length === 1) progress.tasks[task.key] = { ...progress.tasks[priorKeys[0]] };
+    }
     if (!progress.tasks[task.key]) progress.tasks[task.key] = { status: 'pending', updatedAt: now() };
+    const state = progress.tasks[task.key];
+    if (!task.isCCF && state.status === 'rejected' && state.policy
+      && state.catalogPolicyVersion !== POLICY_VERSION
+      && state.policy.latestCASYear && state.policy.actualBigCategory && state.policy.actualBigZone) {
+      const reevaluated = evaluateCatalogEntry({ casPartitions: {
+        [state.policy.latestCASYear]: {
+          bigCategory: state.policy.actualBigCategory,
+          bigZone: state.policy.actualBigZone
+        }
+      } });
+      state.policy = reevaluated;
+      state.catalogPolicyVersion = POLICY_VERSION;
+      state.reason = reevaluated.reason;
+      if (reevaluated.accepted) state.status = 'pending';
+    }
+    if (task.isCCF && task.hasAuthoritativeIdentity && state.status === 'success'
+      && state.identityCheck?.actual
+      && !validateResolvedIdentity(task, state.identityCheck.actual).valid) {
+      results = quarantineMismatchedCCFEntries(results, task, conflicts, identityQuarantine, now());
+      state.status = 'pending';
+      delete state.identityCheck;
+      delete state.journalid;
+      delete state.method;
+      delete state.policy;
+      atomicWriteJSON(config.identityQuarantineFile, identityQuarantine);
+    }
     if (task.isCCF) ensureCCFPlaceholder(results, task);
   }
   const request = config.request || createThrottledFetcher(config);
@@ -803,6 +1028,10 @@ async function runBatch(options = {}) {
   for (const task of selectedTasks) {
     const state = progress.tasks[task.key];
     attempted += 1;
+    if (task.isCCF && task.hasAuthoritativeIdentity && state.status !== 'success') {
+      delete state.journalid;
+      delete state.method;
+    }
     if (partialRun) state.canaryAttempted = true;
     state.status = 'pending';
     state.updatedAt = now();
@@ -819,6 +1048,9 @@ async function runBatch(options = {}) {
       if (state.status === 'not_found' && state.reason !== 'network_error') {
         state.identityMatcherVersion = IDENTITY_MATCHER_VERSION;
       }
+      if (state.status === 'parse_failed' && ['network_error', 'server_error'].includes(state.reason)) {
+        delete state.identityMatcherVersion;
+      }
       if (state.reason.includes('conflict')) conflicts.push({ type: state.reason, taskKey: task.key, candidates: state.candidates });
       if (task.isCCF) ensureCCFPlaceholder(results, task);
       atomicWriteJSON(config.stagingFile, results);
@@ -831,9 +1063,9 @@ async function runBatch(options = {}) {
 
     const journalid = String(resolution.journalid);
     const detailURL = 'https://www.letpub.com.cn/index.php?journalid=' + journalid + '&page=journalapp&view=detail';
-    const response = config.fetchDetailImpl
+    const response = resolution.prefetchedResponse || (config.fetchDetailImpl
       ? await config.fetchDetailImpl(journalid, task)
-      : await request(detailURL);
+      : await request(detailURL));
     if (!response.ok) {
       state.status = response.kind === 'rate_limited' ? 'rate_limited' : 'parse_failed';
       state.reason = response.kind;
@@ -872,7 +1104,11 @@ async function runBatch(options = {}) {
         resolutionMethod: resolution.method,
         ...identityCheck
       });
-      if (task.isCCF) ensureCCFPlaceholder(results, task, { detachIdentity: true });
+      if (task.isCCF && task.hasAuthoritativeIdentity) {
+        results = quarantineMismatchedCCFEntries(results, task, conflicts, identityQuarantine, now());
+        atomicWriteJSON(config.identityQuarantineFile, identityQuarantine);
+        ensureCCFPlaceholder(results, task);
+      } else if (task.isCCF) ensureCCFPlaceholder(results, task, { detachIdentity: true });
       atomicWriteJSON(config.stagingFile, results);
       atomicWriteJSON(config.progressFile, progress);
       atomicWriteJSON(config.conflictFile, conflicts);
@@ -887,6 +1123,7 @@ async function runBatch(options = {}) {
     state.journalid = journalid;
     state.method = resolution.method;
     state.policy = decision;
+    if (!task.isCCF) state.catalogPolicyVersion = POLICY_VERSION;
     state.updatedAt = now();
     if (!decision.accepted) {
       state.status = 'rejected';
@@ -935,6 +1172,8 @@ async function runBatch(options = {}) {
     attemptedThisRun: attempted,
     selectedTaskKeys: selectedTasks.map(task => task.key),
     mode,
+    scope: config.ccfOnly ? 'ccf_only' : config.nonCcfOnly ? 'nonccf_only' : 'all',
+    excludedHistoricalCandidateTaskKeys,
     canaryCoverage: coverage,
     counts,
     countsClosed,
@@ -945,6 +1184,8 @@ async function runBatch(options = {}) {
     stagingFile: config.stagingFile,
     progressFile: config.progressFile,
     conflictCount: conflicts.length,
+    identityQuarantineFile: config.identityQuarantineFile,
+    identityQuarantinedCount: identityQuarantine.length,
     detailAccessMode: config.detailAccessMode,
     detailParserVersion: DETAIL_PARSER_VERSION
   };
@@ -952,7 +1193,7 @@ async function runBatch(options = {}) {
   atomicWriteJSON(config.progressFile, progress);
   atomicWriteJSON(config.conflictFile, conflicts);
   atomicWriteJSON(config.reportFile, report);
-  return { results, progress, conflicts, report, tasks };
+  return { results, progress, conflicts, report, tasks, identityQuarantine };
 }
 
 async function main() {
@@ -978,8 +1219,10 @@ module.exports = {
   applyCandidateJournalAbbreviations,
   constructJournalAbbreviation,
   buildTasks,
+  ccfPlaceholder,
   ccfRelations,
   defaultConfig,
+  hydrateKnownIdentity,
   mergePreserving,
   mergeFetchedSnapshot,
   consolidateJournalAliases,
@@ -994,5 +1237,6 @@ module.exports = {
   serialAliasMatch,
   sameTitleSourceAliasMatch,
   upsertResult,
+  upsertCCFResult,
   validateResolvedIdentity
 };

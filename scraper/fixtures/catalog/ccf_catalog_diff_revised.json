@@ -1,0 +1,543 @@
+{
+  "reportType": "CCF 2026 removed-title reconciliation",
+  "originalDiff": "scraper/output/ccf_catalog_diff.json (preserved unchanged)",
+  "officialCatalog": "data/all_journals_correct.json",
+  "officialPdfAudit": "scraper/fixtures/catalog/ccf_pdf_transcription_audit.json",
+  "normalizationCorrection": "Python comparison now replaces & with AND before token normalization, matching scraper/lib/identity.js. The original diff used a different normalizer, so a removed title means no raw normalized title match; it does not prove removal from the catalog. Title-continuity cases where current serials changed are kept separate from reusable same-identity aliases.",
+  "originalSummary": {
+    "domains": 10,
+    "currentEntryCount": 171,
+    "officialEntryCount": 295,
+    "letpubEntryCount": 273,
+    "addedTitleCount": 140,
+    "removedTitleCount": 15,
+    "levelChangeCount": 1,
+    "domainChangeCount": 5,
+    "letpubMatchedTitleCount": 175,
+    "letpubUnmatchedTitleCount": 116,
+    "catalogEntryCount": 295,
+    "officialAddedRelationCount": 142
+  },
+  "reconciliation": {
+    "originalRemovedTitles": 15,
+    "resolvedAsSameJournalAliases": 6,
+    "ofWhichNowMatchedByNormalizer": 3,
+    "ofWhichRequireExplicitAlias": 3,
+    "confirmedNotIn2026JournalCatalog": 6,
+    "originalAddedTitlesReclassifiedAsAliases": 6,
+    "correctedAddedTitleCount": 131,
+    "correctedAddedDomainRelationCount": 133,
+    "correctedRemovedTitleCount": 6,
+    "correctedRemovedDomainRelationCount": 9,
+    "baseExactTitleLevelChanges": 1,
+    "aliasLevelChanges": [
+      {
+        "legacyFull": "World Wide Web Journal",
+        "officialFull": "World Wide Web",
+        "domain": "交叉/综合/新兴",
+        "from": "C",
+        "to": "B"
+      }
+    ],
+    "correctedLevelChangeCount": 2,
+    "newOfficialCatalogRelations": 295,
+    "equation": "171 old catalog domain relations + 133 added domain relations - 9 removed domain relations = 295 official domain relations (this relation arithmetic does not assert physical journal identity or reuse of metrics)",
+    "catalogTitleContinuityCount": 9,
+    "identityReuseAliasCount": 6,
+    "newSerialContinuationCount": 3,
+    "originalAddedTitlesReclassifiedAsTitleContinuations": 3
+  },
+  "aliases": [
+    {
+      "legacyFull": "Computer Animation and Virtual Worlds",
+      "officialFull": "Computer animation & virtual worlds",
+      "domain": "计算机图形学与多媒体",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "CAVW",
+      "officialAbbr": "CAVW",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Wiley",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/cavw/"
+      },
+      "officialSource": {
+        "publisher": "Wiley",
+        "ccfUrl": "https://dblp.org/db/journals/jvca/index.html"
+      },
+      "letpubIdentity": {
+        "journalid": "1979",
+        "issn": "1546-4261",
+        "eissn": "1546-427X",
+        "name": "COMPUTER ANIMATION AND VIRTUAL WORLDS",
+        "publisher": "John Wiley and Sons Ltd",
+        "officialUrl": "http://onlinelibrary.wiley.com/journal/10.1002/(ISSN)1546-427X",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/cavw/"
+      },
+      "evidence": [
+        "LetPub journalid and print/eISSN identify the same Wiley journal. The current CCF row retains the same established journal abbreviation; the current LetPub publisher is John Wiley and Sons Ltd."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Computer Speech and Language",
+      "officialFull": "Computer Speech & Language",
+      "domain": "人工智能",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "CSL",
+      "officialAbbr": "",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "officialSource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "letpubIdentity": {
+        "journalid": "1994",
+        "issn": "0885-2308",
+        "eissn": "1095-8363",
+        "name": "COMPUTER SPEECH AND LANGUAGE",
+        "publisher": "Academic Press Inc.",
+        "officialUrl": "http://www.journals.elsevier.com/computer-speech-and-language/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "evidence": [
+        "Same LetPub journalid and print/eISSN; the official CCF source URL retains the same DBLP journal path. The ampersand is a title formatting variant."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of Experimental & Theoretical Artificial Intelligence",
+      "officialFull": "Journal of Experimental and Theoretical Artificial Intelligence",
+      "domain": "人工智能",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "JETAI",
+      "officialAbbr": "JETAI",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Taylor & Francis",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "officialSource": {
+        "publisher": "Taylor & Francis",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "letpubIdentity": {
+        "journalid": "4511",
+        "issn": "0952-813X",
+        "eissn": "1362-3079",
+        "name": "JOURNAL OF EXPERIMENTAL & THEORETICAL ARTIFICIAL INTELLIGENCE",
+        "publisher": "Taylor and Francis Ltd.",
+        "officialUrl": "http://www.tandf.co.uk/journals/tf/0952813X.html",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "evidence": [
+        "Same CCF source URL path, LetPub journalid and print/eISSN; same publisher. The ampersand and “and” normalize identically."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of Strategic Information Systems",
+      "officialFull": "The Journal of Strategic Information Systems",
+      "domain": "数据库/数据挖掘/内容检索",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "JSIS",
+      "officialAbbr": "JSIS",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "officialSource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "letpubIdentity": {
+        "journalid": "5185",
+        "issn": "0963-8687",
+        "eissn": "",
+        "name": "JOURNAL OF STRATEGIC INFORMATION SYSTEMS",
+        "publisher": "Elsevier",
+        "officialUrl": "http://www.journals.elsevier.com/the-journal-of-strategic-information-systems/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "evidence": [
+        "Same CCF source URL path, LetPub journalid and ISSN; same publisher. Current official title adds the definite article “The”."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of the Acoustical Society of America",
+      "officialFull": "The Journal of the Acoustical Society of America",
+      "domain": "计算机图形学与多媒体",
+      "legacyLevel": "B",
+      "officialLevel": "B",
+      "legacyAbbr": "JASA",
+      "officialAbbr": "JASA",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "ASA",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jasa/"
+      },
+      "officialSource": {
+        "publisher": "AIP",
+        "ccfUrl": "http://scitation.aip.org/content/asa/journal/jasa"
+      },
+      "letpubIdentity": {
+        "journalid": "5224",
+        "issn": "0001-4966",
+        "eissn": "1520-8524",
+        "name": "JOURNAL OF THE ACOUSTICAL SOCIETY OF AMERICA",
+        "publisher": "Acoustical Society of America",
+        "officialUrl": "http://asadl.org/jasa/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jasa/"
+      },
+      "evidence": [
+        "Same LetPub journalid and print/eISSN; legacy and current CCF source URLs identify the JASA title, and the current publisher is AIP (the former ASA publisher)."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "World Wide Web Journal",
+      "officialFull": "World Wide Web",
+      "domain": "交叉/综合/新兴",
+      "legacyLevel": "C",
+      "officialLevel": "B",
+      "legacyAbbr": "WWWJ",
+      "officialAbbr": "WWW",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/www/"
+      },
+      "officialSource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.org/db/journals/www/index.html"
+      },
+      "letpubIdentity": {
+        "journalid": "8131",
+        "issn": "1386-145X",
+        "eissn": "1573-1413",
+        "name": "WORLD WIDE WEB-INTERNET AND WEB INFORMATION SYSTEMS",
+        "publisher": "Springer US",
+        "officialUrl": "https://www.springer.com/11280",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/www/"
+      },
+      "evidence": [
+        "Same CCF DBLP journal path, LetPub journalid, print/eISSN and Springer publisher."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    }
+  ],
+  "confirmedRemoved": [
+    {
+      "legacy": {
+        "domain": "交叉/综合/新兴",
+        "level": "B",
+        "abbr": "Genome Res.",
+        "full": "Genome Research",
+        "publisher": "Cold Spring Harbor",
+        "url": "https://dblp.uni-trier.de/db/journals/genome/"
+      },
+      "letpubIdentity": {
+        "journalid": "3033",
+        "issn": "1088-9051",
+        "eissn": "1549-5469",
+        "name": "GENOME RESEARCH",
+        "publisher": "Cold Spring Harbor Laboratory Press",
+        "officialUrl": "http://genome.cshlp.org/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/genome/"
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "No current 2026 official journal relation matches this title or has a source URL/LetPub identity linking it to a renamed official entry."
+    },
+    {
+      "legacy": {
+        "domain": "计算机图形学与多媒体",
+        "level": "B",
+        "abbr": "IC",
+        "full": "IEEE Internet Computing",
+        "publisher": "IEEE",
+        "url": "https://dblp.uni-trier.de/db/journals/internet/"
+      },
+      "letpubIdentity": {
+        "journalid": "3333",
+        "issn": "1089-7801",
+        "eissn": "1941-0131",
+        "name": "IEEE INTERNET COMPUTING",
+        "publisher": "Institute of Electrical and Electronics Engineers Inc.",
+        "officialUrl": "http://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=4236",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/internet/"
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "No current 2026 official journal relation matches this title or has a source URL/LetPub identity linking it to a renamed official entry."
+    },
+    {
+      "legacy": {
+        "domain": "人机交互与普适计算",
+        "level": "B",
+        "abbr": "ISR",
+        "full": "Information Systems Research",
+        "publisher": "INFORMS",
+        "url": ""
+      },
+      "letpubIdentity": {
+        "journalid": "11423",
+        "issn": "1047-7047",
+        "eissn": "1526-5536",
+        "name": "INFORMATION SYSTEMS RESEARCH",
+        "publisher": "Institute for Operations Research and the Management Sciences",
+        "officialUrl": "",
+        "ccfUrl": ""
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "No current 2026 official journal relation matches this title or has a source URL/LetPub identity linking it to a renamed official entry."
+    },
+    {
+      "legacy": {
+        "domain": "人机交互与普适计算",
+        "level": "B",
+        "abbr": "JCMC",
+        "full": "Journal of Computer-Mediated Communication",
+        "publisher": "Wiley",
+        "url": "https://dblp.uni-trier.de/db/journals/jcmc/"
+      },
+      "letpubIdentity": {
+        "journalid": "11574",
+        "issn": "1083-6101",
+        "eissn": "",
+        "name": "Journal of Computer-Mediated Communication",
+        "publisher": "Wiley-Blackwell",
+        "officialUrl": "https://academic.oup.com/jcmc",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jcmc/"
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "No current 2026 official journal relation matches this title or has a source URL/LetPub identity linking it to a renamed official entry."
+    },
+    {
+      "legacy": {
+        "domain": "人机交互与普适计算",
+        "level": "B",
+        "abbr": "MISQ",
+        "full": "MIS Quarterly",
+        "publisher": "MIS Quarterly",
+        "url": ""
+      },
+      "letpubIdentity": {
+        "journalid": "5916",
+        "issn": "0276-7783",
+        "eissn": "2162-9730",
+        "name": "MIS QUARTERLY",
+        "publisher": "Management Information Systems Research Center",
+        "officialUrl": "http://www.misq.org/",
+        "ccfUrl": ""
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "No current 2026 official journal relation matches this title or has a source URL/LetPub identity linking it to a renamed official entry."
+    },
+    {
+      "legacy": {
+        "domain": "人机交互与普适计算",
+        "level": "B",
+        "abbr": "IMWUT",
+        "full": "Proceedings of the ACM on Interactive Mobile Wearable and Ubiquitous Technologies",
+        "publisher": "ACM",
+        "url": "https://dblp.uni-trier.de/db/journals/imwut/"
+      },
+      "letpubIdentity": {
+        "journalid": "27328",
+        "issn": "2474-9567",
+        "eissn": "",
+        "name": "Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies",
+        "publisher": "ACM",
+        "officialUrl": "",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/imwut/"
+      },
+      "classification": "not_in_2026_official_journal_catalog",
+      "currentExactOrNormalizedTitleMatches": [],
+      "note": "The title and abbreviation are absent from the full 2026 formal PDF journal and conference sections; no official journal target is available for a safe alias."
+    }
+  ],
+  "domainRelationRemovalsFromExistingTitleChanges": [
+    {
+      "full": "IET Computer Vision",
+      "removedDomain": "计算机图形学与多媒体",
+      "remainingDomain": "人工智能"
+    },
+    {
+      "full": "Knowledge-Based Systems",
+      "removedDomain": "数据库/数据挖掘/内容检索",
+      "remainingDomain": "人工智能"
+    },
+    {
+      "full": "Machine Vision and Applications",
+      "removedDomain": "计算机图形学与多媒体",
+      "remainingDomain": "人工智能"
+    }
+  ],
+  "interpretation": "The 15 legacy removed-title rows reconcile as: 6 same-identity name aliases supported for identity reuse, 3 title continuations with new current ISSNs (TASLP, EITEE, and Discover Computing; no reuse of historical LetPub identities/metrics), and 6 titles absent from the 2026 official journal catalog. A separate check of TON, which was not one of the 15 removed-title rows, also found a new current serial; it is recorded in additionalIdentityFindings. The 9 reconciled catalog title changes still account for 9 added/removed domain relations, but do not mean nine LetPub identities are reusable. The relation equation counts domain rows only: 171 + 133 - 9 = 295. Two of the 6 identity aliases also represent C-to-B upgrades (Journal of Strategic Information Systems and World Wide Web Journal). The legacy diff separately reports one B-to-C downgrade for Personal and Ubiquitous Computing.",
+  "newSerialContinuations": [
+    {
+      "legacyFull": "Frontiers of Information Technology & Electronic Engineering",
+      "officialFull": "ENGINEERING Information Technology & Electronic Engineering（原 Frontiers of Information Technology & Electronic Engineering）",
+      "domain": "交叉/综合/新兴",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "FITEE",
+      "officialAbbr": "EITEE（原 FITEE）",
+      "legacyCatalogSource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/fitee/"
+      },
+      "officialCatalogSource": {
+        "publisher": "浙江大学出版社（原 Springer）",
+        "ccfUrl": "https://www.academax.com/EITEE/home"
+      },
+      "historicalLetpubIdentity": {
+        "journalid": "10004",
+        "issn": "2095-9184",
+        "eissn": "2095-9230",
+        "name": "Frontiers of Information Technology & Electronic Engineering",
+        "publisher": "Zhejiang University Press",
+        "officialUrl": "https://www.springer.com/11714",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/fitee/"
+      },
+      "currentIdentity": {
+        "issn": "3069-8928",
+        "eissn": "3069-8936",
+        "publisherTitle": "ENGINEERING Information Technology & Electronic Engineering",
+        "sourceUrl": "https://www.academax.com/EITEE/home"
+      },
+      "continuationEvidence": [
+        "Publisher introduction identifies EITEE as the current title and states FITEE ran 2015–2025.",
+        "Publisher current site lists print/electronic ISSNs 3069-8928/3069-8936."
+      ],
+      "identityDecision": "Catalog title continuity only. Historical LetPub journalid 10004 and serials 2095-9184/2095-9230 identify FITEE, not the current title or its metrics."
+    },
+    {
+      "legacyFull": "IEEE/ACM Transactions on Audio Speech and Language Processing",
+      "officialFull": "IEEE Transactions on Audio, Speech and Language Processing（原 IEEE/ACM Transactions on Audio, Speech and Language Processing）",
+      "domain": "人工智能",
+      "legacyLevel": "B",
+      "officialLevel": "B",
+      "legacyAbbr": "TASLP",
+      "officialAbbr": "TASLP",
+      "legacyCatalogSource": {
+        "publisher": "IEEE",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/taslp/"
+      },
+      "officialCatalogSource": {
+        "publisher": "IEEE",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/taslp/"
+      },
+      "historicalLetpubIdentity": {
+        "journalid": "9779",
+        "issn": "2329-9290",
+        "eissn": "2329-9304",
+        "name": "IEEE-ACM Transactions on Audio Speech and Language Processing",
+        "publisher": "IEEE Advancing Technology for Humanity",
+        "officialUrl": "",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/taslp/"
+      },
+      "currentIdentity": {
+        "issn": "2998-4173",
+        "eissn": null,
+        "publisherTitle": "IEEE Transactions on Audio, Speech and Language Processing",
+        "sourceUrl": "https://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=10723155"
+      },
+      "continuationEvidence": [
+        "IEEE Xplore identifies the current title at punumber 10723155, 2025–present.",
+        "ISSN Portal confirms the current 2025 title record with ISSN 2998-4173.",
+        "NLM records the IEEE/ACM serial as 2014–2024 and says it is continued by the current IEEE title."
+      ],
+      "identityDecision": "Catalog title continuity only. Historical LetPub journalid 9779 and serials 2329-9290/2329-9304 do not identify the current title or its metrics. Current eISSN left unknown because IEEE title list and inspected ISSN Portal medium labels conflict."
+    },
+    {
+      "legacyFull": "Information Retrieval Journal",
+      "officialFull": "Discover Computing（原 Information Retrieval Journal）",
+      "domain": "数据库/数据挖掘/内容检索",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "IR",
+      "officialAbbr": "（原 IR）",
+      "legacyCatalogSource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/ir/"
+      },
+      "officialCatalogSource": {
+        "publisher": "Springer",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/ir/"
+      },
+      "historicalLetpubIdentity": {
+        "journalid": "3566",
+        "issn": "1386-4564",
+        "eissn": "1573-7659",
+        "name": "Information Retrieval Journal",
+        "publisher": "Springer Netherlands",
+        "officialUrl": "https://www.springer.com/10791",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/ir/"
+      },
+      "currentIdentity": {
+        "issn": "2948-2984",
+        "eissn": "2948-2992",
+        "publisherTitle": "Discover Computing",
+        "sourceUrl": "https://link.springer.com/journal/10791"
+      },
+      "continuationEvidence": [
+        "Springer current journal page identifies Discover Computing and labels electronic ISSN 2948-2992.",
+        "ISSN Portal confirms current Discover Computing serials 2948-2984 (print) and 2948-2992 (online), beginning 2024.",
+        "Springer states Information Retrieval Journal moved into the Discover series as Discover Computing in 2024; ISSN history records 1386-4564/1573-7659 for the preceding title."
+      ],
+      "identityDecision": "Catalog title continuity only. LetPub ID 3566 and serials 1386-4564/1573-7659 refer to the preceding Information Retrieval Journal and must not supply current metrics or current identity. Current eISSN is 2948-2992, not 2948-9679."
+    }
+  ],
+  "additionalIdentityFindings": [
+    {
+      "legacyFull": "IEEE/ACM Transactions on Networking",
+      "officialFull": "IEEE Transactions on Networking（原 IEEE/ACM Transactions on Networking）",
+      "domain": "计算机网络",
+      "legacyLevel": "A",
+      "officialLevel": "A",
+      "legacyAbbr": "TON",
+      "officialAbbr": "TON",
+      "legacyCatalogSource": {
+        "publisher": "IEEE/ACM",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/ton/"
+      },
+      "officialCatalogSource": {
+        "publisher": "IEEE",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/ton/"
+      },
+      "currentIdentity": {
+        "issn": null,
+        "eissn": "2998-4157",
+        "publisherTitle": "IEEE Transactions on Networking",
+        "sourceUrl": "https://ieeexplore.ieee.org/xpl/aboutJournal.jsp?punumber=10723154"
+      },
+      "historicalIdentity": {
+        "issn": "1063-6692",
+        "eissn": "1558-2566",
+        "title": "IEEE/ACM Transactions on Networking",
+        "years": "1993–2024"
+      },
+      "continuationEvidence": [
+        "IEEE Xplore current journal page identifies current IEEE title and publication number 10723154.",
+        "IEEE Xplore 2025 issue records give Electronic ISSN 2998-4157.",
+        "ISSN Portal confirms 2998-4157 as current online ISSN and old 1558-2566 ended 2024.",
+        "IEEE publisher May 2025 title list lists 2998-4157 in ISSN and eISSN columns."
+      ],
+      "identityDecision": "Catalog title continuity only. Historical IEEE/ACM ISSNs 1063-6692/1558-2566 must not be used to match current identity or reuse former LetPub metrics."
+    }
+  ]
+}

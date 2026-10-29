@@ -1,4 +1,5 @@
 const { isRateLimitedHTML, requestHTML } = require('./runtime');
+const { normalizeISSN } = require('./identity');
 
 // Bump this when partition extraction changes in a way that requires retrying
 // entries previously rejected because no CAS partition was found.
@@ -33,7 +34,13 @@ function decodeHTML(value) {
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
     .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>');
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(?:x([\da-f]{1,6})|(\d{1,7}));/gi, (entity, hex, decimal) => {
+      const codePoint = Number.parseInt(hex || decimal, hex ? 16 : 10);
+      if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10ffff
+        || (codePoint >= 0xd800 && codePoint <= 0xdfff)) return entity;
+      return String.fromCodePoint(codePoint);
+    });
 }
 
 function strip(html) {
@@ -404,8 +411,8 @@ function parseDetailHTML(journalid, html, { fetchedAt = new Date().toISOString()
     letpubUrl: 'https://www.letpub.com.cn/index.php?journalid=' + id + '&page=journalapp&view=detail',
     fetchedAt,
     name: nameMatch ? strip(nameMatch[1]) : '',
-    issn: nextCell(html, '期刊ISSN'),
-    eissn: nextCell(html, 'E-ISSN'),
+    issn: normalizeISSN(nextCell(html, '期刊ISSN')),
+    eissn: normalizeISSN(nextCell(html, 'E-ISSN')),
     publisher: nextCell(html, '出版商'),
     country: nextCell(html, '出版国家或地区'),
     language: nextCell(html, '出版语言'),

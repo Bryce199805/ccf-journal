@@ -7,11 +7,17 @@ RUN npm ci
 COPY web/ .
 RUN npm run build
 
-# Stage 2: Convert the two manually maintained datasets into server import data
+# Stage 2: Merge the official journal catalog with metrics and conference data
 FROM node:20-alpine AS catalog-builder
 
 WORKDIR /catalog
 COPY scraper/import_data.js /catalog/scraper/import_data.js
+COPY scraper/ccf_title_aliases.json /catalog/scraper/ccf_title_aliases.json
+COPY scraper/ccf_identity_hints.json /catalog/scraper/ccf_identity_hints.json
+COPY scraper/lib/catalog_merge.js scraper/lib/identity.js /catalog/scraper/lib/
+COPY data/all_journals_correct.json /catalog/data/all_journals_correct.json
+COPY data/ccf_catalog_meta.json /catalog/data/ccf_catalog_meta.json
+COPY data/journal_identity_corrections.json /catalog/data/journal_identity_corrections.json
 COPY data/letpub_full.json /catalog/data/letpub_full.json
 COPY data/all_conferences_correct.json /catalog/data/all_conferences_correct.json
 RUN node /catalog/scraper/import_data.js \

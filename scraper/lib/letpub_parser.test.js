@@ -34,6 +34,12 @@ test('parses dynamic impact-factor label and semantic CAS years in changed order
   assert.match(detail.letpubUrl, /journalid=101/);
 });
 
+test('normalizes unavailable ISSN labels to empty values', () => {
+  const html = fixture('ccf_missing_partition.html').replace('5555-5555', 'N/A');
+  const detail = parseDetailHTML('500', html);
+  assert.equal(detail.issn, '');
+});
+
 test('classifies WOS absence without treating zero as a real partition', () => {
   const notIndexed = '<div>（此期刊未被最新的JCR期刊引证报告收录）</div>'
     + '<div>WOS分区等级：0区 暂无按学科分区信息</div>';

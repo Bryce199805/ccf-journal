@@ -8,7 +8,10 @@ server/db/import_data.json
 scraper/output
 deploy/*.tar.gz
 
-# The image build only needs the two manually synchronized datasets.
+# Catalog sources and metric snapshots required by the import adapter.
 data/*
 !data/letpub_full.json
 !data/all_conferences_correct.json
+!data/all_journals_correct.json
+!data/ccf_catalog_meta.json
+!data/journal_identity_corrections.json

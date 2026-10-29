@@ -1,0 +1,41 @@
+{
+  "organization": "中国计算机学会（CCF）",
+  "catalog": "中国计算机学会推荐国际学术会议和期刊目录",
+  "edition": "第七版",
+  "publishedAt": "2026-03-31",
+  "erratumUpdatedAt": "2026-04-09",
+  "retrievedAt": "2026-10-26T12:49:06+00:00",
+  "officialAnnouncement": "https://www.ccf.org.cn/Academic_Evaluation/By_category/",
+  "officialCategoryPages": [
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/ARCH_DCP_SS/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/CN/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/NIS/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/TCSE_SS_PDL/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/DM_CS/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/TCS/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/CGAndMT/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/AI/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/HCIAndPC/",
+    "https://www.ccf.org.cn/Academic_Evaluation/By_category/Cross_Compre_Emerging/"
+  ],
+  "primaryDocument": "第七版中国计算机学会推荐国际学术会议和期刊目录（正式版），CCF 公告附件；公告注明 2026-04-09 更新修正一处勘误。",
+  "formalPdfMirror": "https://github.com/LovenSar/CCF_RANK/blob/55ca5eae67c26d518c6a8b71ee5827a053086f20/第七版中国计算机学会推荐国际学术会议和期刊目录（正式版）-CCF-ABC.pdf",
+  "formalPdfSha256": "271b630b576bf8a4f802e767f5694caded93680e22b3a19bef7902591c45c1d3",
+  "formalPdfCreationDate": "2026-04-09T11:13:27+08:00",
+  "formalPdfModificationDate": "2026-04-09T11:13:27+08:00",
+  "pdfAudit": {
+    "path": "scraper/fixtures/catalog/ccf_pdf_transcription_audit.json",
+    "verifiedRelations": 295,
+    "uniqueJournalTitles": 291
+  },
+  "structuredTranscription": "https://raw.githubusercontent.com/haozhou-wong/ccf-recommended-list-2026-markdown/dcf1a02335fb44dcaf785997d5c535ab41628a16/data/ccf-2026.json",
+  "transcriptionCommit": "dcf1a02335fb44dcaf785997d5c535ab41628a16",
+  "notes": [
+    "The CCF announcement is authoritative; all 295 journal relations in the pinned transcription were checked by domain, level, sequence, abbreviation, and title against the formal PDF.",
+    "The checked PDF metadata records creation and modification at 2026-04-09 11:13:27 +08:00, consistent with the announcement's 2026-04-09 erratum update.",
+    "The CCF announcement does not identify the corrected row; the audit verifies the complete post-erratum PDF snapshot and records its checksum.",
+    "Static CCF category pages were not treated as the source of truth because their contents may lag the formal PDF.",
+    "Officially blank abbreviations remain empty. The line-wrapped PDF abbreviation JCOMPLEXI / TY is normalized to JCOMPLEXITY.",
+    "A journal appearing in multiple CCF domains remains a separate domain relation in all_journals_correct.json."
+  ]
+}

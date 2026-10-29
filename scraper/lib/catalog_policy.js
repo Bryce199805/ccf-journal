@@ -1,3 +1,5 @@
+const POLICY_VERSION = 2;
+
 function availableCASPartitions(data) {
   const partitions = { ...(data?.casPartitions || {}) };
   for (const [key, value] of Object.entries(data || {})) {
@@ -37,16 +39,16 @@ function evaluateCatalogEntry(data, { isCCF = false } = {}) {
     actualBigCategory: latest.bigCategory || null,
     actualBigZone: latest.bigZone || null
   };
-  if (!['1区', '2区'].includes(latest.bigZone)) return {
+  if (!['1区', '2区', '3区'].includes(latest.bigZone)) return {
     accepted: false,
-    reason: 'cas_big_zone_not_1_or_2',
+    reason: 'cas_big_zone_not_1_or_2_or_3',
     latestCASYear: latest.year,
     actualBigCategory: latest.bigCategory,
     actualBigZone: latest.bigZone || null
   };
   return {
     accepted: true,
-    reason: 'cas_computer_science_zone_1_or_2',
+    reason: 'cas_computer_science_zone_1_or_2_or_3',
     latestCASYear: latest.year,
     actualBigCategory: latest.bigCategory,
     actualBigZone: latest.bigZone
@@ -63,4 +65,4 @@ function isFresh(completed, refreshDays = 30, now = Date.now()) {
   return Number.isFinite(timestamp) && now - timestamp < refreshDays * 24 * 60 * 60 * 1000;
 }
 
-module.exports = { availableCASPartitions, evaluateCatalogEntry, getLatestCASPartition, isEligibleNonCCF, isFresh };
+module.exports = { POLICY_VERSION, availableCASPartitions, evaluateCatalogEntry, getLatestCASPartition, isEligibleNonCCF, isFresh };

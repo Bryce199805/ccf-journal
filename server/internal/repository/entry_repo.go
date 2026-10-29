@@ -31,7 +31,7 @@ const entryColumns = `id, type, ccf_domain, ccf_level, ccf_abbr, ccf_full,
 	is_ccf, catalog_source, inclusion_reason, last_scraped_at, last_scrape_error`
 
 const listColumns = `e.id, e.type, e.ccf_domain, e.ccf_level, e.ccf_abbr, e.ccf_full,
-	e.ccf_publisher, e.ccf_url, e.letpub_url, e.journalid, e.name, e.journal_abbr, e.issn, e.eissn, e.publisher,
+	e.ccf_publisher, e.ccf_url, e.ccf_relations, e.letpub_url, e.journalid, e.name, e.journal_abbr, e.issn, e.eissn, e.publisher,
 	e.impact_factor, e.cite_score, e.h_index,
 	e.cas2025, e.xinrui, e.wos_zone, e.wos_status, e.wos_reason, e.sci_type, e.article_count, e.letpub_score,
 	e.is_ccf, e.catalog_source, e.inclusion_reason, e.last_scraped_at`
@@ -53,6 +53,10 @@ func escapeLike(s string) string {
 func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, error) {
 	var conditions []string
 	var args []interface{}
+	// Archived rows remain addressable for existing favorites and notes.
+	if !q.Favorites {
+		conditions = append(conditions, "e.catalog_source != 'historical_ccf'")
+	}
 
 	// Build WHERE conditions
 	if q.Type != "" {
@@ -62,23 +66,32 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	if q.Catalog == "ccf" {
 		conditions = append(conditions, "e.is_ccf = 1")
 	} else if q.Catalog == "non_ccf" {
-		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0")
+		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0 AND e.catalog_source != 'historical_ccf'")
 	}
-	if domains := q.Domains(); len(domains) > 0 {
-		domainConditions := make([]string, len(domains))
-		for i, d := range domains {
-			domainConditions[i] = "(e.ccf_domain = ? OR e.ccf_relations LIKE ? ESCAPE '\\')"
-			args = append(args, d, `%"domain":"`+escapeLike(d)+`"%`)
+	domains, levels := q.Domains(), q.Levels()
+	if len(domains) > 0 || len(levels) > 0 {
+		primary, related := []string{}, []string{}
+		primaryArgs, relatedArgs := []interface{}{}, []interface{}{}
+		for _, field := range []struct {
+			values          []string
+			column, jsonKey string
+		}{
+			{domains, "e.ccf_domain", "domain"}, {levels, "e.ccf_level", "level"},
+		} {
+			if len(field.values) == 0 {
+				continue
+			}
+			placeholders := strings.TrimSuffix(strings.Repeat("?,", len(field.values)), ",")
+			primary = append(primary, field.column+" IN ("+placeholders+")")
+			related = append(related, "json_extract(relation.value, '$."+field.jsonKey+"') IN ("+placeholders+")")
+			for _, value := range field.values {
+				primaryArgs = append(primaryArgs, value)
+				relatedArgs = append(relatedArgs, value)
+			}
 		}
-		conditions = append(conditions, "("+strings.Join(domainConditions, " OR ")+")")
-	}
-	if levels := q.Levels(); len(levels) > 0 {
-		levelConditions := make([]string, len(levels))
-		for i, l := range levels {
-			levelConditions[i] = "(e.ccf_level = ? OR e.ccf_relations LIKE ? ESCAPE '\\')"
-			args = append(args, l, `%"level":"`+escapeLike(l)+`"%`)
-		}
-		conditions = append(conditions, "("+strings.Join(levelConditions, " OR ")+")")
+		conditions = append(conditions, "(("+strings.Join(primary, " AND ")+") OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(e.ccf_relations) THEN e.ccf_relations ELSE '[]' END) relation WHERE "+strings.Join(related, " AND ")+"))")
+		args = append(args, primaryArgs...)
+		args = append(args, relatedArgs...)
 	}
 	if casZones := q.CASZones(); len(casZones) > 0 {
 		zoneConditions := make([]string, len(casZones))
@@ -202,7 +215,7 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		var tagsJSON string
 		err := rows.Scan(
 			&item.ID, &item.Type, &item.CCFDomain, &item.CCFLevel,
-			&item.CCFAbbr, &item.CCFFull, &item.CCFPublisher, &item.CCFUrl,
+			&item.CCFAbbr, &item.CCFFull, &item.CCFPublisher, &item.CCFUrl, &item.CCFRelations,
 			&item.LetPubUrl, &item.JournalID, &item.Name, &item.JournalAbbr, &item.ISSN, &item.EISSN, &item.Publisher,
 			&item.ImpactFactor, &item.CiteScore,
 			&item.HIndex, &item.CAS2025, &item.Xinrui, &item.WoSZone, &item.WoSStatus, &item.WoSReason,
@@ -231,7 +244,11 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	}
 
 	// Total counts
-	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal'").Scan(&stats.TotalJournals); err != nil {
+	var catalogJSON string
+	if err := r.db.QueryRow("SELECT value FROM catalog_metadata WHERE key = 'journal_catalog'").Scan(&catalogJSON); err == nil && json.Valid([]byte(catalogJSON)) {
+		stats.JournalCatalog = json.RawMessage(catalogJSON)
+	}
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf'").Scan(&stats.TotalJournals); err != nil {
 		return nil, err
 	}
 	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'conference'").Scan(&stats.TotalConferences); err != nil {
@@ -240,7 +257,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 1").Scan(&stats.CCFJournals); err != nil {
 		return nil, err
 	}
-	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 0").Scan(&stats.NonCCFJournals); err != nil {
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 0 AND catalog_source != 'historical_ccf'").Scan(&stats.NonCCFJournals); err != nil {
 		return nil, err
 	}
 	var dataUpdatedAt sql.NullString
@@ -257,7 +274,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 
 	// By domain - use separate scope to avoid rows variable reuse
 	func() {
-		rows, err := r.db.Query("SELECT ccf_domain, COUNT(*) FROM entries GROUP BY ccf_domain")
+		rows, err := r.db.Query("SELECT ccf_domain, COUNT(*) FROM entries WHERE catalog_source != 'historical_ccf' GROUP BY ccf_domain")
 		if err != nil {
 			return
 		}
@@ -274,7 +291,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 
 	// By level
 	func() {
-		rows, err := r.db.Query("SELECT ccf_level, COUNT(*) FROM entries GROUP BY ccf_level ORDER BY ccf_level")
+		rows, err := r.db.Query("SELECT ccf_level, COUNT(*) FROM entries WHERE catalog_source != 'historical_ccf' GROUP BY ccf_level ORDER BY ccf_level")
 		if err != nil {
 			return
 		}
@@ -300,7 +317,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 				ELSE '未分区'
 			END as zone,
 			COUNT(*) 
-			FROM entries WHERE type = 'journal' GROUP BY zone ORDER BY zone`)
+			FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf' GROUP BY zone ORDER BY zone`)
 		if err != nil {
 			return
 		}

@@ -1,0 +1,519 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-27T04:44:29.943508+00:00",
+  "scope": "Six blank CCF placeholders, 21 same-series eISSN completions, and an independently verified JSEP predecessor/current-serial separation; predecessor metrics are not copied to the current serial.",
+  "records": [
+    {
+      "title": "ACM Transactions in Quantum Computing",
+      "changes": {
+        "issn": {
+          "before": "",
+          "after": "2643-6809"
+        },
+        "eissn": {
+          "before": "",
+          "after": "2643-6817"
+        },
+        "publisher": {
+          "before": null,
+          "after": "Association for Computing Machinery (ACM)"
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://dl.acm.org/journal/tqc"
+        }
+      },
+      "sources": [
+        "https://www.acm.org/binaries/content/assets/press-releases/2020/december/tqc-launches.pdf",
+        "https://portal.issn.org/resource/ISSN-L/2643-6809",
+        "https://portal.issn.org/resource/ISSN/2643-6817"
+      ]
+    },
+    {
+      "title": "Behaviour & Information Technology",
+      "changes": {
+        "issn": {
+          "before": "",
+          "after": "0144-929X"
+        },
+        "eissn": {
+          "before": "",
+          "after": "1362-3001"
+        },
+        "publisher": {
+          "before": null,
+          "after": "Taylor & Francis"
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://www.tandfonline.com/journals/tbit20"
+        }
+      },
+      "sources": [
+        "https://www.tandfonline.com/action/journalInformation?journalCode=tbit20",
+        "https://portal.issn.org/resource/ISSN-L/0144-929X",
+        "https://portal.issn.org/resource/ISSN/0144-929X",
+        "https://portal.issn.org/resource/ISSN/1362-3001"
+      ]
+    },
+    {
+      "title": "PLOS Computational Biology",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1553-7358"
+        },
+        "publisher": {
+          "before": null,
+          "after": "Public Library of Science (PLOS)"
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://journals.plos.org/ploscompbiol/"
+        }
+      },
+      "sources": [
+        "https://journals.plos.org/ploscompbiol/s/journal-information",
+        "https://journals.plos.org/plosbiology/s/publishing-information",
+        "https://portal.issn.org/resource/ISSN-L/1553-734X",
+        "https://www.ncbi.nlm.nih.gov/nlmcatalog?term=1553-734X%5BISSN%5D",
+        "https://doaj.org/toc/1553-7358"
+      ]
+    },
+    {
+      "title": "The Computer Journal",
+      "changes": {
+        "issn": {
+          "before": "",
+          "after": "0010-4620"
+        },
+        "eissn": {
+          "before": "",
+          "after": "1460-2067"
+        },
+        "publisher": {
+          "before": null,
+          "after": "Oxford University Press (for the British Computer Society)"
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://academic.oup.com/comjnl"
+        }
+      },
+      "sources": [
+        "https://academic.oup.com/comjnl"
+      ]
+    },
+    {
+      "title": "The Journal of Symbolic Logic",
+      "changes": {
+        "issn": {
+          "before": "",
+          "after": "0022-4812"
+        },
+        "eissn": {
+          "before": "",
+          "after": "1943-5886"
+        },
+        "publisher": {
+          "before": null,
+          "after": "Cambridge University Press"
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://www.cambridge.org/core/journals/journal-of-symbolic-logic"
+        }
+      },
+      "sources": [
+        "https://www.cambridge.org/core/journals/journal-of-symbolic-logic"
+      ]
+    },
+    {
+      "title": "Virtual Reality & Intelligent Hardware",
+      "changes": {
+        "issn": {
+          "before": "",
+          "after": "2096-5796"
+        },
+        "eissn": {
+          "before": "",
+          "after": "2666-1209"
+        },
+        "publisher": {
+          "before": null,
+          "after": "KeAi Communications Co., Ltd."
+        },
+        "officialUrl": {
+          "before": null,
+          "after": "https://www.keaipublishing.com/en/journals/virtual-reality-and-intelligent-hardware"
+        }
+      },
+      "sources": [
+        "https://www.keaipublishing.com/en/journals/virtual-reality-and-intelligent-hardware"
+      ]
+    },
+    {
+      "title": "Annals of Pure and Applied Logic",
+      "journalid": "634",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-2461"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-2461"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Computer Communications",
+      "journalid": "1982",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-703X"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-703X"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Computer Languages, Systems and Structures",
+      "journalid": "1986",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-6866"
+        }
+      },
+      "sources": [
+        "https://www.ncbi.nlm.nih.gov/nlmcatalog/101670243"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Discrete Applied Mathematics",
+      "journalid": "2315",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-6771"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1872-6771"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Fundamenta Informaticae",
+      "journalid": "2961",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1875-8681"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1875-8681"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Future Generation Computer Systems",
+      "journalid": "2972",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-7115"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1872-7115"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Information and Software Technology",
+      "journalid": "3562",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-6025"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-6025"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Integration, the VLSI Journal",
+      "journalid": "3606",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-7522"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1872-7522"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Journal of Systems Architecture: Embedded Software Design",
+      "journalid": "5214",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-6165"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-6165"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Journal of Systems and Software",
+      "journalid": "5213",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-1228"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN-L/0164-1212"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Parallel Computing",
+      "journalid": "6492",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-7336"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1872-7336"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Performance Evaluation: An International Journal",
+      "journalid": "6554",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-745X"
+        }
+      },
+      "sources": [
+        "https://www.sciencedirect.com/journal/performance-evaluation"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Pervasive and Mobile Computing",
+      "journalid": "8947",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-1589"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-1589"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Science of Computer Programming",
+      "journalid": "7410",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1872-7964"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1872-7964"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Theoretical Computer Science",
+      "journalid": "7797",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1879-2294"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1879-2294"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "JOURNAL OF PROCESS CONTROL",
+      "journalid": "5082",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1873-2771"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1873-2771"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "SIMULATION MODELLING PRACTICE AND THEORY",
+      "journalid": "7510",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1878-1462"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN-L/1569-190X"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Big Data Research",
+      "journalid": "10682",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "2214-580X"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/2214-580X"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Sustainable Computing-Informatics & Systems",
+      "journalid": "10154",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "2210-5387"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/2210-5387"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Entertainment Computing",
+      "journalid": "10775",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "1875-953X"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/1875-953X"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "International Journal of Critical Infrastructure Protection",
+      "journalid": "8849",
+      "changes": {
+        "eissn": {
+          "before": "",
+          "after": "2212-2087"
+        }
+      },
+      "sources": [
+        "https://portal.issn.org/resource/ISSN/2212-2087"
+      ],
+      "verifiedAt": "2026-10-28T03:55:29.761830+00:00",
+      "identityLinkRationale": "The cited authoritative online ISSN record identifies the proposed number as the Online serial for this title and links it to the existing issn/ISSN-L; no title-identity substitution is inferred."
+    },
+    {
+      "title": "Journal of Software: Evolution and Process",
+      "changes": {
+        "name": {
+          "before": "JOURNAL OF SOFTWARE MAINTENANCE AND EVOLUTION-RESEARCH AND PRACTICE",
+          "after": "Journal of Software: Evolution and Process"
+        },
+        "journalid": {
+          "before": "5156",
+          "after": ""
+        },
+        "issn": {
+          "before": "1532-060X",
+          "after": "2047-7473"
+        },
+        "eissn": {
+          "before": "",
+          "after": "2047-7481"
+        },
+        "officialUrl": {
+          "before": "https://onlinelibrary.wiley.com/journal/20477481",
+          "after": "https://onlinelibrary.wiley.com/journal/20477481"
+        },
+        "submissionUrl": {
+          "before": "https://mc.manuscriptcentral.com/jsme",
+          "after": "https://authors.wiley.com/journal/SMR"
+        }
+      },
+      "sources": [
+        "https://onlinelibrary.wiley.com/page/journal/20477481/homepage/productinformation.html",
+        "https://portal.issn.org/resource/ISSN/2047-7473",
+        "https://portal.issn.org/resource/ISSN/2047-7481"
+      ],
+      "kind": "predecessor_identity_correction",
+      "metricsHandling": "Predecessor snapshot retained separately; current-serial metrics remain unknown until verified."
+    }
+  ],
+  "updatedAt": "2026-10-29T08:32:30.472016+00:00",
+  "retiredJournalIdentities": [
+    {
+      "journalid": "5156",
+      "issn": "1532-060X",
+      "expectedName": "JOURNAL OF SOFTWARE MAINTENANCE AND EVOLUTION-RESEARCH AND PRACTICE",
+      "legacyFull": "Journal of Software Maintenance and Evolution: Research and Practice",
+      "successorFull": "Journal of Software: Evolution and Process",
+      "successorIssn": "2047-7473",
+      "reason": "旧题名来源快照；与现刊独立序号分离，保留历史指标及个人引用"
+    }
+  ]
+}

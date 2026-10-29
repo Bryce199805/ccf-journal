@@ -27,7 +27,7 @@ test('detects journalid/ISSN conflicts, missing CCF relations, ineligible Non-CC
       type: 'journal',
       isCCF: false,
       issn: '1111-1111',
-      cas2025: { bigCategory: '计算机科学', bigZone: '3区' }
+      cas2025: { bigCategory: '计算机科学', bigZone: '4区' }
     },
     {
       journalid: 'same',

@@ -19,9 +19,19 @@ test('uses the newest available CAS year, independent of object order', () => {
 test('returns structured admission and rejection reasons', () => {
   assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '计算机科学', bigZone: '1区' } }).accepted, true);
   assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '计算机科学', bigZone: '2区' } }).accepted, true);
-  assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '计算机科学', bigZone: '3区' } }).reason, 'cas_big_zone_not_1_or_2');
+  assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '计算机科学', bigZone: '3区' } }).accepted, true);
+  assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '计算机科学', bigZone: '4区' } }).reason, 'cas_big_zone_not_1_or_2_or_3');
   assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '工程技术', bigZone: '1区' } }).reason, 'cas_big_category_not_computer_science');
   assert.equal(evaluateCatalogEntry({}).reason, 'missing_cas_partition');
+});
+
+test('zone 3 admission requires the latest official CAS computer science major category', () => {
+  assert.equal(evaluateCatalogEntry({
+    cas2023: { bigCategory: '计算机科学', bigZone: '1区' },
+    cas2025: { bigCategory: '计算机科学', bigZone: '4区' },
+    xinrui: { bigCategory: '计算机科学', bigZone: '3区' }
+  }).accepted, false);
+  assert.equal(evaluateCatalogEntry({ cas2025: { bigCategory: '工程技术', bigZone: '3区' } }).accepted, false);
 });
 
 test('CCF is always preserved even without a partition', () => {

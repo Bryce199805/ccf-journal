@@ -1,5 +1,10 @@
 -- CCF Journal & Conference Directory Database Schema
 
+CREATE TABLE IF NOT EXISTS catalog_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,                -- journal / conference

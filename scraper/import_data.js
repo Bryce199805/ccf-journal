@@ -2,14 +2,17 @@
 // Usage: node import_data.js [letpub_full.json] [conferences.json] [output.json]
 const fs = require('fs');
 const path = require('path');
+const { mergeJournalCatalog } = require('./lib/catalog_merge');
 
 const LETPUB_FILE = process.argv[2] || path.join(__dirname, '..', 'data', 'letpub_full.json');
 const CONFERENCES_FILE = process.argv[3] || path.join(__dirname, '..', 'data', 'all_conferences_correct.json');
 const OUTPUT_FILE = process.argv[4] || process.env.IMPORT_OUTPUT_FILE || path.join(__dirname, '..', 'server', 'db', 'import_data.json');
 
-function buildImportData(letpubData, conferencesData) {
+function buildImportData(letpubData, conferencesData, journalCatalog, identityCorrections = {}) {
     return {
-        journals: letpubData.map(j => ({
+        journalCatalogComplete: !!journalCatalog,
+        retiredJournalIdentities: identityCorrections.retiredJournalIdentities || [],
+        journals: (journalCatalog ? mergeJournalCatalog(letpubData, journalCatalog) : letpubData).map(j => ({
             ...j,
             // Existing datasets predate source metadata and contain CCF journals.
             isCCF: j.isCCF ?? true,
@@ -41,7 +44,14 @@ function main() {
     console.log(`Conference entries: ${confEntries.length}`);
 
     // Generate a JSON file that the Go server can import directly
-    const importData = buildImportData(letpubData, conferencesData);
+    const catalogFile = process.env.CCF_SOURCE_FILE || path.join(__dirname, '..', 'data', 'all_journals_correct.json');
+    const journalCatalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+    const correctionsFile = path.join(__dirname, '..', 'data', 'journal_identity_corrections.json');
+    const identityCorrections = fs.existsSync(correctionsFile)
+        ? JSON.parse(fs.readFileSync(correctionsFile, 'utf8')) : {};
+    const importData = buildImportData(letpubData, conferencesData, journalCatalog, identityCorrections);
+    const metadataFile = process.env.CCF_METADATA_FILE || path.join(__dirname, '..', 'data', 'ccf_catalog_meta.json');
+    if (fs.existsSync(metadataFile)) importData.journalCatalog = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
     fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(importData, null, 2));
     console.log(`Generated import JSON: ${OUTPUT_FILE}`);

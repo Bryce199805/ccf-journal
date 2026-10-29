@@ -109,13 +109,20 @@ async function fetchWithRetry(url, options = {}) {
       });
       const body = typeof response === 'string' ? response : response.body;
       const statusCode = typeof response === 'string' ? 200 : response.statusCode;
-      if (statusCode === 429 || isRateLimitedHTML(body)) {
+      const terminalKind = typeof response === 'string' ? '' : response.terminalKind || '';
+      if (terminalKind) {
+        last = { ok: false, kind: terminalKind, statusCode, body, attempts: attempt, url };
+      } else if (statusCode === 429 || isRateLimitedHTML(body)) {
         last = { ok: false, kind: 'rate_limited', statusCode, body, attempts: attempt, url };
+      } else if (statusCode >= 500 && statusCode < 600) {
+        last = { ok: false, kind: 'server_error', statusCode, body, attempts: attempt, url };
       } else if (statusCode >= 400) {
         last = { ok: false, kind: 'http_error', statusCode, body, attempts: attempt, url };
       } else {
         return { ok: true, statusCode, body, attempts: attempt, url };
       }
+      if (last.kind === 'rate_limited') return last;
+      if (typeof response !== 'string' && response.retryable === false) return last;
     } catch (error) {
       last = { ok: false, kind: 'network_error', error: error.message, attempts: attempt, url };
     }

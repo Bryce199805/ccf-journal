@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "retrievedAt": "2026-10-27T04:44:29Z",
+  "sourceScope": "Authoritative current serial identities for CCF lookup and conflict guards, including six blank placeholders verified during the 2026-10-27 catalog audit. Historical serials are excluded from current matching.",
+  "excludedTasks": [
+    "ACM Conference on Supporting Group Work",
+    "ACM International Conference on Interactive Tabletops and Surfaces",
+    "ACM International Conference on Multimodal Interaction",
+    "ACM International Conference on Mobile Human Computer Interaction",
+    "Asia Pacific Conference on Computer Human Interaction"
+  ],
+  "items": [
+    {
+      "officialFull": "ACM Transactions on Recommender Systems",
+      "issn": null,
+      "eissn": "2770-6699",
+      "publisherTitle": "Transactions on Recommender Systems",
+      "sourceUrl": "https://publishers.issn.org/resource/ISSN/2770-6699",
+      "catalogUrl": "https://dblp.uni-trier.de/db/journals/tors/index.html",
+      "retrievedAt": "2026-10-26T13:48:30Z",
+      "evidence": "DBLP venue metadata and ISSN Portal record identify 2770-6699 as online/electronic ISSN; no print ISSN was found. ACM journal URL is https://dl.acm.org/journal/tors.",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://dblp.org/db/journals/tors/index.html",
+          "claim": "DBLP labels 2770-6699 as online ISSN."
+        }
+      ]
+    },
+    {
+      "officialFull": "ACM Transactions on Evolutionary Learning and Optimization",
+      "issn": "2688-299X",
+      "eissn": "2688-3007",
+      "publisherTitle": "ACM Transactions on Evolutionary Learning and Optimization",
+      "sourceUrl": "https://dblp.org/db/journals/telo/index.html",
+      "catalogUrl": "https://dblp.uni-trier.de/db/journals/telo/index.html",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title, print ISSN, and electronic ISSN."
+    },
+    {
+      "officialFull": "ACM Journal on Autonomous Transportation Systems",
+      "issn": null,
+      "eissn": "2833-0528",
+      "publisherTitle": "ACM journal on autonomous transportation systems",
+      "sourceUrl": "https://portal.issn.org/resource/ISSN/2833-0528",
+      "catalogUrl": "",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "ISSN Portal record identifies the title, online ISSN, publisher ACM, and ACM journal URL. CCF has no catalog URL for this title."
+    },
+    {
+      "officialFull": "ACM Distributed Ledger Technologies: Research and Practice",
+      "issn": "2769-6472",
+      "eissn": "2769-6480",
+      "publisherTitle": "Distributed Ledger Technologies: Research and Practice",
+      "sourceUrl": "https://dblp.org/db/journals/distribledger/index.html",
+      "catalogUrl": "https://dblp.uni-trier.de/db/journals/distribledger/index.html",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "IEEE Transactions on Very Large Scale Integration (VLSI) Systems",
+      "issn": "1063-8210",
+      "eissn": "1557-9999",
+      "publisherTitle": "IEEE Transactions on Very Large Scale Integration (VLSI) Systems",
+      "sourceUrl": "https://dblp.org/db/journals/tvlsi/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/tvlsi/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Journal of Systems Architecture: Embedded Software Design",
+      "issn": "1383-7621",
+      "eissn": "1873-6165",
+      "publisherTitle": "Journal of Systems Architecture",
+      "sourceUrl": "https://dblp.org/db/journals/jsa/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/jsa/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue info identifies Journal of Systems Architecture and current print/electronic ISSNs; CCF title includes the descriptor “Embedded Software Design”."
+    },
+    {
+      "officialFull": "Performance Evaluation: An International Journal",
+      "issn": "0166-5316",
+      "eissn": "1872-745X",
+      "publisherTitle": "Performance Evaluation",
+      "sourceUrl": "https://dblp.org/db/journals/pe/index.html",
+      "catalogUrl": "https://dblp.org/db/journals/pe/index.html",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Concurrency and Computation: Practice and Experience",
+      "issn": "1532-0626",
+      "eissn": "1532-0634",
+      "publisherTitle": "Concurrency and Computation: Practice and Experience",
+      "sourceUrl": "https://onlinelibrary.wiley.com/journal/15320634",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/concurrency/",
+      "retrievedAt": "2026-10-26T13:48:30Z",
+      "evidence": "Wiley current journal page explicitly labels print ISSN 1532-0626 and online ISSN 1532-0634. ISSN Portal lists 1040-3108 for the preceding title Concurrency, Practice and Experience; it is historical and must not be used as the current journal serial.",
+      "legacyIssns": [
+        {
+          "title": "Concurrency: Practice and Experience",
+          "issn": "1040-3108",
+          "medium": "print",
+          "note": "Preceding title; not current serial ISSN."
+        },
+        {
+          "title": "Concurrency: Practice and Experience",
+          "issn": "1096-9128",
+          "medium": "online",
+          "note": "Earlier online ISSN, not current title ISSN."
+        }
+      ],
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/1040-3108",
+          "claim": "ISSN Portal title record identifies 1040-3108 as the preceding print title Concurrency, practice and experience."
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/1532-0634",
+          "claim": "ISSN Portal confirms 1532-0634 is the online medium, linked to print ISSN 1532-0626."
+        }
+      ]
+    },
+    {
+      "officialFull": "Future Generation Computer Systems",
+      "issn": "0167-739X",
+      "eissn": "1872-7115",
+      "publisherTitle": "Future Generation Computer Systems",
+      "sourceUrl": "https://dblp.org/db/journals/fgcs/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/fgcs",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Integration, the VLSI Journal",
+      "issn": "0167-9260",
+      "eissn": "1872-7522",
+      "publisherTitle": "Integration, the VLSI Journal",
+      "sourceUrl": "https://dblp.org/db/journals/integration/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/integration",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs and links the publisher."
+    },
+    {
+      "officialFull": "The Journal of Supercomputing",
+      "issn": "0920-8542",
+      "eissn": "1573-0484",
+      "publisherTitle": "The Journal of Supercomputing",
+      "sourceUrl": "https://dblp.org/db/journals/tjs/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/tjs/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue search record gives title and print/electronic ISSNs; linked publisher is Springer."
+    },
+    {
+      "officialFull": "IEEE Transactions on Circuits and Systems I: Regular Papers",
+      "issn": "1549-8328",
+      "eissn": "1558-0806",
+      "publisherTitle": "IEEE Transactions on Circuits and Systems I: Regular Papers",
+      "sourceUrl": "https://dblp.org/db/journals/tcasi/index.html",
+      "catalogUrl": "https://dblp.org/db/journals/tcasI/index.html",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue record gives print/electronic ISSNs; IEEE CAS publication page confirms the journal series."
+    },
+    {
+      "officialFull": "IEEE Transactions on Networking（原 IEEE/ACM Transactions on Networking）",
+      "issn": null,
+      "eissn": "2998-4157",
+      "publisherTitle": "IEEE Transactions on Networking",
+      "sourceUrl": "https://ieeexplore.ieee.org/xpl/aboutJournal.jsp?punumber=10723154",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/ton/",
+      "retrievedAt": "2026-10-26T14:24:00Z",
+      "evidence": "IEEE Xplore identifies the current IEEE Transactions on Networking series (publication number 10723154); 2025 Xplore issues explicitly label Electronic ISSN 2998-4157. ISSN Portal confirms 2998-4157 as the current online serial (records 2025 issues). IEEE May 2025 title list lists 2998-4157 in both ISSN/eISSN columns. The previous IEEE/ACM title uses 1063-6692 print and 1558-2566 online through 2024; neither is current identity.",
+      "legacyIssns": [
+        {
+          "title": "IEEE/ACM Transactions on Networking",
+          "issn": "1063-6692",
+          "medium": "print",
+          "years": "1993–2024"
+        },
+        {
+          "title": "IEEE/ACM Transactions on Networking",
+          "issn": "1558-2566",
+          "medium": "online",
+          "years": "1993–2024"
+        }
+      ],
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/2998-4157",
+          "claim": "ISSN Portal identifies 2998-4157 as current online serial; notes cite 2025 Xplore issues."
+        },
+        {
+          "sourceUrl": "https://open.ieee.org/wp-content/uploads/IEEE-Title-List-May-2025.pdf",
+          "claim": "IEEE publisher title list identifies IEEE Transactions on Networking and lists 2998-4157 in ISSN and eISSN columns."
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/1063-6692",
+          "claim": "ISSN Portal records the prior IEEE/ACM title serial 1063-6692 (print) and 1558-2566 (online), with online ended in 2024."
+        },
+        {
+          "sourceUrl": "https://ieeexplore.ieee.org/xpl/document/10891943",
+          "claim": "IEEE Xplore February 2025 issue record labels the new title and Electronic ISSN 2998-4157."
+        }
+      ]
+    },
+    {
+      "officialFull": "IEEE Transactions on Network and Service Management",
+      "issn": "1932-4537",
+      "eissn": null,
+      "publisherTitle": "IEEE Transactions on Network and Service Management",
+      "sourceUrl": "https://dblp.org/db/journals/tnsm/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/tnsm/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page confirms title and print ISSN; no electronic ISSN was exposed in the inspected record, so it is left null."
+    },
+    {
+      "officialFull": "Networks",
+      "issn": "0028-3045",
+      "eissn": "1097-0037",
+      "publisherTitle": "Networks",
+      "sourceUrl": "https://onlinelibrary.wiley.com/journal/10970037",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/networks/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "Wiley publisher journal page identifies Networks and print/electronic ISSNs. CCF DBLP URL is recorded separately."
+    },
+    {
+      "officialFull": "Computers & Security",
+      "issn": "0167-4048",
+      "eissn": "1872-6208",
+      "publisherTitle": "Computers & Security",
+      "sourceUrl": "https://dblp.org/db/journals/compsec/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/compsec/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Computer Law & Security Review",
+      "issn": "0267-3649",
+      "eissn": "1873-6734",
+      "publisherTitle": "Computer Law & Security Review",
+      "sourceUrl": "https://dblp.org/db/journals/clsr/index.html",
+      "catalogUrl": "https://dblp.org/db/journals/clsr/index.html",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Journal of Software: Evolution and Process",
+      "issn": "2047-7473",
+      "eissn": "2047-7481",
+      "publisherTitle": "Journal of Software: Evolution and Process",
+      "sourceUrl": "https://onlinelibrary.wiley.com/page/journal/20477481/homepage/productinformation.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/smr/",
+      "retrievedAt": "2026-10-29T08:39:53.088725+00:00",
+      "evidence": "Wiley and ISSN authority identify the current title by print 2047-7473 / online 2047-7481. Former title Journal of Software Maintenance and Evolution: Research and Practice used 1532-060X / 1532-0618 through 2011; those must not identify the current title.",
+      "legacyIssns": [
+        {
+          "title": "Journal of Software Maintenance and Evolution: Research and Practice",
+          "issn": "1532-060X",
+          "medium": "print",
+          "years": "2001–2011"
+        },
+        {
+          "title": "Journal of Software Maintenance and Evolution: Research and Practice",
+          "issn": "1532-0618",
+          "medium": "online",
+          "years": "2001–2011"
+        }
+      ],
+      "journalid": "9548",
+      "providerCandidateSource": {
+        "file": "scraper/output/non_ccf_candidates.json",
+        "sourcePage": 23,
+        "cataloguedTitle": "Journal of Software-Evolution and Process",
+        "cataloguedISSN": "2047-7473",
+        "note": "Discovery candidate only. The requested detail must independently pass the current serial and title checks; the candidate ID is not proof of scientific data."
+      }
+    },
+    {
+      "officialFull": "Software: Practice and Experience",
+      "issn": "0038-0644",
+      "eissn": "1097-024X",
+      "publisherTitle": "Software: Practice and Experience",
+      "sourceUrl": "https://onlinelibrary.wiley.com/journal/1097024x",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/spe/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "Wiley publisher page identifies the journal title, publisher, print ISSN, and electronic ISSN."
+    },
+    {
+      "officialFull": "International Journal of Software Tools for Technology Transfer",
+      "issn": "1433-2779",
+      "eissn": "1433-2787",
+      "publisherTitle": "International Journal of Software Tools for Technology Transfer",
+      "sourceUrl": "https://dblp.org/db/journals/sttt/index.html",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/sttt/",
+      "retrievedAt": "2026-10-26T13:29:52Z",
+      "evidence": "DBLP venue page gives title and print/electronic ISSNs."
+    },
+    {
+      "officialFull": "Discover Computing（原 Information Retrieval Journal）",
+      "issn": "2948-2984",
+      "eissn": "2948-2992",
+      "publisherTitle": "Discover Computing",
+      "sourceUrl": "https://link.springer.com/journal/10791",
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/ir/",
+      "retrievedAt": "2026-10-26T14:15:00Z",
+      "evidence": "Springer current journal page names Discover Computing and explicitly gives electronic ISSN 2948-2992; it says Information Retrieval Journal became Discover Computing in 2024. ISSN Portal confirms current print/eISSN 2948-2984/2948-2992. Earlier print/eISSN 1386-4564/1573-7659 belong to the former Information Retrieval Journal (ceased 2023) and are not current serials. 2948-9679 was not supported by the publisher or ISSN Portal.",
+      "legacyIssns": [
+        {
+          "title": "Information Retrieval Journal",
+          "issn": "1386-4564",
+          "medium": "print",
+          "years": "1998–2023"
+        },
+        {
+          "title": "Information Retrieval Journal",
+          "issn": "1573-7659",
+          "medium": "online",
+          "years": "2002–2023"
+        }
+      ],
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/2948-2984",
+          "claim": "ISSN Portal confirms current print ISSN 2948-2984 and online ISSN 2948-2992, both from 2024."
+        },
+        {
+          "sourceUrl": "https://www.ncbi.nlm.nih.gov/nlmcatalog/390572",
+          "claim": "NLM identifies Discover Computing as continuing Information Retrieval Journal and records current ISSNs 2948-2984/2948-2992."
+        },
+        {
+          "sourceUrl": "https://dblp.dagstuhl.de/db/journals/ir/index.html",
+          "claim": "DBLP distinguishes current serials 2948-2984/2948-2992 from old 1386-4564/1573-7659."
+        }
+      ]
+    },
+    {
+      "officialFull": "IEEE Transactions on Audio, Speech and Language Processing（原 IEEE/ACM Transactions on Audio, Speech and Language Processing）",
+      "issn": "2998-4173",
+      "eissn": null,
+      "publisherTitle": "IEEE Transactions on Audio, Speech and Language Processing",
+      "sourceUrl": "https://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=10723155",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://open.ieee.org/wp-content/uploads/IEEE-Title-List-February-2025.pdf",
+          "claim": "IEEE publisher title list lists current title with ISSN 2998-4173 and eISSN 1558-4173."
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/custom-search/print/2998-4173/public",
+          "claim": "ISSN Portal confirms current title record for 2025 and ISSN 2998-4173; it classifies this identifier as online."
+        },
+        {
+          "sourceUrl": "https://www.ncbi.nlm.nih.gov/nlmcatalog/101646714",
+          "claim": "NLM records IEEE/ACM serial 2014–2024 with 2329-9290/2329-9304, continued by IEEE current title ISSN 2998-4173."
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/1558-7916",
+          "claim": "ISSN-L record bounds 1558-7916/1558-7924 to 2006–2013 old IEEE title."
+        }
+      ],
+      "catalogUrl": "http://dblp.uni-trier.de/db/journals/taslp/",
+      "retrievedAt": "2026-10-26T14:02:00Z",
+      "evidence": "IEEE Xplore identifies the current journal title and publication number 10723155, 2025–present; ISSN Portal confirms current serial 2998-4173. IEEE’s February 2025 title list reports eISSN 1558-4173, but the inspected ISSN Portal record classifies 2998-4173 as online and did not confirm 1558-4173. eissn is therefore left null to avoid presenting a conflicting medium assignment as verified. Neither 2014–2024 IEEE/ACM 2329-9290/9304 nor 2006–2013 IEEE 1558-7916/7924 is a current identifier."
+    },
+    {
+      "officialFull": "ENGINEERING Information Technology & Electronic Engineering（原 Frontiers of Information Technology & Electronic Engineering）",
+      "issn": "3069-8928",
+      "eissn": "3069-8936",
+      "publisherTitle": "ENGINEERING Information Technology & Electronic Engineering",
+      "sourceUrl": "https://www.academax.com/EITEE/home",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://www.fitee.zjujournals.com/en/introduction/",
+          "claim": "Publisher introduction identifies current EITEE, its 3069-8928 print/3069-8936 online ISSNs and says former title FITEE ran 2015–2025."
+        },
+        {
+          "sourceUrl": "https://www.fitee.zjujournals.com/en/news/520310/",
+          "claim": "Publisher notice says title changed from FITEE to EITEE on 2026-01-01."
+        }
+      ],
+      "catalogUrl": "https://www.academax.com/EITEE/home",
+      "retrievedAt": "2026-10-26T14:02:00Z",
+      "legacyIssns": [
+        {
+          "title": "Frontiers of Information Technology & Electronic Engineering",
+          "issn": "2095-9184",
+          "medium": "print",
+          "years": "2015–2025"
+        },
+        {
+          "title": "Frontiers of Information Technology & Electronic Engineering",
+          "issn": "2095-9230",
+          "medium": "online",
+          "years": "2015–2025"
+        }
+      ],
+      "evidence": "Current publisher page reports print ISSN 3069-8928 and online ISSN 3069-8936. Publisher states current EITEE was formerly FITEE during 2015–2025; old serials 2095-9184/2095-9230 are historical, not current identity."
+    },
+    {
+      "officialFull": "Blockchain: Research and Applications",
+      "issn": "2096-7209",
+      "eissn": "2666-9536",
+      "publisherTitle": "Blockchain: Research and Applications",
+      "sourceUrl": "https://portal.issn.org/resource/ISSN/2096-7209",
+      "catalogUrl": "https://dblp.uni-trier.de/search?q=BCRA",
+      "retrievedAt": "2026-10-26T14:36:13.157Z",
+      "evidence": "ISSN Portal confirms print 2096-7209 and online 2666-9536 (linking ISSN 2096-7209), publisher Elsevier Ltd / Zhejiang University. Serial hints only; LetPub detail must still validate."
+    },
+    {
+      "officialFull": "ACM Transactions in Quantum Computing",
+      "issn": "2643-6809",
+      "eissn": "2643-6817",
+      "publisherTitle": "ACM Transactions on Quantum Computing",
+      "sourceUrl": "https://www.acm.org/binaries/content/assets/press-releases/2020/december/tqc-launches.pdf",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/2643-6809"
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/2643-6817"
+        }
+      ],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank serial metadata completion; official CCF title preserved."
+    },
+    {
+      "officialFull": "Behaviour & Information Technology",
+      "issn": "0144-929X",
+      "eissn": "1362-3001",
+      "publisherTitle": "Behaviour & Information Technology",
+      "sourceUrl": "https://www.tandfonline.com/action/journalInformation?journalCode=tbit20",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/0144-929X"
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/0144-929X"
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN/1362-3001"
+        }
+      ],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank serial metadata completion; official CCF title preserved."
+    },
+    {
+      "officialFull": "PLOS Computational Biology",
+      "issn": null,
+      "eissn": "1553-7358",
+      "publisherTitle": "PLOS Computational Biology",
+      "sourceUrl": "https://journals.plos.org/ploscompbiol/s/journal-information",
+      "additionalEvidence": [
+        {
+          "sourceUrl": "https://journals.plos.org/plosbiology/s/publishing-information"
+        },
+        {
+          "sourceUrl": "https://portal.issn.org/resource/ISSN-L/1553-734X"
+        },
+        {
+          "sourceUrl": "https://www.ncbi.nlm.nih.gov/nlmcatalog?term=1553-734X%5BISSN%5D"
+        },
+        {
+          "sourceUrl": "https://doaj.org/toc/1553-7358"
+        }
+      ],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank metadata completion; official CCF title preserved. PLOS current online ISSN only; historical print ISSN is excluded."
+    },
+    {
+      "officialFull": "The Computer Journal",
+      "issn": "0010-4620",
+      "eissn": "1460-2067",
+      "publisherTitle": "The Computer Journal",
+      "sourceUrl": "https://academic.oup.com/comjnl",
+      "additionalEvidence": [],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank serial metadata completion; official CCF title preserved."
+    },
+    {
+      "officialFull": "The Journal of Symbolic Logic",
+      "issn": "0022-4812",
+      "eissn": "1943-5886",
+      "publisherTitle": "The Journal of Symbolic Logic",
+      "sourceUrl": "https://www.cambridge.org/core/journals/journal-of-symbolic-logic",
+      "additionalEvidence": [],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank serial metadata completion; official CCF title preserved."
+    },
+    {
+      "officialFull": "Virtual Reality & Intelligent Hardware",
+      "issn": "2096-5796",
+      "eissn": "2666-1209",
+      "publisherTitle": "Virtual Reality & Intelligent Hardware",
+      "sourceUrl": "https://www.keaipublishing.com/en/journals/virtual-reality-and-intelligent-hardware",
+      "additionalEvidence": [],
+      "retrievedAt": "2026-10-27T04:44:29.943508+00:00",
+      "evidence": "Authority-backed blank serial metadata completion; official CCF title preserved."
+    },
+    {
+      "officialFull": "Computer Languages, Systems and Structures",
+      "issn": "1477-8424",
+      "eissn": "1873-6866",
+      "publisherTitle": "Computer Languages, Systems and Structures",
+      "sourceUrl": "https://www.ncbi.nlm.nih.gov/nlmcatalog/101670243",
+      "retrievedAt": "2026-10-29T08:42:40.126090+00:00",
+      "evidence": "These identifiers identify the exact catalogued title. They are not Computational Linguistics (0891-2017/1530-9312), despite the shared CL abbreviation. A successor title with another serial is not automatically substituted or assigned the CCF ranking."
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "catalogEdition": "CCF seventh edition (2026-04-09 corrected PDF)",
+  "officialCatalog": "data/all_journals_correct.json",
+  "pdfAudit": "scraper/fixtures/catalog/ccf_pdf_transcription_audit.json",
+  "identityPolicy": "Aliases are title mappings supported by current identity evidence. Historical serials/title records are not mapped to a new current title unless current serial identity is independently confirmed. Never identify a journal by abbreviation alone.",
+  "normalizationNote": "The collector normalizer now maps ampersand to AND like scraper/lib/identity.js. Three mappings are therefore also recognized by normalized title; six require an explicit title alias.",
+  "aliases": [
+    {
+      "legacyFull": "Computer Animation and Virtual Worlds",
+      "officialFull": "Computer animation & virtual worlds",
+      "domain": "计算机图形学与多媒体",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "CAVW",
+      "officialAbbr": "CAVW",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Wiley",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/cavw/"
+      },
+      "officialSource": {
+        "publisher": "Wiley",
+        "ccfUrl": "https://dblp.org/db/journals/jvca/index.html"
+      },
+      "letpubIdentity": {
+        "journalid": "1979",
+        "issn": "1546-4261",
+        "eissn": "1546-427X",
+        "name": "COMPUTER ANIMATION AND VIRTUAL WORLDS",
+        "publisher": "John Wiley and Sons Ltd",
+        "officialUrl": "http://onlinelibrary.wiley.com/journal/10.1002/(ISSN)1546-427X",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/cavw/"
+      },
+      "evidence": [
+        "LetPub journalid and print/eISSN identify the same Wiley journal. The current CCF row retains the same established journal abbreviation; the current LetPub publisher is John Wiley and Sons Ltd."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Computer Speech and Language",
+      "officialFull": "Computer Speech & Language",
+      "domain": "人工智能",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "CSL",
+      "officialAbbr": "",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "officialSource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "letpubIdentity": {
+        "journalid": "1994",
+        "issn": "0885-2308",
+        "eissn": "1095-8363",
+        "name": "COMPUTER SPEECH AND LANGUAGE",
+        "publisher": "Academic Press Inc.",
+        "officialUrl": "http://www.journals.elsevier.com/computer-speech-and-language/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/csl/"
+      },
+      "evidence": [
+        "Same LetPub journalid and print/eISSN; the official CCF source URL retains the same DBLP journal path. The ampersand is a title formatting variant."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of Experimental & Theoretical Artificial Intelligence",
+      "officialFull": "Journal of Experimental and Theoretical Artificial Intelligence",
+      "domain": "人工智能",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "JETAI",
+      "officialAbbr": "JETAI",
+      "matchStrategy": "normalized_title",
+      "legacySource": {
+        "publisher": "Taylor & Francis",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "officialSource": {
+        "publisher": "Taylor & Francis",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "letpubIdentity": {
+        "journalid": "4511",
+        "issn": "0952-813X",
+        "eissn": "1362-3079",
+        "name": "JOURNAL OF EXPERIMENTAL & THEORETICAL ARTIFICIAL INTELLIGENCE",
+        "publisher": "Taylor and Francis Ltd.",
+        "officialUrl": "http://www.tandf.co.uk/journals/tf/0952813X.html",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jetai/"
+      },
+      "evidence": [
+        "Same CCF source URL path, LetPub journalid and print/eISSN; same publisher. The ampersand and “and” normalize identically."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of Strategic Information Systems",
+      "officialFull": "The Journal of Strategic Information Systems",
+      "domain": "数据库/数据挖掘/内容检索",
+      "legacyLevel": "C",
+      "officialLevel": "C",
+      "legacyAbbr": "JSIS",
+      "officialAbbr": "JSIS",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "officialSource": {
+        "publisher": "Elsevier",
+        "ccfUrl": "http://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "letpubIdentity": {
+        "journalid": "5185",
+        "issn": "0963-8687",
+        "eissn": "",
+        "name": "JOURNAL OF STRATEGIC INFORMATION SYSTEMS",
+        "publisher": "Elsevier",
+        "officialUrl": "http://www.journals.elsevier.com/the-journal-of-strategic-information-systems/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jsis/"
+      },
+      "evidence": [
+        "Same CCF source URL path, LetPub journalid and ISSN; same publisher. Current official title adds the definite article “The”."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "Journal of the Acoustical Society of America",
+      "officialFull": "The Journal of the Acoustical Society of America",
+      "domain": "计算机图形学与多媒体",
+      "legacyLevel": "B",
+      "officialLevel": "B",
+      "legacyAbbr": "JASA",
+      "officialAbbr": "JASA",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "ASA",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jasa/"
+      },
+      "officialSource": {
+        "publisher": "AIP",
+        "ccfUrl": "http://scitation.aip.org/content/asa/journal/jasa"
+      },
+      "letpubIdentity": {
+        "journalid": "5224",
+        "issn": "0001-4966",
+        "eissn": "1520-8524",
+        "name": "JOURNAL OF THE ACOUSTICAL SOCIETY OF AMERICA",
+        "publisher": "Acoustical Society of America",
+        "officialUrl": "http://asadl.org/jasa/",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/jasa/"
+      },
+      "evidence": [
+        "Same LetPub journalid and print/eISSN; legacy and current CCF source URLs identify the JASA title, and the current publisher is AIP (the former ASA publisher)."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    },
+    {
+      "legacyFull": "World Wide Web Journal",
+      "officialFull": "World Wide Web",
+      "domain": "交叉/综合/新兴",
+      "legacyLevel": "C",
+      "officialLevel": "B",
+      "legacyAbbr": "WWWJ",
+      "officialAbbr": "WWW",
+      "matchStrategy": "explicit_alias",
+      "legacySource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/www/"
+      },
+      "officialSource": {
+        "publisher": "Springer",
+        "ccfUrl": "https://dblp.org/db/journals/www/index.html"
+      },
+      "letpubIdentity": {
+        "journalid": "8131",
+        "issn": "1386-145X",
+        "eissn": "1573-1413",
+        "name": "WORLD WIDE WEB-INTERNET AND WEB INFORMATION SYSTEMS",
+        "publisher": "Springer US",
+        "officialUrl": "https://www.springer.com/11280",
+        "ccfUrl": "https://dblp.uni-trier.de/db/journals/www/"
+      },
+      "evidence": [
+        "Same CCF DBLP journal path, LetPub journalid, print/eISSN and Springer publisher."
+      ],
+      "abbreviationWasNotUsedAsIdentity": true
+    }
+  ],
+  "excludedHistoricalCandidates": [
+    {
+      "officialFull": "IEEE Transactions on Audio, Speech and Language Processing（原 IEEE/ACM Transactions on Audio, Speech and Language Processing）",
+      "legacyFull": "IEEE/ACM Transactions on Audio Speech and Language Processing",
+      "historicalPublisherTitle": "IEEE/ACM Transactions on Audio, Speech and Language Processing",
+      "historicalISSN": "2329-9290",
+      "historicalEISSN": "2329-9304",
+      "historicalYears": "2014–2024",
+      "candidateLetPubJournalid": "9779",
+      "candidateRejectedAsCurrent": true,
+      "currentIdentityISSN": "2998-4173",
+      "evidence": [
+        "IEEE Xplore browse page identifies the current title as 2025–present and publisher number 10723155.",
+        "ISSN Portal confirmed serial record identifies the 2025 title with ISSN 2998-4173.",
+        "NLM catalog says the IEEE/ACM title ended in 2024 and was continued by the current IEEE title."
+      ]
+    },
+    {
+      "officialFull": "IEEE Transactions on Audio, Speech and Language Processing（原 IEEE/ACM Transactions on Audio, Speech and Language Processing）",
+      "legacyFull": "IEEE Transactions on Audio, Speech and Language Processing",
+      "historicalPublisherTitle": "IEEE Transactions on Audio, Speech and Language Processing (2006–2013)",
+      "historicalISSN": "1558-7916",
+      "historicalEISSN": "1558-7924",
+      "historicalYears": "2006–2013",
+      "candidateLetPubJournalid": "3363",
+      "candidateRejectedAsCurrent": true,
+      "currentIdentityISSN": "2998-4173",
+      "evidence": [
+        "ISSN-L record 1558-7916 assigns print 1558-7916 and online 1558-7924 to years 2006–2013.",
+        "IEEE Xplore lists the current title from 2025 onward."
+      ]
+    },
+    {
+      "officialFull": "ENGINEERING Information Technology & Electronic Engineering（原 Frontiers of Information Technology & Electronic Engineering）",
+      "legacyFull": "Frontiers of Information Technology & Electronic Engineering",
+      "historicalPublisherTitle": "Frontiers of Information Technology & Electronic Engineering",
+      "historicalISSN": "2095-9184",
+      "historicalEISSN": "2095-9230",
+      "historicalYears": "2015–2025",
+      "candidateLetPubJournalid": "10004",
+      "candidateRejectedAsCurrent": true,
+      "currentIdentityISSN": "3069-8928",
+      "currentIdentityEISSN": "3069-8936",
+      "evidence": [
+        "Current publisher journal page identifies EITEE as the 2026 title and explicitly states the former title and 2015–2025 period.",
+        "Current publisher page provides print ISSN 3069-8928 and online ISSN 3069-8936."
+      ]
+    },
+    {
+      "officialFull": "Discover Computing（原 Information Retrieval Journal）",
+      "legacyFull": "Information Retrieval Journal",
+      "historicalPublisherTitle": "Information Retrieval Journal",
+      "historicalISSN": "1386-4564",
+      "historicalEISSN": "1573-7659",
+      "historicalYears": "1998–2023 (print), 2002–2023 (online)",
+      "candidateLetPubJournalid": "3566",
+      "candidateRejectedAsCurrent": true,
+      "currentISSN": "2948-2984",
+      "currentEISSN": "2948-2992",
+      "evidence": [
+        "Springer current journal page identifies Discover Computing, electronic ISSN 2948-2992, and says Information Retrieval Journal moved into the Discover series as Discover Computing in 2024.",
+        "ISSN Portal confirms 2948-2984 print and 2948-2992 online beginning 2024.",
+        "DBLP identifies 1386-4564/1573-7659 as old serials."
+      ]
+    },
+    {
+      "officialFull": "IEEE Transactions on Networking（原 IEEE/ACM Transactions on Networking）",
+      "legacyFull": "IEEE/ACM Transactions on Networking",
+      "historicalPublisherTitle": "IEEE/ACM Transactions on Networking",
+      "historicalISSN": "1063-6692",
+      "historicalEISSN": "1558-2566",
+      "historicalYears": "1993–2024",
+      "candidateRejectedAsCurrent": true,
+      "currentEISSN": "2998-4157",
+      "evidence": [
+        "IEEE Xplore current journal page identifies IEEE Transactions on Networking at publication number 10723154.",
+        "IEEE Xplore issue records from 2025 explicitly report Electronic ISSN 2998-4157.",
+        "ISSN Portal record 2998-4157 is the current online title, with notes citing 2025 Xplore issues.",
+        "IEEE publisher May 2025 title list lists 2998-4157 in both ISSN and eISSN columns; old IEEE/ACM serials are 1063-6692/1558-2566."
+      ]
+    },
+    {
+      "officialFull": "Journal of Software: Evolution and Process",
+      "legacyFull": "Journal of Software Maintenance and Evolution: Research and Practice",
+      "historicalPublisherTitle": "Journal of Software Maintenance and Evolution: Research and Practice",
+      "historicalISSN": "1532-060X",
+      "historicalEISSN": "1532-0618",
+      "historicalYears": "2001–2011",
+      "candidateLetPubJournalid": "5156",
+      "candidateRejectedAsCurrent": true,
+      "currentIdentityISSN": "2047-7473",
+      "currentIdentityEISSN": "2047-7481",
+      "evidence": [
+        "Wiley and ISSN authority identify the current title from volume 24 (2012) with 2047-7473 / 2047-7481.",
+        "Authenticated provider5156 still describes the predecessor with old serial1532-060X and cannot supply current-title metrics."
+      ]
+    }
+  ],
+  "retrievedAt": "2026-10-26T14:24:00Z"
+}

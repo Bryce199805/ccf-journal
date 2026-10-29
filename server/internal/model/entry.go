@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"encoding/json"
 	"strings"
 )
 
@@ -63,6 +64,7 @@ type Entry struct {
 
 // EntryListItem is a lightweight version for list views
 type EntryListItem struct {
+	CCFRelations    *string  `json:"ccf_relations"`
 	ID              int      `json:"id"`
 	Type            string   `json:"type"`
 	CCFDomain       string   `json:"ccf_domain"`
@@ -205,14 +207,15 @@ func splitMulti(s string) []string {
 
 // Stats represents database statistics
 type Stats struct {
-	TotalJournals    int            `json:"total_journals"`
-	TotalConferences int            `json:"total_conferences"`
-	ByDomain         map[string]int `json:"by_domain"`
-	ByLevel          map[string]int `json:"by_level"`
-	ByCASZone        map[string]int `json:"by_cas_zone"`
-	CCFJournals      int            `json:"ccf_journals"`
-	NonCCFJournals   int            `json:"non_ccf_journals"`
-	DataUpdatedAt    *string        `json:"data_updated_at"`
+	JournalCatalog   json.RawMessage `json:"journal_catalog,omitempty"`
+	TotalJournals    int             `json:"total_journals"`
+	TotalConferences int             `json:"total_conferences"`
+	ByDomain         map[string]int  `json:"by_domain"`
+	ByLevel          map[string]int  `json:"by_level"`
+	ByCASZone        map[string]int  `json:"by_cas_zone"`
+	CCFJournals      int             `json:"ccf_journals"`
+	NonCCFJournals   int             `json:"non_ccf_journals"`
+	DataUpdatedAt    *string         `json:"data_updated_at"`
 }
 
 // PaginatedResponse wraps list results with pagination

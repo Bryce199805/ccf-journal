@@ -89,14 +89,16 @@ npm install
 npm run dev
 ```
 
-前端开发服务器默认代理 API 请求到 `http://localhost:8080`。
+前端开发服务器默认监听 `0.0.0.0:5173`，可通过 `http://本机局域网IP:5173` 访问，API 请求代理到 `http://localhost:8080`。
 
 ## Docker 部署
 
-服务器只需安装 Docker 和 Docker Compose，并在仓库根目录准备以下两个手动同步的数据文件：
+服务器只需安装 Docker 和 Docker Compose，并在仓库根目录准备以下数据文件：
 
-- `data/letpub_full.json`
-- `data/all_conferences_correct.json`
+- `data/all_journals_correct.json`：完整官方 CCF 期刊目录
+- `data/ccf_catalog_meta.json`：目录版本与来源
+- `data/letpub_full.json`：LetPub 指标与 Non-CCF 期刊
+- `data/all_conferences_correct.json`：现有会议目录
 
 随后从仓库根目录执行：
 
@@ -126,7 +128,7 @@ docker compose down
 ```
 
 更新程序时只需拉取代码并重新执行 `docker compose up -d --build`。更新期刊数据时，替换上述
-两个 JSON 文件后执行同一命令即可。用户、收藏和笔记位于 `docker/data/ccf.db`，不会由代码或
+JSON 文件后执行同一命令即可。用户、收藏和笔记位于 `docker/data/ccf.db`，不会由代码或
 期刊数据自动同步；迁移服务器时可按需手动复制整个 `docker/data/` 目录。
 
 若需要域名和 HTTPS，可让宿主机 Nginx 反向代理 `127.0.0.1:8080`。
@@ -154,10 +156,48 @@ server {
 
 ## 数据更新
 
+CCF 期刊目录已扩展到全部十个领域，采用第七版正式目录（2026-03-31 发布，
+2026-04-09 勘误）。会议目录仍单独维护，不随期刊目录更新。
+
+导入器将官方期刊目录与 LetPub 指标合并；没有 LetPub 详情的期刊也会入库并可检索、收藏。
+多领域期刊保留各领域等级，领域与等级筛选要求同一条归属同时匹配。
+更新数据库时保留条目 ID、用户收藏和笔记；从当前目录移除的旧期刊保留为历史条目，
+不再进入常规目录列表，仍可通过原有收藏和详情链接访问。官方目录以外的已有 Non-CCF 期刊继续保留。
+
+```bash
+# 重建固定版本的期刊目录、来源元数据和差异报告
+python3 scraper/collect_ccf_catalog.py
+# 单独补全 CCF，复用进度并避免采集 Non-CCF 候选
+cd scraper
+CCF_ONLY=1 REFRESH_DAYS=90 npm run scrape
+# 生成导入数据；Docker 构建也会自动执行
+node import_data.js
+```
+
+差异报告在 `scraper/output/ccf_catalog_diff.json`；版本与来源在
+`data/ccf_catalog_meta.json`。采集脚本采用固定提交的结构化转录，来源及正式 PDF
+校验记录见 `docs/ccf-catalog-update.md`。再次运行目录重建时，差异基于当时的本地目录。
+CCF_ONLY 报告只代表 CCF 详情补全，已有 Non-CCF 数据继续沿用；发布时仍需通过
+完整数据校验，并保留成功的全量候选发现报告。
+
 抓取流程固定使用 `data/all_journals_correct.json` 中的全部 CCF 期刊，并从 LetPub
 “大类学科=计算机科学”搜索结果发现 Non-CCF 候选。Non-CCF 只有在详情页最新可用的
-中科院分区满足“大类学科严格等于计算机科学，且大类分区为 1 区或 2 区”时才进入暂存数据。
+中科院分区满足“大类学科严格等于计算机科学，且大类分区为 1 区、2 区或 3 区”时才进入暂存数据。
 新锐、JCR 和小类分区不参与准入。
+策略版本升级后，会本地重评旧拒绝检查点：仍不符合的四区或非计算机大类无需重新联网；
+此前仅因三区而被拒绝的候选会重新抓取详情并核验，不用删除历史进度。
+
+只扩展 Non-CCF、不刷新已有 CCF 时可执行：
+
+```bash
+cd scraper
+NON_CCF_ONLY=1 REFRESH_DAYS=365 npm run scrape
+npm run validate:data
+npm run publish:data
+```
+
+已有成功数据按刷新周期复用，新候选仍需通过详情身份与最新可用中科院大类分区校验。
+`NON_CCF_ONLY` 与 `CCF_ONLY` 分别限定采集范围；发布前仍校验完整暂存数据。
 
 所有命令从 `scraper/` 运行。自动测试只读取本地 fixture，不访问网络：
 
@@ -244,3 +284,21 @@ FORCE_REFRESH=1 npm run scrape
 且详情报告中没有 `pending` 任务；canary 允许保留 `pending`，此时 `closed=false`，只能
 校验、不能发布。旧 journalid/ISSN 仅作为查找提示，详情名称和 ISSN/EISSN 校验不一致时会
 进入冲突报告。无法匹配 LetPub 的 CCF 仍以 CCF 全名保留，`journalid` 留空。
+
+### 新增期刊数据校对
+
+校对记录和已发布的补全见 [数据校对进度](docs/data-audit-progress.md)，逐字段来源保存在
+`data/journal_identity_corrections.json`。更名续刊与同一串号下的缺失字段分别核对，不能直接
+给现刊继承历史刊物的指标。
+
+隔离审计入口需要 Node.js 和 Python 3（仅标准库），从仓库根目录运行：
+
+```bash
+node scraper/run_data_audit.js --auto --wait-for-cookie
+```
+
+先将自己的登录 Cookie 私密写入 `/tmp/ccf-letpub-audit-session.cookie`，权限设为 `0600`。
+命令依次认证、试采与批量核对，结果及脱敏证据只写入 `scraper/output/` 的审计专用文件，
+不直接发布指标。请求至少间隔 12 秒；认证请求的临时网络错误最多尝试三次。明确出现登录
+门禁时保存断点并等待 Cookie 文件更新，再自动验证与续跑；未知页面或结构错误会停止，
+不能据此断言 Cookie 失效。Cookie 不得写入仓库、报告或命令参数。

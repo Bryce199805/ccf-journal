@@ -1,0 +1,2087 @@
+{
+  "计算机体系结构/并行与分布计算/存储系统": [
+    {
+      "level": "A",
+      "abbr": "TOCS",
+      "full": "ACM Transactions on Computer Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tocs/"
+    },
+    {
+      "level": "A",
+      "abbr": "TOS",
+      "full": "ACM Transactions on Storage",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tos/"
+    },
+    {
+      "level": "A",
+      "abbr": "TCAD",
+      "full": "IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tcad/"
+    },
+    {
+      "level": "A",
+      "abbr": "TC",
+      "full": "IEEE Transactions on Computers",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tc/index.html"
+    },
+    {
+      "level": "A",
+      "abbr": "TPDS",
+      "full": "IEEE Transactions on Parallel and Distributed Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tpds/"
+    },
+    {
+      "level": "A",
+      "abbr": "TACO",
+      "full": "ACM Transactions on Architecture and Code Optimization",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/taco/"
+    },
+    {
+      "level": "B",
+      "abbr": "TAAS",
+      "full": "ACM Transactions on Autonomous and Adaptive Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/taas/"
+    },
+    {
+      "level": "B",
+      "abbr": "TODAES",
+      "full": "ACM Transactions on Design Automation of Electronic Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/todaes/"
+    },
+    {
+      "level": "B",
+      "abbr": "TECS",
+      "full": "ACM Transactions on Embedded Computing Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tecs/"
+    },
+    {
+      "level": "B",
+      "abbr": "TRETS",
+      "full": "ACM Transactions on Reconfigurable Technology and Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/trets/"
+    },
+    {
+      "level": "B",
+      "abbr": "TVLSI",
+      "full": "IEEE Transactions on Very Large Scale Integration (VLSI) Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tvlsi/"
+    },
+    {
+      "level": "B",
+      "abbr": "JPDC",
+      "full": "Journal of Parallel and Distributed Computing",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jpdc/"
+    },
+    {
+      "level": "B",
+      "abbr": "JSA",
+      "full": "Journal of Systems Architecture: Embedded Software Design",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jsa/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Parallel Computing",
+      "publisher": "Elsevier",
+      "url": "https://dblp.org/db/journals/pc/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Performance Evaluation: An International Journal",
+      "publisher": "Elsevier",
+      "url": "https://dblp.org/db/journals/pe/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "TCC",
+      "full": "IEEE Transactions on Cloud Computing",
+      "publisher": "IEEE",
+      "url": "https://dblp.uni-trier.de/db/journals/tcc/"
+    },
+    {
+      "level": "C",
+      "abbr": "JETC",
+      "full": "ACM Journal on Emerging Technologies in Computing Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/jetc/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Concurrency and Computation: Practice and Experience",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/concurrency/"
+    },
+    {
+      "level": "C",
+      "abbr": "DC",
+      "full": "Distributed Computing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/dc/"
+    },
+    {
+      "level": "C",
+      "abbr": "FGCS",
+      "full": "Future Generation Computer Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/fgcs"
+    },
+    {
+      "level": "C",
+      "abbr": "Integration",
+      "full": "Integration, the VLSI Journal",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/integration"
+    },
+    {
+      "level": "C",
+      "abbr": "JETTA",
+      "full": "Journal of Electronic Testing-Theory and Applications",
+      "publisher": "Springer",
+      "url": "https://dblp.org/db/journals/et/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "JGC",
+      "full": "Journal of Grid computing",
+      "publisher": "Springer",
+      "url": "https://dblp.uni-trier.de/db/journals/grid/"
+    },
+    {
+      "level": "C",
+      "abbr": "RTS",
+      "full": "Real-Time Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/rts/"
+    },
+    {
+      "level": "C",
+      "abbr": "TJSC",
+      "full": "The Journal of Supercomputing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/tjs/"
+    },
+    {
+      "level": "C",
+      "abbr": "TCASI",
+      "full": "IEEE Transactions on Circuits and Systems I: Regular Papers",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tcasI/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "CCF-THPC",
+      "full": "CCF Transactions on High Performance Computing",
+      "publisher": "CCF",
+      "url": "https://dblp.org/db/journals/ccfthpc/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TSUSC",
+      "full": "IEEE Transactions on Sustainable Computing",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tsusc/index.html"
+    }
+  ],
+  "计算机网络": [
+    {
+      "level": "A",
+      "abbr": "JSAC",
+      "full": "IEEE Journal on Selected Areas in Communications",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/jsac/"
+    },
+    {
+      "level": "A",
+      "abbr": "TMC",
+      "full": "IEEE Transactions on Mobile Computing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tmc/"
+    },
+    {
+      "level": "A",
+      "abbr": "TON",
+      "full": "IEEE Transactions on Networking（原 IEEE/ACM Transactions on Networking）",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/ton/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOIT",
+      "full": "ACM Transactions on Internet Technology",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/toit/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOMM",
+      "full": "ACM Transactions on Multimedia Computing, Communications and Applications",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tomccap/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOSN",
+      "full": "ACM Transactions on Sensor Networks",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tosn/"
+    },
+    {
+      "level": "B",
+      "abbr": "CN",
+      "full": "Computer Networks",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cn/"
+    },
+    {
+      "level": "B",
+      "abbr": "TCOM",
+      "full": "IEEE Transactions on Communications",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tcom/"
+    },
+    {
+      "level": "B",
+      "abbr": "TWC",
+      "full": "IEEE Transactions on Wireless Communications",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/twc/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Ad Hoc Networks",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/adhoc/"
+    },
+    {
+      "level": "C",
+      "abbr": "CC",
+      "full": "Computer Communications",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/comcom/"
+    },
+    {
+      "level": "C",
+      "abbr": "TNSM",
+      "full": "IEEE Transactions on Network and Service Management",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tnsm/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IET Communications",
+      "publisher": "IET",
+      "url": "http://dblp.uni-trier.de/db/journals/iet-com/"
+    },
+    {
+      "level": "C",
+      "abbr": "JNCA",
+      "full": "Journal of Network and Computer Applications",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jnca/"
+    },
+    {
+      "level": "C",
+      "abbr": "MONET",
+      "full": "Mobile Networks and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/monet/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Networks",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/networks/"
+    },
+    {
+      "level": "C",
+      "abbr": "PPNA",
+      "full": "Peer-to-Peer Networking and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ppna/"
+    },
+    {
+      "level": "C",
+      "abbr": "WCMC",
+      "full": "Wireless Communications and Mobile Computing",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/wicomm/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Wireless Networks",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/winet/"
+    },
+    {
+      "level": "C",
+      "abbr": "IOT",
+      "full": "IEEE Internet of Things Journal",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/iotj/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TIOT",
+      "full": "ACM Transactions on Internet of Things",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/tiot/index.html"
+    }
+  ],
+  "网络与信息安全": [
+    {
+      "level": "A",
+      "abbr": "TDSC",
+      "full": "IEEE Transactions on Dependable and Secure Computing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tdsc/"
+    },
+    {
+      "level": "A",
+      "abbr": "TIFS",
+      "full": "IEEE Transactions on Information Forensics and Security",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tifs/"
+    },
+    {
+      "level": "A",
+      "abbr": "",
+      "full": "Journal of Cryptology",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/joc/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOPS",
+      "full": "ACM Transactions on Privacy and Security",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/tissec/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Computers & Security",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/compsec/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Designs, Codes and Cryptography",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/dcc/"
+    },
+    {
+      "level": "B",
+      "abbr": "JCS",
+      "full": "Journal of Computer Security",
+      "publisher": "IOS Press",
+      "url": "http://dblp.uni-trier.de/db/journals/jcs/"
+    },
+    {
+      "level": "B",
+      "abbr": "Cybersecurity",
+      "full": "Cybersecurity",
+      "publisher": "Springer（原中国科学院信息工程研究所/科学出版社）",
+      "url": "https://dblp.uni-trier.de/db/journals/cybersec/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "CLSR",
+      "full": "Computer Law & Security Review",
+      "publisher": "Elsevier",
+      "url": "https://dblp.org/db/journals/clsr/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "EURASIP Journal on Information Security",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ejisec/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IET Information Security",
+      "publisher": "IET",
+      "url": "http://dblp.uni-trier.de/db/journals/iet-ifs/"
+    },
+    {
+      "level": "C",
+      "abbr": "IMCS",
+      "full": "Information and Computer Security",
+      "publisher": "Emerald",
+      "url": "http://dblp.uni-trier.de/db/journals/imcs/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJICS",
+      "full": "International Journal of Information and Computer Security",
+      "publisher": "Inderscience",
+      "url": "http://dblp.uni-trier.de/db/journals/ijics/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJISP",
+      "full": "International Journal of Information Security and Privacy",
+      "publisher": "IGI Global",
+      "url": "http://dblp.uni-trier.de/db/journals/ijisp/"
+    },
+    {
+      "level": "C",
+      "abbr": "JISA",
+      "full": "Journal of Information Security and Applications",
+      "publisher": "Elsevier",
+      "url": "https://dblp.uni-trier.de/db/journals/istr/"
+    },
+    {
+      "level": "C",
+      "abbr": "SCN",
+      "full": "Security and Communication Networks",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/scn/"
+    },
+    {
+      "level": "C",
+      "abbr": "HCC",
+      "full": "High-Confidence Computing",
+      "publisher": "Elsevier",
+      "url": "https://www.journals.elsevier.com/high-confidence-computing"
+    }
+  ],
+  "软件工程/系统软件/程序设计语言": [
+    {
+      "level": "A",
+      "abbr": "TOPLAS",
+      "full": "ACM Transactions on Programming Languages and Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/toplas/"
+    },
+    {
+      "level": "A",
+      "abbr": "TOSEM",
+      "full": "ACM Transactions on Software Engineering and Methodology",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tosem/"
+    },
+    {
+      "level": "A",
+      "abbr": "TSE",
+      "full": "IEEE Transactions on Software Engineering",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tse/"
+    },
+    {
+      "level": "A",
+      "abbr": "TSC",
+      "full": "IEEE Transactions on Services Computing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tsc/"
+    },
+    {
+      "level": "B",
+      "abbr": "ASE",
+      "full": "Automated Software Engineering",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ase/"
+    },
+    {
+      "level": "B",
+      "abbr": "ESE",
+      "full": "Empirical Software Engineering",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ese/"
+    },
+    {
+      "level": "B",
+      "abbr": "IETS",
+      "full": "IET Software",
+      "publisher": "IET",
+      "url": "https://dblp.uni-trier.de/db/journals/iet-sen/"
+    },
+    {
+      "level": "B",
+      "abbr": "IST",
+      "full": "Information and Software Technology",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/infsof/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "JFP",
+      "full": "Journal of Functional Programming",
+      "publisher": "Cambridge University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/jfp/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Journal of Software: Evolution and Process",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/smr/"
+    },
+    {
+      "level": "B",
+      "abbr": "JSS",
+      "full": "Journal of Systems and Software",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jss/"
+    },
+    {
+      "level": "B",
+      "abbr": "RE",
+      "full": "Requirements Engineering",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/re/"
+    },
+    {
+      "level": "B",
+      "abbr": "SCP",
+      "full": "Science of Computer Programming",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/scp/"
+    },
+    {
+      "level": "B",
+      "abbr": "SoSyM",
+      "full": "Software and Systems Modeling",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/sosym/"
+    },
+    {
+      "level": "B",
+      "abbr": "STVR",
+      "full": "Software Testing, Verification and Reliability",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/stvr/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "SPE",
+      "full": "Software: Practice and Experience",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/spe/"
+    },
+    {
+      "level": "C",
+      "abbr": "CL",
+      "full": "Computer Languages, Systems and Structures",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cl/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "IJSEKE",
+      "full": "International Journal of Software Engineering and Knowledge Engineering",
+      "publisher": "World Scientific",
+      "url": "http://dblp.uni-trier.de/db/journals/ijseke/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "STTT",
+      "full": "International Journal of Software Tools for Technology Transfer",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/sttt/"
+    },
+    {
+      "level": "C",
+      "abbr": "JLAMP",
+      "full": "Journal of Logical and Algebraic Methods in Programming",
+      "publisher": "Elsevier",
+      "url": "https://dblp.uni-trier.de/db/journals/jlap/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "JWE",
+      "full": "Journal of Web Engineering",
+      "publisher": "Rinton Press",
+      "url": "http://dblp.uni-trier.de/db/journals/jwe/"
+    },
+    {
+      "level": "C",
+      "abbr": "SOCA",
+      "full": "Service Oriented Computing and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/soca/"
+    },
+    {
+      "level": "C",
+      "abbr": "SQJ",
+      "full": "Software Quality Journal",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/sqj/"
+    },
+    {
+      "level": "C",
+      "abbr": "TPLP",
+      "full": "Theory and Practice of Logic Programming",
+      "publisher": "Cambridge University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/tplp/"
+    },
+    {
+      "level": "C",
+      "abbr": "PACM PL",
+      "full": "Proceedings of the ACM on Programming Languages",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/pacmpl/index.html"
+    }
+  ],
+  "数据库/数据挖掘/内容检索": [
+    {
+      "level": "A",
+      "abbr": "TODS",
+      "full": "ACM Transactions on Database Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tods/"
+    },
+    {
+      "level": "A",
+      "abbr": "TOIS",
+      "full": "ACM Transactions on Information Systems",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tois/"
+    },
+    {
+      "level": "A",
+      "abbr": "TKDE",
+      "full": "IEEE Transactions on Knowledge and Data Engineering",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tkde/"
+    },
+    {
+      "level": "A",
+      "abbr": "VLDBJ",
+      "full": "The VLDB Journal",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/vldb/"
+    },
+    {
+      "level": "B",
+      "abbr": "TKDD",
+      "full": "ACM Transactions on Knowledge Discovery from Data",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tkdd/"
+    },
+    {
+      "level": "B",
+      "abbr": "TWEB",
+      "full": "ACM Transactions on the Web",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tweb/"
+    },
+    {
+      "level": "B",
+      "abbr": "AEI",
+      "full": "Advanced Engineering Informatics",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/aei/"
+    },
+    {
+      "level": "B",
+      "abbr": "DKE",
+      "full": "Data & Knowledge Engineering",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/dke/"
+    },
+    {
+      "level": "B",
+      "abbr": "DMKD",
+      "full": "Data Mining and Knowledge Discovery",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/datamine/"
+    },
+    {
+      "level": "B",
+      "abbr": "EJIS",
+      "full": "European Journal of Information Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ejis/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "GeoInformatica",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/geoinformatica/"
+    },
+    {
+      "level": "B",
+      "abbr": "IPM",
+      "full": "Information Processing and Management",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ipm/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Information Sciences",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/isci/"
+    },
+    {
+      "level": "B",
+      "abbr": "IS",
+      "full": "Information Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/is/"
+    },
+    {
+      "level": "B",
+      "abbr": "JASIST",
+      "full": "Journal of the Association for Information Science and Technology",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/jasis/"
+    },
+    {
+      "level": "B",
+      "abbr": "JWS",
+      "full": "Journal of Web Semantics",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ws/"
+    },
+    {
+      "level": "B",
+      "abbr": "KAIS",
+      "full": "Knowledge and Information Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/kais/"
+    },
+    {
+      "level": "B",
+      "abbr": "DSE",
+      "full": "Data Science and Engineering",
+      "publisher": "CCF/Springer Nature",
+      "url": "https://dblp.org/db/journals/dase/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "DPD",
+      "full": "Distributed and Parallel Databases",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/dpd/"
+    },
+    {
+      "level": "C",
+      "abbr": "I&M",
+      "full": "Information & Management",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/iam/"
+    },
+    {
+      "level": "C",
+      "abbr": "IPL",
+      "full": "Information Processing Letters",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ipl/"
+    },
+    {
+      "level": "C",
+      "abbr": "（原 IR）",
+      "full": "Discover Computing（原 Information Retrieval Journal）",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ir/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJCIS",
+      "full": "International Journal of Cooperative Information Systems",
+      "publisher": "World Scientific",
+      "url": "http://dblp.uni-trier.de/db/journals/ijcis/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJGIS",
+      "full": "International Journal of Geographical Information Science",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/gis/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJIS",
+      "full": "International Journal of Intelligent Systems",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/ijis/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJKM",
+      "full": "International Journal of Knowledge Management",
+      "publisher": "IGI",
+      "url": "http://dblp.uni-trier.de/db/journals/ijkm/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJSWIS",
+      "full": "International Journal on Semantic Web and Information Systems",
+      "publisher": "IGI",
+      "url": "http://dblp.uni-trier.de/db/journals/ijswis/"
+    },
+    {
+      "level": "C",
+      "abbr": "JCIS",
+      "full": "Journal of Computer Information Systems",
+      "publisher": "IACIS",
+      "url": "http://dblp.uni-trier.de/db/journals/jcis/"
+    },
+    {
+      "level": "C",
+      "abbr": "JDM",
+      "full": "Journal of Database Management",
+      "publisher": "IGI-Global",
+      "url": "http://dblp.uni-trier.de/db/journals/jdm/"
+    },
+    {
+      "level": "C",
+      "abbr": "JGITM",
+      "full": "Journal of Global Information Technology Management",
+      "publisher": "Ivy League Publishing",
+      "url": "https://dblp.org/db/journals/jgim/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "JIIS",
+      "full": "Journal of Intelligent Information Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/jiis/"
+    },
+    {
+      "level": "C",
+      "abbr": "JSIS",
+      "full": "The Journal of Strategic Information Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jsis/"
+    },
+    {
+      "level": "C",
+      "abbr": "TIST",
+      "full": "ACM Transactions on Intelligent Systems and Technology",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/tist/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TORS",
+      "full": "ACM Transactions on Recommender Systems",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/tors/index.html"
+    }
+  ],
+  "计算机科学理论": [
+    {
+      "level": "A",
+      "abbr": "TIT",
+      "full": "IEEE Transactions on Information Theory",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tit/"
+    },
+    {
+      "level": "A",
+      "abbr": "IANDC",
+      "full": "Information and Computation",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/iandc/"
+    },
+    {
+      "level": "A",
+      "abbr": "SICOMP",
+      "full": "SIAM Journal on Computing",
+      "publisher": "SIAM",
+      "url": "http://dblp.uni-trier.de/db/journals/siamcomp/"
+    },
+    {
+      "level": "B",
+      "abbr": "TALG",
+      "full": "ACM Transactions on Algorithms",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/talg/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOCL",
+      "full": "ACM Transactions on Computational Logic",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tocl/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOMS",
+      "full": "ACM Transactions on Mathematical Software",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/toms/"
+    },
+    {
+      "level": "B",
+      "abbr": "Algorithmica",
+      "full": "Algorithmica",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/algorithmica/"
+    },
+    {
+      "level": "B",
+      "abbr": "CC",
+      "full": "Computational Complexity",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/cc/"
+    },
+    {
+      "level": "B",
+      "abbr": "FAC",
+      "full": "Formal Aspects of Computing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/fac/"
+    },
+    {
+      "level": "B",
+      "abbr": "FMSD",
+      "full": "Formal Methods in System Design",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/fmsd/"
+    },
+    {
+      "level": "B",
+      "abbr": "INFORMS",
+      "full": "INFORMS Journal on Computing",
+      "publisher": "INFORMS",
+      "url": "http://dblp.uni-trier.de/db/journals/informs/"
+    },
+    {
+      "level": "B",
+      "abbr": "JCSS",
+      "full": "Journal of Computer and System Sciences",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jcss/"
+    },
+    {
+      "level": "B",
+      "abbr": "JGO",
+      "full": "Journal of Global Optimization",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/jgo/"
+    },
+    {
+      "level": "B",
+      "abbr": "JSC",
+      "full": "Journal of Symbolic Computation",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jsc/"
+    },
+    {
+      "level": "B",
+      "abbr": "MSCS",
+      "full": "Mathematical Structures in Computer Science",
+      "publisher": "Cambridge University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/mscs/"
+    },
+    {
+      "level": "B",
+      "abbr": "TCS",
+      "full": "Theoretical Computer Science",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/tcs/"
+    },
+    {
+      "level": "C",
+      "abbr": "ACTA",
+      "full": "Acta Informatica",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/acta/"
+    },
+    {
+      "level": "C",
+      "abbr": "APAL",
+      "full": "Annals of Pure and Applied Logic",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/apal/"
+    },
+    {
+      "level": "C",
+      "abbr": "DAM",
+      "full": "Discrete Applied Mathematics",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/dam/"
+    },
+    {
+      "level": "C",
+      "abbr": "FUIN",
+      "full": "Fundamenta Informaticae",
+      "publisher": "IOS Press",
+      "url": "http://dblp.uni-trier.de/db/journals/fuin/"
+    },
+    {
+      "level": "C",
+      "abbr": "IPL",
+      "full": "Information Processing Letters",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ipl/"
+    },
+    {
+      "level": "C",
+      "abbr": "JCOMPLEXITY",
+      "full": "Journal of Complexity",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jc/"
+    },
+    {
+      "level": "C",
+      "abbr": "LOGCOM",
+      "full": "Journal of Logic and Computation",
+      "publisher": "Oxford University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/logcom/"
+    },
+    {
+      "level": "C",
+      "abbr": "JSL",
+      "full": "The Journal of Symbolic Logic",
+      "publisher": "Association for Symbolic Logic",
+      "url": "http://dblp.uni-trier.de/db/journals/jsyml/"
+    },
+    {
+      "level": "C",
+      "abbr": "LMCS",
+      "full": "Logical Methods in Computer Science",
+      "publisher": "LMCS",
+      "url": "http://dblp.uni-trier.de/db/journals/lmcs/"
+    },
+    {
+      "level": "C",
+      "abbr": "SIDMA",
+      "full": "SIAM Journal on Discrete Mathematics",
+      "publisher": "SIAM",
+      "url": "http://dblp.uni-trier.de/db/journals/siamdm/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Theory of Computing Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/mst/"
+    },
+    {
+      "level": "C",
+      "abbr": "TQC",
+      "full": "ACM Transactions in Quantum Computing",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/tqc/index.html"
+    }
+  ],
+  "计算机图形学与多媒体": [
+    {
+      "level": "A",
+      "abbr": "TOG",
+      "full": "ACM Transactions on Graphics",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tog/"
+    },
+    {
+      "level": "A",
+      "abbr": "TIP",
+      "full": "IEEE Transactions on Image Processing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tip/"
+    },
+    {
+      "level": "A",
+      "abbr": "TVCG",
+      "full": "IEEE Transactions on Visualization and Computer Graphics",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tvcg/"
+    },
+    {
+      "level": "A",
+      "abbr": "TMM",
+      "full": "IEEE Transactions on Multimedia",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tmm/"
+    },
+    {
+      "level": "B",
+      "abbr": "TOMM",
+      "full": "ACM Transactions on Multimedia Computing, Communications and Applications",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tomccap/"
+    },
+    {
+      "level": "B",
+      "abbr": "CAGD",
+      "full": "Computer Aided Geometric Design",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cagd/"
+    },
+    {
+      "level": "B",
+      "abbr": "CGF",
+      "full": "Computer Graphics Forum",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/cgf/"
+    },
+    {
+      "level": "B",
+      "abbr": "CAD",
+      "full": "Computer-Aided Design",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cad/"
+    },
+    {
+      "level": "B",
+      "abbr": "TCSVT",
+      "full": "IEEE Transactions on Circuits and Systems for Video Technology",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tcsv/"
+    },
+    {
+      "level": "B",
+      "abbr": "JASA",
+      "full": "The Journal of the Acoustical Society of America",
+      "publisher": "AIP",
+      "url": "http://scitation.aip.org/content/asa/journal/jasa"
+    },
+    {
+      "level": "B",
+      "abbr": "SIIMS",
+      "full": "SIAM Journal on Imaging Sciences",
+      "publisher": "SIAM",
+      "url": "http://dblp.uni-trier.de/db/journals/siamis/"
+    },
+    {
+      "level": "B",
+      "abbr": "SPECOM",
+      "full": "Speech Communication",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/speech/"
+    },
+    {
+      "level": "B",
+      "abbr": "CVMJ",
+      "full": "Computational Visual Media",
+      "publisher": "清华大学出版社/IEEE（原 Tsinghua University/Springer）",
+      "url": "https://dblp.org/db/journals/cvm/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "CGTA",
+      "full": "Computational Geometry: Theory and Applications",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/comgeo/"
+    },
+    {
+      "level": "C",
+      "abbr": "CAVW",
+      "full": "Computer animation & virtual worlds",
+      "publisher": "Wiley",
+      "url": "https://dblp.org/db/journals/jvca/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "C&G",
+      "full": "Computers & Graphics",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cg/"
+    },
+    {
+      "level": "C",
+      "abbr": "DCG",
+      "full": "Discrete & Computational Geometry",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/dcg/"
+    },
+    {
+      "level": "C",
+      "abbr": "SPL",
+      "full": "IEEE Signal Processing Letters",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/spl/"
+    },
+    {
+      "level": "C",
+      "abbr": "IET-IPR",
+      "full": "IET Image Processing",
+      "publisher": "IET",
+      "url": "http://dblp.uni-trier.de/db/journals/iet-ipr/"
+    },
+    {
+      "level": "C",
+      "abbr": "JVCIR",
+      "full": "Journal of Visual Communication and Image Representation",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/jvcir/"
+    },
+    {
+      "level": "C",
+      "abbr": "MS",
+      "full": "Multimedia Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/mms/"
+    },
+    {
+      "level": "C",
+      "abbr": "MTA",
+      "full": "Multimedia Tools and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/mta/"
+    },
+    {
+      "level": "C",
+      "abbr": "SIGPRO",
+      "full": "Signal Processing",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/sigpro/"
+    },
+    {
+      "level": "C",
+      "abbr": "IMAGE",
+      "full": "Signal Processing: Image Communication",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/spic/"
+    },
+    {
+      "level": "C",
+      "abbr": "TVC",
+      "full": "The Visual Computer",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/vc/"
+    },
+    {
+      "level": "C",
+      "abbr": "VI",
+      "full": "Visual Informatics",
+      "publisher": "浙江大学出版社",
+      "url": "https://dblp.uni-trier.de/db/journals/vi/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "VRIH",
+      "full": "Virtual Reality & Intelligent Hardware",
+      "publisher": "中国科技出版社/北京航空航天大学",
+      "url": "https://dblp.uni-trier.de/db/journals/vrih/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "GMOD",
+      "full": "Graphical Models",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cvgip/"
+    }
+  ],
+  "人工智能": [
+    {
+      "level": "A",
+      "abbr": "AI",
+      "full": "Artificial Intelligence",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ai/"
+    },
+    {
+      "level": "A",
+      "abbr": "TPAMI",
+      "full": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/pami/"
+    },
+    {
+      "level": "A",
+      "abbr": "IJCV",
+      "full": "International Journal of Computer Vision",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ijcv/"
+    },
+    {
+      "level": "A",
+      "abbr": "JMLR",
+      "full": "Journal of Machine Learning Research",
+      "publisher": "MIT Press",
+      "url": "http://dblp.uni-trier.de/db/journals/jmlr/"
+    },
+    {
+      "level": "B",
+      "abbr": "TAP",
+      "full": "ACM Transactions on Applied Perception",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tap/"
+    },
+    {
+      "level": "B",
+      "abbr": "AAMAS",
+      "full": "Autonomous Agents and Multi-Agent Systems",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/aamas/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Computational Linguistics",
+      "publisher": "MIT Press",
+      "url": "http://dblp.uni-trier.de/db/journals/coling/"
+    },
+    {
+      "level": "B",
+      "abbr": "CVIU",
+      "full": "Computer Vision and Image Understanding",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/cviu/"
+    },
+    {
+      "level": "B",
+      "abbr": "DKE",
+      "full": "Data & Knowledge Engineering",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/dke/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Evolutionary Computation",
+      "publisher": "MIT Press",
+      "url": "http://dblp.uni-trier.de/db/journals/ec/"
+    },
+    {
+      "level": "B",
+      "abbr": "TAC",
+      "full": "IEEE Transactions on Affective Computing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/taffco/"
+    },
+    {
+      "level": "B",
+      "abbr": "TASLP",
+      "full": "IEEE Transactions on Audio, Speech and Language Processing（原 IEEE/ACM Transactions on Audio, Speech and Language Processing）",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/taslp/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "IEEE Transactions on Cybernetics",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tcyb/"
+    },
+    {
+      "level": "B",
+      "abbr": "TEC",
+      "full": "IEEE Transactions on Evolutionary Computation",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tec/"
+    },
+    {
+      "level": "B",
+      "abbr": "TFS",
+      "full": "IEEE Transactions on Fuzzy Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tfs/"
+    },
+    {
+      "level": "B",
+      "abbr": "TNNLS",
+      "full": "IEEE Transactions on Neural Networks and learning systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tnn/"
+    },
+    {
+      "level": "B",
+      "abbr": "IJAR",
+      "full": "International Journal of Approximate Reasoning",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ijar/"
+    },
+    {
+      "level": "B",
+      "abbr": "JAIR",
+      "full": "Journal of Artificial Intelligence Research",
+      "publisher": "AAAI",
+      "url": "http://dblp.uni-trier.de/db/journals/jair/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Journal of Automated Reasoning",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/jar/"
+    },
+    {
+      "level": "B",
+      "abbr": "JSLHR",
+      "full": "Journal of Speech, Language, and Hearing Research",
+      "publisher": "American Speech-Language Hearing Association",
+      "url": "http://jslhr.pubs.asha.org/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Machine Learning",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ml/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Neural Computation",
+      "publisher": "MIT Press",
+      "url": "http://dblp.uni-trier.de/db/journals/neco/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Neural Networks",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/nn/"
+    },
+    {
+      "level": "B",
+      "abbr": "PR",
+      "full": "Pattern Recognition",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/conf/par/"
+    },
+    {
+      "level": "B",
+      "abbr": "TACL",
+      "full": "Transactions of the Association for Computational Linguistics",
+      "publisher": "The Association for Computational Linguistics",
+      "url": "https://dblp.org/db/journals/tacl/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TALLIP",
+      "full": "ACM Transactions on Asian and Low-Resource Language Information Processing",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/talip/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Applied Intelligence",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/apin/"
+    },
+    {
+      "level": "C",
+      "abbr": "AIM",
+      "full": "Artificial Intelligence in Medicine",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/artmed/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Artificial Life",
+      "publisher": "MIT Press",
+      "url": "http://dblp.uni-trier.de/db/journals/alife/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Computational Intelligence",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/ci/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Computer Speech & Language",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/csl/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Connection Science",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/connection/"
+    },
+    {
+      "level": "C",
+      "abbr": "DSS",
+      "full": "Decision Support Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/dss/"
+    },
+    {
+      "level": "C",
+      "abbr": "EAAI",
+      "full": "Engineering Applications of Artificial Intelligence",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/eaai/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Expert Systems",
+      "publisher": "Blackwell/Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/es/"
+    },
+    {
+      "level": "C",
+      "abbr": "ESWA",
+      "full": "Expert Systems with Applications",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/eswa/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Fuzzy Sets and Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/fss/"
+    },
+    {
+      "level": "C",
+      "abbr": "TG",
+      "full": "IEEE Transactions on Games",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tciaig/"
+    },
+    {
+      "level": "C",
+      "abbr": "IET-CVI",
+      "full": "IET Computer Vision",
+      "publisher": "IET",
+      "url": "https://dblp.org/db/journals/iet-cvi/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IET Signal Processing",
+      "publisher": "IET",
+      "url": "https://dblp.org/db/journals/iet-spr/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "IVC",
+      "full": "Image and Vision Computing",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ivc/"
+    },
+    {
+      "level": "C",
+      "abbr": "IDA",
+      "full": "Intelligent Data Analysis",
+      "publisher": "IOS Press",
+      "url": "http://dblp.uni-trier.de/db/journals/ida/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJCIA",
+      "full": "International Journal of Computational Intelligence and Applications",
+      "publisher": "World Scientific",
+      "url": "http://dblp.uni-trier.de/db/journals/ijcia/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJIS",
+      "full": "International Journal of Intelligent Systems",
+      "publisher": "Wiley",
+      "url": "http://dblp.uni-trier.de/db/journals/ijis/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJNS",
+      "full": "International Journal of Neural Systems",
+      "publisher": "World Scientific",
+      "url": "http://dblp.uni-trier.de/db/journals/ijns/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJPRAI",
+      "full": "International Journal of Pattern Recognition and Artificial Intelligence",
+      "publisher": "World Scientific",
+      "url": "http://dblp.uni-trier.de/db/journals/ijprai/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJUFKS",
+      "full": "International Journal of Uncertainty, Fuzziness and Knowledge-Based Systems",
+      "publisher": "World Scientific",
+      "url": "https://dblp.uni-trier.de/db/journals/ijufks/"
+    },
+    {
+      "level": "C",
+      "abbr": "IJDAR",
+      "full": "International Journal on Document Analysis and Recognition",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/ijdar/"
+    },
+    {
+      "level": "C",
+      "abbr": "JETAI",
+      "full": "Journal of Experimental and Theoretical Artificial Intelligence",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/jetai/"
+    },
+    {
+      "level": "C",
+      "abbr": "KBS",
+      "full": "Knowledge-Based Systems",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/kbs/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Machine Translation",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/mt/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Machine Vision and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/mva/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Natural Computing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/nc/"
+    },
+    {
+      "level": "C",
+      "abbr": "NLE",
+      "full": "Natural Language Engineering",
+      "publisher": "Cambridge University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/nle/"
+    },
+    {
+      "level": "C",
+      "abbr": "NCA",
+      "full": "Neural Computing and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/nca/"
+    },
+    {
+      "level": "C",
+      "abbr": "NPL",
+      "full": "Neural Processing Letters",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/npl/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Neurocomputing",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ijon/"
+    },
+    {
+      "level": "C",
+      "abbr": "PAA",
+      "full": "Pattern Analysis and Applications",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/paa/"
+    },
+    {
+      "level": "C",
+      "abbr": "PRL",
+      "full": "Pattern Recognition Letters",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/prl/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Soft Computing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/soco/"
+    },
+    {
+      "level": "C",
+      "abbr": "WI",
+      "full": "Web Intelligence",
+      "publisher": "IOS Press",
+      "url": "http://dblp.uni-trier.de/db/journals/wias/"
+    },
+    {
+      "level": "C",
+      "abbr": "TIIS",
+      "full": "ACM Transactions on Interactive Intelligent Systems",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/tiis/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TELO",
+      "full": "ACM Transactions on Evolutionary Learning and Optimization",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/telo/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "JATS",
+      "full": "ACM Journal on Autonomous Transportation Systems",
+      "publisher": "ACM",
+      "url": ""
+    }
+  ],
+  "人机交互与普适计算": [
+    {
+      "level": "A",
+      "abbr": "TOCHI",
+      "full": "ACM Transactions on Computer-Human Interaction",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tochi/"
+    },
+    {
+      "level": "A",
+      "abbr": "IJHCS",
+      "full": "International Journal of Human-Computer Studies",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/ijmms/"
+    },
+    {
+      "level": "B",
+      "abbr": "CSCW",
+      "full": "Computer Supported Cooperative Work",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/cscw/"
+    },
+    {
+      "level": "B",
+      "abbr": "HCI",
+      "full": "Human-Computer Interaction",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/hhci/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "IEEE Transactions on Human-Machine Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/thms/"
+    },
+    {
+      "level": "B",
+      "abbr": "IWC",
+      "full": "Interacting with Computers",
+      "publisher": "Oxford University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/iwc/"
+    },
+    {
+      "level": "B",
+      "abbr": "IJHCI",
+      "full": "International Journal of Human-Computer Interaction",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/ijhci/"
+    },
+    {
+      "level": "B",
+      "abbr": "UMUAI",
+      "full": "User Modeling and User-Adapted Interaction",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/umuai/"
+    },
+    {
+      "level": "B",
+      "abbr": "TSMC",
+      "full": "IEEE Transactions on Systems, Man,and Cybernetics: Systems",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tsmc/tsmc12.html"
+    },
+    {
+      "level": "B",
+      "abbr": "CCF TPCI",
+      "full": "CCF Transactions on Pervasive Computing and Interaction",
+      "publisher": "CCF/Springer",
+      "url": "https://dblp.uni-trier.de/db/journals/ccftpci/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "BIT",
+      "full": "Behaviour & Information Technology",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/behaviourIT/"
+    },
+    {
+      "level": "C",
+      "abbr": "PUC",
+      "full": "Personal and Ubiquitous Computing",
+      "publisher": "Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/puc/"
+    },
+    {
+      "level": "C",
+      "abbr": "PMC",
+      "full": "Pervasive and Mobile Computing",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/percom/"
+    },
+    {
+      "level": "C",
+      "abbr": "PACMHCI",
+      "full": "Proceedings of the ACM on Human-Computer Interaction",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/pacmhci/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "THRI",
+      "full": "ACM Transactions on Human-Robot Interaction",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/thri/index.html"
+    }
+  ],
+  "交叉/综合/新兴": [
+    {
+      "level": "A",
+      "abbr": "JACM",
+      "full": "Journal of the ACM",
+      "publisher": "ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/jacm/"
+    },
+    {
+      "level": "A",
+      "abbr": "Proc. IEEE",
+      "full": "Proceedings of the IEEE",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/pieee/"
+    },
+    {
+      "level": "A",
+      "abbr": "SCIS",
+      "full": "Science China Information Sciences",
+      "publisher": "Science in China Press/Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/chinaf/"
+    },
+    {
+      "level": "A",
+      "abbr": "Bioinformatics",
+      "full": "Bioinformatics",
+      "publisher": "Oxford University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/bioinformatics/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "Briefings in Bioinformatics",
+      "publisher": "Oxford University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/bib/"
+    },
+    {
+      "level": "B",
+      "abbr": "Cognition",
+      "full": "Cognition",
+      "publisher": "Elsevier",
+      "url": "http://www.journals.elsevier.com/cognition/"
+    },
+    {
+      "level": "B",
+      "abbr": "TASAE",
+      "full": "IEEE Transactions on Automation Science and Engineering",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tase/"
+    },
+    {
+      "level": "B",
+      "abbr": "TGARS",
+      "full": "IEEE Transactions on Geoscience and Remote Sensing",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tgrs/"
+    },
+    {
+      "level": "B",
+      "abbr": "TITS",
+      "full": "IEEE Transactions on Intelligent Transportation Systems",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tits/"
+    },
+    {
+      "level": "B",
+      "abbr": "TMI",
+      "full": "IEEE Transactions on Medical Imaging",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/tmi/"
+    },
+    {
+      "level": "B",
+      "abbr": "TR",
+      "full": "IEEE Transactions on Robotics",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/trob/"
+    },
+    {
+      "level": "B",
+      "abbr": "TCBB",
+      "full": "IEEE/ACM Transactions on Computational Biology and Bioinformatics",
+      "publisher": "IEEE/ACM",
+      "url": "http://dblp.uni-trier.de/db/journals/tcbb/"
+    },
+    {
+      "level": "B",
+      "abbr": "JCST",
+      "full": "Journal of Computer Science and Technology",
+      "publisher": "SCIENCE PRESS/Springer",
+      "url": "http://dblp.uni-trier.de/db/journals/jcst/"
+    },
+    {
+      "level": "B",
+      "abbr": "JAMIA",
+      "full": "Journal of the American Medical Informatics Association",
+      "publisher": "BMJ Journals",
+      "url": "http://dblp.uni-trier.de/db/journals/jamia/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "PLOS Computational Biology",
+      "publisher": "Public Library of Science",
+      "url": "http://dblp.uni-trier.de/db/journals/ploscb/"
+    },
+    {
+      "level": "B",
+      "abbr": "",
+      "full": "The Computer Journal",
+      "publisher": "Oxford University Press",
+      "url": "http://dblp.uni-trier.de/db/journals/cj/"
+    },
+    {
+      "level": "B",
+      "abbr": "WWW",
+      "full": "World Wide Web",
+      "publisher": "Springer",
+      "url": "https://dblp.org/db/journals/www/index.html"
+    },
+    {
+      "level": "B",
+      "abbr": "FCS",
+      "full": "Frontiers of Computer Science",
+      "publisher": "Higher Education Press",
+      "url": "http://dblp.uni-trier.de/db/journals/fcsc/"
+    },
+    {
+      "level": "B",
+      "abbr": "BCRA",
+      "full": "Blockchain: Research and Applications",
+      "publisher": "浙江大学出版社/Elsevier",
+      "url": "https://dblp.uni-trier.de/search?q=BCRA"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "BMC Bioinformatics",
+      "publisher": "BioMed Central",
+      "url": "http://dblp.uni-trier.de/db/journals/bmcbi/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Cybernetics and Systems",
+      "publisher": "Taylor & Francis",
+      "url": "http://dblp.uni-trier.de/db/journals/cas/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IEEE Geoscience and Remote Sensing Letters",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/lgrs/"
+    },
+    {
+      "level": "C",
+      "abbr": "JBHI",
+      "full": "IEEE Journal of Biomedical and Health Informatics",
+      "publisher": "IEEE",
+      "url": "http://dblp.uni-trier.de/db/journals/titb/"
+    },
+    {
+      "level": "C",
+      "abbr": "TBD",
+      "full": "IEEE Transactions on Big Data",
+      "publisher": "IEEE",
+      "url": "https://dblp.uni-trier.de/db/journals/tbd/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IET Intelligent Transport Systems",
+      "publisher": "IET",
+      "url": "http://digital-library.theiet.org/content/journals/iet-its"
+    },
+    {
+      "level": "C",
+      "abbr": "JBI",
+      "full": "Journal of Biomedical Informatics",
+      "publisher": "Elsevier",
+      "url": "https://dblp.uni-trier.de/db/journals/jbi/"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "Medical Image Analysis",
+      "publisher": "Elsevier",
+      "url": "http://dblp.uni-trier.de/db/journals/mia/"
+    },
+    {
+      "level": "C",
+      "abbr": "TII",
+      "full": "IEEE Transactions on Industrial Informatics",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tii/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TCPS",
+      "full": "ACM Transactions on Cyber-Physical Systems",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/tcps/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "TOCE",
+      "full": "ACM Transactions on Computing Education",
+      "publisher": "ACM",
+      "url": "https://dblp.org/db/journals/jeric/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "EITEE（原 FITEE）",
+      "full": "ENGINEERING Information Technology & Electronic Engineering（原 Frontiers of Information Technology & Electronic Engineering）",
+      "publisher": "浙江大学出版社（原 Springer）",
+      "url": "https://www.academax.com/EITEE/home"
+    },
+    {
+      "level": "C",
+      "abbr": "TCSS",
+      "full": "IEEE Transactions on Computational Social Systems",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tcss/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "",
+      "full": "IEEE Transactions on Reliability",
+      "publisher": "IEEE",
+      "url": "https://dblp.org/db/journals/tr/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "HEALTH",
+      "full": "ACM Transactions on Computing for Healthcare",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/health/index.html"
+    },
+    {
+      "level": "C",
+      "abbr": "ACM DLT",
+      "full": "ACM Distributed Ledger Technologies: Research and Practice",
+      "publisher": "ACM",
+      "url": "https://dblp.uni-trier.de/db/journals/distribledger/index.html"
+    }
+  ]
+}

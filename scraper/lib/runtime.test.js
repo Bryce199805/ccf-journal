@@ -38,12 +38,41 @@ test('challenge features without normal journal structure are rate limited', () 
 });
 
 test('HTTP 429 is rate limited regardless of response body', async () => {
+  let attempts = 0;
   const response = await fetchWithRetry('https://example.invalid/search', {
-    retries: 1,
-    fetchImpl: async () => ({ statusCode: 429, body: '<html>temporary response</html>' })
+    retries: 3,
+    fetchImpl: async () => { attempts += 1; return { statusCode: 429, body: '<html>temporary response</html>' }; }
   });
   assert.equal(response.ok, false);
   assert.equal(response.kind, 'rate_limited');
+  assert.equal(attempts, 1);
+});
+
+test('transient HTTP 5xx responses retry up to the configured attempt count', async () => {
+  let attempts = 0;
+  const delays = [];
+  const response = await fetchWithRetry('https://example.invalid/detail', {
+    retries: 3, backoffMs: 100, jitterMs: 0,
+    sleepImpl: async ms => delays.push(ms),
+    fetchImpl: async () => { attempts += 1; return { statusCode: 503, body: 'temporary server error' }; }
+  });
+  assert.equal(response.ok, false);
+  assert.equal(response.kind, 'server_error');
+  assert.equal(response.attempts, 3);
+  assert.equal(attempts, 3);
+  assert.deepEqual(delays, [100, 200]);
+});
+
+test('explicit non-retryable wrapper failures stop immediately', async () => {
+  let attempts = 0;
+  const response = await fetchWithRetry('https://example.invalid/detail', {
+    retries: 3,
+    fetchImpl: async () => { attempts += 1; return { statusCode: 401, body: 'gate', retryable: false, terminalKind: 'login_gate' }; }
+  });
+  assert.equal(response.ok, false);
+  assert.equal(response.kind, 'login_gate');
+  assert.equal(response.attempts, 1);
+  assert.equal(attempts, 1);
 });
 
 test('LetPub cookie is attached only to HTTPS LetPub hosts', () => {
