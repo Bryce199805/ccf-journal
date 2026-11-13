@@ -40,10 +40,7 @@ buttons and the brand mark explicitly use white.
 - Hover elevation is limited to devices with a fine pointer and hover support.
 - Reduced-motion preferences suppress transitions and animation.
 - Full titles wrap; badges, metadata, and controls wrap within the viewport.
-- Journal cards are two-zone: the left holds badges + actions, title, full name
-  (clamped to two lines), publisher with the LetPub link, CCF domains, partitions
-  and notes; from md up the four metrics sit in a centered 2x2 tile panel on the
-  right, and on phones they fall back to a four-cell strip along the bottom.
+- Card notes precede the metric strip to align the comparison area across cards.
 - Mobile partition details use stacked sections; wide tables retain local scrolling.
 - A compact legend explains the independent classification systems.
 
