@@ -74,7 +74,7 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
             <div className="px-5 py-16 text-center"><DialogTitle className="sr-only">正在加载详情</DialogTitle><p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" />正在加载详情…</p></div>
           ) : (
             <div key={entry.id} className="min-w-0 [overflow-wrap:anywhere]">
-              <EntryIdentity entry={entry} />
+              <EntryIdentity entry={entry} aside={entry.type === 'journal' ? <JournalMetrics entry={entry} /> : null} />
               {entry.type === 'conference' ? <ConferenceDetail entry={entry} /> : <JournalDetail entry={entry} />}
             </div>
           )}
@@ -85,12 +85,13 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
   )
 }
 
-function EntryIdentity({ entry }: { entry: Entry }) {
+function EntryIdentity({ entry, aside }: { entry: Entry; aside?: ReactNode }) {
   const title = entry.ccf_full || entry.name || entry.ccf_abbr || '未命名条目'
   const abbreviation = entry.ccf_abbr || entry.journal_abbr
   const publisher = entry.ccf_publisher || entry.publisher
   return (
-    <header className="detail-identity px-4 pb-3 pt-3 sm:px-7 sm:pb-4 sm:pt-4">
+    <header className="detail-identity grid gap-4 px-4 pb-3 pt-3 sm:px-7 sm:pb-3 sm:pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-center lg:gap-8">
+      <div className="min-w-0">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {entry.type === 'conference' ? <LevelBadge level={entry.ccf_level} label={`CCF ${entry.ccf_level}`} /> : entry.is_ccf ? <CCFGrade entry={entry} /> : <Badge variant="outline" className="text-xs">{entry.catalog_source === 'historical_ccf' ? '历史 CCF' : 'Non-CCF'}</Badge>}
         {entry.type === 'journal' && parseCAS(entry.cas2025)?.isTop && <TopBadge />}
@@ -101,6 +102,8 @@ function EntryIdentity({ entry }: { entry: Entry }) {
       {publisher && entry.type === 'conference' && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{publisher}</p>}
       {entry.is_ccf && <div className="mt-2"><CCFRelations entry={entry} /></div>}
       {entry.is_ccf && entry.type === 'journal' && !entry.journalid && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">已收录 CCF 目录，期刊指标待补充。</p>}
+      </div>
+      {aside}
     </header>
   )
 }
@@ -120,13 +123,14 @@ function JournalDetail({ entry }: { entry: Entry }) {
   const hasRankings = citeScore.length > 0 || jif.length > 0 || jci.length > 0
   const hasBasics = [entry.issn, entry.eissn, entry.publisher, entry.ccf_publisher, entry.country, entry.language, entry.periodicity, entry.is_oa, entry.gold_oa_ratio, entry.self_citation_rate].some(Boolean)
   return (
-    <div className="detail-body min-w-0 space-y-4 border-t px-4 py-4 sm:px-7 sm:py-5">
-      <JournalMetrics entry={entry} />
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,16rem)] xl:gap-5">
+    <div className="detail-body min-w-0 space-y-3 border-t px-4 py-4 sm:px-7 sm:py-4">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-5">
         <section aria-label="分区对比" className="min-w-0 space-y-3">
           <SectionHeading>分区对比</SectionHeading>
+          <div className="grid gap-3 sm:grid-cols-2">
           <Partition label="中科院" year="2025" data={cas2025} variant="cas" />
           <Partition label="新锐" year="2026" data={xinrui} variant="xinrui" />
+          <Partition label="中科院" year="2023" data={cas2023} variant="cas" historical />
           <div className="rounded-xl border bg-card px-3.5 py-2.5 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <span className="mr-auto font-semibold">JCR 分区</span>
@@ -134,7 +138,7 @@ function JournalDetail({ entry }: { entry: Entry }) {
             </div>
             {entry.wos_reason && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{entry.wos_reason}</p>}
           </div>
-          <Partition label="中科院" year="2023" data={cas2023} variant="cas" historical />
+          </div>
         </section>
         <section aria-label="学科排名" className="min-w-0 space-y-3">
           <SectionHeading>学科排名</SectionHeading>
@@ -145,26 +149,24 @@ function JournalDetail({ entry }: { entry: Entry }) {
           </> : <p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无学科排名数据。</p>}
           {entry.research_area && <div className="rounded-xl border bg-card px-3.5 py-3"><h4 className="text-sm font-semibold">研究方向</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{entry.research_area}</p></div>}
         </section>
-        <aside className="min-w-0 space-y-4 rounded-xl border bg-card px-3.5 py-3.5 lg:col-span-2 xl:col-span-1 xl:self-start" aria-label="期刊资料">
-          <div>
-            <SectionHeading>期刊信息</SectionHeading>
-            <dl className="detail-info mt-2 lg:grid lg:grid-cols-2 lg:gap-x-8 xl:block">
-              <InfoField label="ISSN" value={entry.issn} />
-              <InfoField label="eISSN" value={entry.eissn} />
-              <InfoField label="出版商" value={entry.publisher || entry.ccf_publisher} />
-              <InfoField label="国家/地区" value={entry.country} />
-              <InfoField label="语言" value={entry.language} />
-              <InfoField label="出版周期" value={entry.periodicity} />
-              <InfoField label="开放获取" value={entry.is_oa} />
-              <InfoField label="Gold OA" value={entry.gold_oa_ratio} />
-              <InfoField label="自引率" value={entry.self_citation_rate} />
-            </dl>
-            {!hasBasics && <p className="mt-3 text-sm text-muted-foreground">基础资料待补充。</p>}
-          </div>
-          {(entry.review_speed || entry.acceptance_rate) && <div><SectionHeading>投稿参考</SectionHeading><dl className="detail-info mt-2 lg:grid lg:grid-cols-2 lg:gap-x-8 xl:block"><InfoField label="审稿速度" value={entry.review_speed} /><InfoField label="录取率" value={entry.acceptance_rate} /></dl></div>}
-          {updated && <p className="flex items-start gap-2 border-t pt-3 text-xs leading-relaxed text-muted-foreground"><CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>数据更新于 {updated}</span></p>}
-        </aside>
       </div>
+      <section aria-label="期刊资料" className="min-w-0 rounded-xl border bg-card px-3.5 py-3">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><SectionHeading>期刊信息</SectionHeading>{updated && <p className="flex items-center gap-1.5 text-xs text-muted-foreground sm:ml-auto"><CalendarDays className="h-3.5 w-3.5 shrink-0" />数据更新于 {updated}</p>}</div>
+        <dl className="detail-info mt-1.5 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <InfoField label="ISSN" value={entry.issn} />
+          <InfoField label="eISSN" value={entry.eissn} />
+          <InfoField label="出版商" value={entry.publisher || entry.ccf_publisher} />
+          <InfoField label="国家/地区" value={entry.country} />
+          <InfoField label="语言" value={entry.language} />
+          <InfoField label="出版周期" value={entry.periodicity} />
+          <InfoField label="开放获取" value={entry.is_oa} />
+          <InfoField label="Gold OA" value={entry.gold_oa_ratio} />
+          <InfoField label="自引率" value={entry.self_citation_rate} />
+          <InfoField label="审稿速度" value={entry.review_speed} />
+          <InfoField label="录取率" value={entry.acceptance_rate} />
+        </dl>
+        {!hasBasics && !entry.review_speed && !entry.acceptance_rate && <p className="mt-2 text-sm text-muted-foreground">基础资料待补充。</p>}
+      </section>
     </div>
   )
 }
@@ -185,18 +187,18 @@ function JournalMetrics({ entry }: { entry: Entry }) {
     { label: 'SNIP', value: entry.snip, tone: 'emerald' },
   ].filter(metric => metric.value != null)
   const hasMetrics = primary.some(metric => metric.value != null) || extra.length > 0
-  if (!hasMetrics) return <section aria-label="期刊指标"><SectionHeading>期刊指标</SectionHeading><p className="mt-3 rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无期刊指标，待数据补充后展示。</p></section>
-  return <section aria-label="期刊指标" className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end">
+  if (!hasMetrics) return <section aria-label="期刊指标"><h3 className="sr-only">期刊指标</h3><p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无期刊指标，待数据补充后展示。</p></section>
+  return <section aria-label="期刊指标" className="min-w-0 space-y-2">
+    <h3 className="sr-only">期刊指标</h3>
     <div className="min-w-0">
-      <SectionHeading>期刊指标</SectionHeading>
-      <dl className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {primary.map(({ label, value, tone }) => <div key={label} data-tone={tone} data-empty={value == null} className="detail-metric min-w-0 rounded-xl border px-3 py-2.5">
           <dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="detail-metric-dot" aria-hidden="true" />{label}</dt>
           <dd className="mt-1.5 text-2xl font-semibold leading-none tabular-nums">{value == null ? '—' : label === 'H-index' || label === '文章数' ? String(value) : fmt(value)}</dd>
         </div>)}
       </dl>
     </div>
-    {extra.length > 0 && <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-3">
+    {extra.length > 0 && <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
       {extra.map(({ label, value, tone }) => <div key={label} data-tone={tone} className="detail-metric-sm flex min-w-0 items-baseline justify-between gap-2 rounded-lg border px-3 py-2">
         <dt className="min-w-0 text-xs text-muted-foreground">{label}</dt>
         <dd className="metric-value text-sm font-semibold tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd>
