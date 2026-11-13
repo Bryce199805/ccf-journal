@@ -40,7 +40,7 @@ buttons and the brand mark explicitly use white.
 - Hover elevation is limited to devices with a fine pointer and hover support.
 - Reduced-motion preferences suppress transitions and animation.
 - Full titles wrap; badges, metadata, and controls wrap within the viewport.
-- Card notes precede the metric strip to align the comparison area across cards.
+- Card tags and notes sit in their own footer row below the metric strip.
 - Mobile partition details use stacked sections; wide tables retain local scrolling.
 - A compact legend explains the independent classification systems.
 
