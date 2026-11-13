@@ -65,6 +65,7 @@ async function main() {
     assert.equal(await page.locator('details').evaluate(e => e.open), false)
     await page.locator('summary').filter({ hasText: '期刊信息' }).click()
     await page.getByText('1234-5678', { exact: true }).waitFor()
+    await page.getByRole('heading', { name: '研究方向', exact: true }).waitFor()
     for (const text of ['1.25', '2.34', '历史计算机科学', '3/180', 'CiteScore 学科']) await page.getByText(text, { exact: true }).waitFor()
     assert.ok(await page.getByRole('dialog').evaluate(e => e.scrollWidth <= e.clientWidth + 1))
     console.log('PASS zero metric, secondary metrics, historical partitions and rankings visible; journal info collapsed by default')

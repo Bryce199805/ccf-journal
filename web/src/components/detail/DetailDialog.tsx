@@ -121,11 +121,11 @@ function JournalDetail({ entry }: { entry: Entry }) {
   const citeScore = parseRows<CiteScoreRanking>(entry.citescore_rankings)
   const updated = formatDataDate(entry.last_scraped_at)
   const hasBasics = [entry.issn, entry.eissn, entry.publisher, entry.ccf_publisher, entry.country, entry.language, entry.periodicity, entry.is_oa, entry.gold_oa_ratio, entry.self_citation_rate].some(Boolean)
-  const rankingCount = [citeScore, jif, jci].filter(rows => rows.length > 0).length + (entry.research_area ? 1 : 0)
+  const hasRankings = citeScore.length > 0 || jif.length > 0 || jci.length > 0
   return (
-    <div className="detail-body min-w-0 space-y-4 border-t px-4 py-4 sm:px-7 sm:py-4">
+    <div className="detail-body min-w-0 space-y-3 border-t px-4 py-3 sm:px-7 sm:py-3.5">
       <details className="detail-disclosure" aria-label="期刊资料">
-        <summary><span className="flex items-center gap-2"><Info aria-hidden="true" className="!h-4 !w-4 text-primary" /><span>期刊信息</span><span className="text-xs font-normal text-muted-foreground">ISSN、出版商、投稿参考等</span></span><span className="flex items-center gap-3">{updated && <span className="hidden items-center gap-1.5 text-xs font-normal text-muted-foreground sm:flex"><CalendarDays className="h-3.5 w-3.5 shrink-0" />数据更新于 {updated}</span>}<ChevronDown aria-hidden="true" /></span></summary>
+        <summary><span className="flex items-center gap-2"><Info aria-hidden="true" className="!h-4 !w-4 text-primary" /><span>期刊信息</span><span className="text-xs font-normal text-muted-foreground">ISSN、出版商、投稿参考、研究方向</span></span><span className="flex items-center gap-3">{updated && <span className="hidden items-center gap-1.5 text-xs font-normal text-muted-foreground sm:flex"><CalendarDays className="h-3.5 w-3.5 shrink-0" />数据更新于 {updated}</span>}<ChevronDown aria-hidden="true" /></span></summary>
         <div className="border-t px-3.5 pb-3 pt-1">
           <dl className="detail-info grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <InfoField label="ISSN" value={entry.issn} />
@@ -140,31 +140,31 @@ function JournalDetail({ entry }: { entry: Entry }) {
             <InfoField label="审稿速度" value={entry.review_speed} />
             <InfoField label="录取率" value={entry.acceptance_rate} />
           </dl>
-          {!hasBasics && !entry.review_speed && !entry.acceptance_rate && <p className="mt-2 text-sm text-muted-foreground">基础资料待补充。</p>}
+          {entry.research_area && <div className="mt-2 border-t border-border/60 pt-3"><h4 className="text-xs text-muted-foreground">研究方向</h4><p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">{entry.research_area}</p></div>}
+          {!hasBasics && !entry.review_speed && !entry.acceptance_rate && !entry.research_area && <p className="mt-2 text-sm text-muted-foreground">基础资料待补充。</p>}
         </div>
       </details>
-      <section aria-label="分区对比" className="min-w-0 space-y-2.5">
+      <section aria-label="分区对比" className="min-w-0 space-y-2">
         <SectionHeading>分区对比</SectionHeading>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3">
           <Partition label="中科院" year="2025" data={cas2025} variant="cas" />
           <Partition label="新锐" year="2026" data={xinrui} variant="xinrui" />
           <Partition label="中科院" year="2023" data={cas2023} variant="cas" historical />
-          <div className="rounded-xl border bg-card px-3.5 py-2.5 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-auto font-semibold">JCR 分区</span>
-              {entry.wos_zone ? <ZoneBadge zone={entry.wos_zone} variant="jcr" /> : <span className="text-xs text-muted-foreground">{wosStatusLabel(entry.wos_status) || '暂无数据'}</span>}
-            </div>
-            {entry.wos_reason && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{entry.wos_reason}</p>}
-          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border bg-card px-3.5 py-2 text-sm">
+          <span className="font-semibold">JCR 分区</span>
+          {entry.wos_zone ? <ZoneBadge zone={entry.wos_zone} variant="jcr" /> : <span className="text-xs text-muted-foreground">{wosStatusLabel(entry.wos_status) || '暂无数据'}</span>}
+          {entry.wos_reason && <p className="min-w-0 basis-full text-xs leading-relaxed text-muted-foreground sm:basis-0 sm:flex-1">{entry.wos_reason}</p>}
         </div>
       </section>
-      <section aria-label="学科排名" className="min-w-0 space-y-2.5">
+      <section aria-label="学科排名" className="min-w-0 space-y-2">
         <SectionHeading>学科排名</SectionHeading>
-        {rankingCount > 0 ? <div className="grid min-w-0 items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {hasRankings ? <div className="min-w-0 space-y-3">
           {citeScore.length > 0 && <RankingTable title="CiteScore" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
-          {jif.length > 0 && <RankingTable title="JIF" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
-          {jci.length > 0 && <RankingTable title="JCI" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
-          {entry.research_area && <div className="rounded-xl border bg-card px-3.5 py-3"><h4 className="text-sm font-semibold">研究方向</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{entry.research_area}</p></div>}
+          {(jif.length > 0 || jci.length > 0) && <div className={`grid min-w-0 items-start gap-3 ${jif.length > 0 && jci.length > 0 ? 'md:grid-cols-2' : ''}`}>
+            {jif.length > 0 && <RankingTable title="JIF" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
+            {jci.length > 0 && <RankingTable title="JCI" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
+          </div>}
         </div> : <p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无学科排名数据。</p>}
       </section>
     </div>
@@ -192,7 +192,7 @@ function JournalMetrics({ entry }: { entry: Entry }) {
     <h3 className="sr-only">期刊指标</h3>
     <div className="min-w-0">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {primary.map(({ label, value, tone }) => <div key={label} data-tone={tone} data-empty={value == null} className="detail-metric min-w-0 rounded-xl border px-3 py-2.5">
+        {primary.map(({ label, value, tone }) => <div key={label} data-tone={tone} data-empty={value == null} className="detail-metric min-w-0 rounded-xl border px-3 py-2">
           <dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="detail-metric-dot" aria-hidden="true" />{label}</dt>
           <dd className="mt-1.5 text-2xl font-semibold leading-none tabular-nums">{value == null ? '—' : label === 'H-index' || label === '文章数' ? String(value) : fmt(value)}</dd>
         </div>)}
@@ -238,7 +238,7 @@ function RankingTable({ title, tone, headers, rows }: { title: string; tone: str
     <h4 className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-sm font-semibold"><span className="detail-metric-dot" aria-hidden="true" />{title} 学科排名<span className="ml-auto text-xs font-normal text-muted-foreground">{rows.length} 个学科</span></h4>
     <table className="w-full table-fixed text-left text-xs">
       <thead className="text-muted-foreground"><tr><th scope="col" className="px-3.5 py-1.5 font-normal">学科</th>{headers.map(header => <th key={header} scope="col" className="w-[4.25rem] px-2 py-1.5 font-normal last:pr-3.5">{header}</th>)}</tr></thead>
-      <tbody className="divide-y divide-border/60">{rows.map((row, index) => <tr key={index} className="align-top"><th scope="row" className="px-3.5 py-2 text-sm font-medium leading-relaxed">{row.subject}</th>{row.values.map((value, i) => <td key={headers[i]} className="metric-value px-2 py-2 text-sm font-semibold tabular-nums last:pr-3.5">{value}</td>)}</tr>)}</tbody>
+      <tbody className="divide-y divide-border/60">{rows.map((row, index) => <tr key={index} className="align-top"><th scope="row" className="px-3.5 py-1.5 text-sm font-medium leading-relaxed">{row.subject}</th>{row.values.map((value, i) => <td key={headers[i]} className="metric-value px-2 py-1.5 text-sm font-semibold tabular-nums last:pr-3.5">{value}</td>)}</tr>)}</tbody>
     </table>
   </div>
 }
