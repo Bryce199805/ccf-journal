@@ -19,7 +19,7 @@ async function main() {
       xinrui: null, country: 'United States', issn: '1234-5678', eissn: '9876-5432',
       research_area: '研究方向'.repeat(100), review_speed: 'ReviewSpeed'.repeat(20), acceptance_rate: '20%',
       jif: JSON.stringify([{ subject: 'Computer Science / Artificial Intelligence'.repeat(5), quartile: 'Q1', rank: '3/180' }]),
-      citescore_rankings: JSON.stringify([{ subject: 'CiteScore 学科', zone: 'Q1', rank: '4/200', percentile: '98%' }]),
+      citescore_rankings: JSON.stringify([{ subject: 'CiteScore 学科', zone: 'Q1', rank: '1234/5678', percentile: '98%' }]),
       jci_json: '{}', tags: [], note: '', letpub_url: 'https://example.com/letpub', official_url: 'https://example.com/official', submission_url: 'https://example.com/submit', ccf_url: 'https://example.com/ccf',
     }
     await page.route(`${origin}/api/**`, async route => {
@@ -47,6 +47,7 @@ async function main() {
       assert.ok(footerBefore.y + footerBefore.height <= 740)
       assert.ok(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1))
       if (width >= 1280) assert.equal(new Set(await page.locator('.detail-metric-sm').evaluateAll(items => items.map(item => Math.round(item.getBoundingClientRect().top)))).size, 1, 'secondary metrics share one row')
+      if (width >= 768) assert.ok(await page.locator('.detail-body table td').evaluateAll(cells => cells.every(cell => { const range = document.createRange(); range.selectNodeContents(cell); return range.getClientRects().length === 1 })), 'ranking values stay on one line')
       assert.ok(await page.locator('.detail-metric-sm dt').evaluateAll(items => items.every(item => item.getBoundingClientRect().height < 20)), 'secondary metric labels stay on one line')
       const scroll = page.locator('[data-detail-scroll]')
       await scroll.evaluate(e => { e.scrollTop = e.scrollHeight })

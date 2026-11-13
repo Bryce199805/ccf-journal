@@ -160,7 +160,7 @@ function JournalDetail({ entry }: { entry: Entry }) {
       <section aria-label="学科排名" className="min-w-0 space-y-2">
         <SectionHeading>学科排名</SectionHeading>
         {hasRankings ? <div className="min-w-0 space-y-3">
-          {citeScore.length > 0 && <RankingTable title="CiteScore" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
+          {citeScore.length > 0 && <RankingTable wide title="CiteScore" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
           {(jif.length > 0 || jci.length > 0) && <div className={`grid min-w-0 items-start gap-3 ${jif.length > 0 && jci.length > 0 ? 'md:grid-cols-2' : ''}`}>
             {jif.length > 0 && <RankingTable title="JIF" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
             {jci.length > 0 && <RankingTable title="JCI" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
@@ -233,12 +233,13 @@ function InfoField({ label, value }: { label: string; value: string | null | und
   return <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-border/60 py-1.5 text-sm leading-relaxed last:border-0 sm:text-xs"><dt className="text-muted-foreground">{label}</dt><dd className="min-w-0 whitespace-pre-wrap font-medium [overflow-wrap:anywhere]">{value}</dd></div>
 }
 
-function RankingTable({ title, tone, headers, rows }: { title: string; tone: string; headers: string[]; rows: { subject: string; values: string[] }[] }) {
+function RankingTable({ title, tone, headers, rows, wide }: { title: string; tone: string; headers: string[]; rows: { subject: string; values: string[] }[]; wide?: boolean }) {
+  const columnWidth = wide ? 'w-[4.5rem] md:w-[9rem]' : 'w-[4.5rem] xl:w-[7rem]'
   return <div data-tone={tone} className="min-w-0 overflow-hidden rounded-xl border bg-card">
     <h4 className="flex items-center gap-2 border-b bg-muted/50 px-3.5 py-2 text-sm font-semibold"><span className="detail-metric-dot" aria-hidden="true" />{title} 学科排名<span className="ml-auto text-xs font-normal text-muted-foreground">{rows.length} 个学科</span></h4>
     <table className="w-full table-fixed text-left text-xs">
-      <thead className="text-muted-foreground"><tr><th scope="col" className="px-3.5 py-1.5 font-normal">学科</th>{headers.map(header => <th key={header} scope="col" className="w-[4.25rem] px-2 py-1.5 font-normal last:pr-3.5">{header}</th>)}</tr></thead>
-      <tbody className="divide-y divide-border/60">{rows.map((row, index) => <tr key={index} className="align-top"><th scope="row" className="px-3.5 py-1.5 text-sm font-medium leading-relaxed">{row.subject}</th>{row.values.map((value, i) => <td key={headers[i]} className="metric-value px-2 py-1.5 text-sm font-semibold tabular-nums last:pr-3.5">{value}</td>)}</tr>)}</tbody>
+      <thead className="text-muted-foreground"><tr><th scope="col" className="px-3.5 py-1.5 font-normal">学科</th>{headers.map(header => <th key={header} scope="col" className={`${columnWidth} px-2 py-1.5 font-normal last:pr-3.5`}>{header}</th>)}</tr></thead>
+      <tbody className="divide-y divide-border/60">{rows.map((row, index) => <tr key={index} className="align-top"><th scope="row" className="px-3.5 py-1.5 text-sm font-medium leading-relaxed">{row.subject}</th>{row.values.map((value, i) => <td key={headers[i]} className="metric-value px-2 py-1.5 text-sm font-semibold tabular-nums last:pr-3.5 md:whitespace-nowrap">{value}</td>)}</tr>)}</tbody>
     </table>
   </div>
 }
