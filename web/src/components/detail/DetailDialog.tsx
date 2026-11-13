@@ -6,7 +6,7 @@ import { RequestError } from '@/components/shared/RequestError'
 import { LevelBadge, ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { CCFGrade, CCFRelations } from '@/components/shared/CCFRelations'
 import { ActionButtons } from './ActionButtons'
-import { BookOpen, CalendarDays, Loader2, X } from 'lucide-react'
+import { BookOpen, CalendarDays, ChevronDown, Info, Loader2, X } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
 import { fmt } from '@/lib/utils'
 import { wosStatusLabel } from '@/lib/wos'
@@ -120,14 +120,32 @@ function JournalDetail({ entry }: { entry: Entry }) {
   const jci = parseRows<JIFRanking>(entry.jci_json)
   const citeScore = parseRows<CiteScoreRanking>(entry.citescore_rankings)
   const updated = formatDataDate(entry.last_scraped_at)
-  const hasRankings = citeScore.length > 0 || jif.length > 0 || jci.length > 0
   const hasBasics = [entry.issn, entry.eissn, entry.publisher, entry.ccf_publisher, entry.country, entry.language, entry.periodicity, entry.is_oa, entry.gold_oa_ratio, entry.self_citation_rate].some(Boolean)
+  const rankingCount = [citeScore, jif, jci].filter(rows => rows.length > 0).length + (entry.research_area ? 1 : 0)
   return (
-    <div className="detail-body min-w-0 space-y-3 border-t px-4 py-4 sm:px-7 sm:py-4">
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-5">
-        <section aria-label="分区对比" className="min-w-0 space-y-3">
-          <SectionHeading>分区对比</SectionHeading>
-          <div className="grid gap-3 sm:grid-cols-2">
+    <div className="detail-body min-w-0 space-y-4 border-t px-4 py-4 sm:px-7 sm:py-4">
+      <details className="detail-disclosure" aria-label="期刊资料">
+        <summary><span className="flex items-center gap-2"><Info aria-hidden="true" className="!h-4 !w-4 text-primary" /><span>期刊信息</span><span className="text-xs font-normal text-muted-foreground">ISSN、出版商、投稿参考等</span></span><span className="flex items-center gap-3">{updated && <span className="hidden items-center gap-1.5 text-xs font-normal text-muted-foreground sm:flex"><CalendarDays className="h-3.5 w-3.5 shrink-0" />数据更新于 {updated}</span>}<ChevronDown aria-hidden="true" /></span></summary>
+        <div className="border-t px-3.5 pb-3 pt-1">
+          <dl className="detail-info grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <InfoField label="ISSN" value={entry.issn} />
+            <InfoField label="eISSN" value={entry.eissn} />
+            <InfoField label="出版商" value={entry.publisher || entry.ccf_publisher} />
+            <InfoField label="国家/地区" value={entry.country} />
+            <InfoField label="语言" value={entry.language} />
+            <InfoField label="出版周期" value={entry.periodicity} />
+            <InfoField label="开放获取" value={entry.is_oa} />
+            <InfoField label="Gold OA" value={entry.gold_oa_ratio} />
+            <InfoField label="自引率" value={entry.self_citation_rate} />
+            <InfoField label="审稿速度" value={entry.review_speed} />
+            <InfoField label="录取率" value={entry.acceptance_rate} />
+          </dl>
+          {!hasBasics && !entry.review_speed && !entry.acceptance_rate && <p className="mt-2 text-sm text-muted-foreground">基础资料待补充。</p>}
+        </div>
+      </details>
+      <section aria-label="分区对比" className="min-w-0 space-y-2.5">
+        <SectionHeading>分区对比</SectionHeading>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Partition label="中科院" year="2025" data={cas2025} variant="cas" />
           <Partition label="新锐" year="2026" data={xinrui} variant="xinrui" />
           <Partition label="中科院" year="2023" data={cas2023} variant="cas" historical />
@@ -138,34 +156,16 @@ function JournalDetail({ entry }: { entry: Entry }) {
             </div>
             {entry.wos_reason && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{entry.wos_reason}</p>}
           </div>
-          </div>
-        </section>
-        <section aria-label="学科排名" className="min-w-0 space-y-3">
-          <SectionHeading>学科排名</SectionHeading>
-          {hasRankings ? <>
-            {citeScore.length > 0 && <RankingTable title="CiteScore" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
-            {jif.length > 0 && <RankingTable title="JIF" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
-            {jci.length > 0 && <RankingTable title="JCI" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
-          </> : <p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无学科排名数据。</p>}
+        </div>
+      </section>
+      <section aria-label="学科排名" className="min-w-0 space-y-2.5">
+        <SectionHeading>学科排名</SectionHeading>
+        {rankingCount > 0 ? <div className="grid min-w-0 items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {citeScore.length > 0 && <RankingTable title="CiteScore" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
+          {jif.length > 0 && <RankingTable title="JIF" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
+          {jci.length > 0 && <RankingTable title="JCI" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
           {entry.research_area && <div className="rounded-xl border bg-card px-3.5 py-3"><h4 className="text-sm font-semibold">研究方向</h4><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{entry.research_area}</p></div>}
-        </section>
-      </div>
-      <section aria-label="期刊资料" className="min-w-0 rounded-xl border bg-card px-3.5 py-3">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><SectionHeading>期刊信息</SectionHeading>{updated && <p className="flex items-center gap-1.5 text-xs text-muted-foreground sm:ml-auto"><CalendarDays className="h-3.5 w-3.5 shrink-0" />数据更新于 {updated}</p>}</div>
-        <dl className="detail-info mt-1.5 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <InfoField label="ISSN" value={entry.issn} />
-          <InfoField label="eISSN" value={entry.eissn} />
-          <InfoField label="出版商" value={entry.publisher || entry.ccf_publisher} />
-          <InfoField label="国家/地区" value={entry.country} />
-          <InfoField label="语言" value={entry.language} />
-          <InfoField label="出版周期" value={entry.periodicity} />
-          <InfoField label="开放获取" value={entry.is_oa} />
-          <InfoField label="Gold OA" value={entry.gold_oa_ratio} />
-          <InfoField label="自引率" value={entry.self_citation_rate} />
-          <InfoField label="审稿速度" value={entry.review_speed} />
-          <InfoField label="录取率" value={entry.acceptance_rate} />
-        </dl>
-        {!hasBasics && !entry.review_speed && !entry.acceptance_rate && <p className="mt-2 text-sm text-muted-foreground">基础资料待补充。</p>}
+        </div> : <p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无学科排名数据。</p>}
       </section>
     </div>
   )
@@ -199,9 +199,9 @@ function JournalMetrics({ entry }: { entry: Entry }) {
       </dl>
     </div>
     {extra.length > 0 && <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
-      {extra.map(({ label, value, tone }) => <div key={label} data-tone={tone} className="detail-metric-sm flex min-w-0 items-baseline justify-between gap-2 rounded-lg border px-3 py-2">
-        <dt className="min-w-0 text-xs text-muted-foreground">{label}</dt>
-        <dd className="metric-value text-sm font-semibold tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd>
+      {extra.map(({ label, value, tone }) => <div key={label} data-tone={tone} className="detail-metric-sm flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 rounded-lg border px-3 py-2">
+        <dt className="whitespace-nowrap text-xs text-muted-foreground">{label}</dt>
+        <dd className="metric-value ml-auto whitespace-nowrap text-sm font-semibold tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd>
       </div>)}
     </dl>}
   </section>

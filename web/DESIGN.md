@@ -61,14 +61,15 @@ Nothing is collapsed: every metric, partition, ranking and metadata field is
 visible so a journal can be read at a glance.
 
 From lg widths the four primary metrics (large tiles) and the six secondary
-metrics (compact tiles) sit in the title area, to the right of the title. Below
-it, partitions (CAS current, Xinrui, historical CAS, JCR with its note as a 2x2
-grid) sit beside subject-ranking tables (CiteScore / JIF / JCI, then research
-area). Journal info is low-priority reference data: it is a quiet full-width
-strip at the bottom with identifiers, submission references and the data date,
-never a side column. At 1440x900 a typical journal fits without scrolling;
-phones stack everything. Long lists of ranking subjects scroll inside the
-dialog rather than being hidden.
+metrics (compact single-line tiles) sit in the title area, to the right of the
+title. Below the title, the journal info (identifiers, publisher, submission
+references, data date) is a full-width section that is collapsed by default —
+it is low-priority reference data and the only collapsible part of the dialog.
+Then come four partition cards in one full-width row (CAS current, Xinrui,
+historical CAS, JCR with its note; 2x2 below xl), then subject-ranking tables
+(CiteScore / JIF / JCI) and the research area in a three-column row. At
+1440x900 a typical journal fits without scrolling; phones stack everything.
+Long lists of ranking subjects scroll inside the dialog rather than being hidden.
 
 The submission link is the primary footer action; the official website takes
 that emphasis if no submission URL exists. Other links use outlined buttons.
