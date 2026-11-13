@@ -206,6 +206,7 @@
   }
   .journal-card:focus-within { border-color: var(--primary); }
   .metric-strip { background: var(--muted); }
+  @media (min-width: 768px) { .metric-aside { background: color-mix(in srgb, var(--muted) 55%, var(--card)); } }
   .dark .metric-cell { border-top-width: 1px; }
   .metric-cell { background: var(--tone-soft); border-top: 2px solid var(--tone-line); }
   .metric-cell dd { color: var(--tone); }
