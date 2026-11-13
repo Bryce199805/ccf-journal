@@ -90,7 +90,7 @@ function EntryIdentity({ entry, aside }: { entry: Entry; aside?: ReactNode }) {
   const abbreviation = entry.ccf_abbr || entry.journal_abbr
   const publisher = entry.ccf_publisher || entry.publisher
   return (
-    <header className="detail-identity grid gap-4 px-4 pb-3 pt-3 sm:px-7 sm:pb-3 sm:pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-center lg:gap-8">
+    <header className="detail-identity grid gap-4 px-4 pb-3 pt-3 sm:px-7 sm:pb-3 sm:pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-center lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,41rem)]">
       <div className="min-w-0">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {entry.type === 'conference' ? <LevelBadge level={entry.ccf_level} label={`CCF ${entry.ccf_level}`} /> : entry.is_ccf ? <CCFGrade entry={entry} /> : <Badge variant="outline" className="text-xs">{entry.catalog_source === 'historical_ccf' ? '历史 CCF' : 'Non-CCF'}</Badge>}
@@ -198,10 +198,10 @@ function JournalMetrics({ entry }: { entry: Entry }) {
         </div>)}
       </dl>
     </div>
-    {extra.length > 0 && <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
-      {extra.map(({ label, value, tone }) => <div key={label} data-tone={tone} className="detail-metric-sm flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 rounded-lg border px-3 py-2">
+    {extra.length > 0 && <dl className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none">
+      {extra.map(({ label, value, tone }) => <div key={label} data-tone={tone} className="detail-metric-sm min-w-0 rounded-lg border px-3 py-1.5">
         <dt className="whitespace-nowrap text-xs text-muted-foreground">{label}</dt>
-        <dd className="metric-value ml-auto whitespace-nowrap text-sm font-semibold tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd>
+        <dd className="metric-value mt-0.5 whitespace-nowrap text-sm font-semibold leading-tight tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd>
       </div>)}
     </dl>}
   </section>

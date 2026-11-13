@@ -61,7 +61,7 @@ Nothing is collapsed: every metric, partition, ranking and metadata field is
 visible so a journal can be read at a glance.
 
 From lg widths the four primary metrics (large tiles) and the six secondary
-metrics (compact single-line tiles) sit in the title area, to the right of the
+metrics (compact tiles, label above value, one row from xl) sit in the title area, to the right of the
 title. Below the title, journal info (identifiers, publisher, submission
 references, research area, data date) is a full-width section that is collapsed
 by default — low-priority reference data, and the only collapsible part of the

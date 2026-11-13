@@ -46,6 +46,7 @@ async function main() {
       assert.ok(closeBefore.y >= 0)
       assert.ok(footerBefore.y + footerBefore.height <= 740)
       assert.ok(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1))
+      if (width >= 1280) assert.equal(new Set(await page.locator('.detail-metric-sm').evaluateAll(items => items.map(item => Math.round(item.getBoundingClientRect().top)))).size, 1, 'secondary metrics share one row')
       assert.ok(await page.locator('.detail-metric-sm dt').evaluateAll(items => items.every(item => item.getBoundingClientRect().height < 20)), 'secondary metric labels stay on one line')
       const scroll = page.locator('[data-detail-scroll]')
       await scroll.evaluate(e => { e.scrollTop = e.scrollHeight })
