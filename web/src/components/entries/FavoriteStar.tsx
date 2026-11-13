@@ -22,7 +22,7 @@ export function FavoriteStar({ entryId, isFavorite, deviceId, className }: Favor
       onClick={(e) => { e.stopPropagation(); toggle(entryId, isFavorite) }}
       className={cn(
         'disabled:opacity-50 disabled:cursor-wait cursor-pointer transition-all hover:scale-110 inline-flex items-center justify-center p-2 -m-2 rounded-md hover:bg-muted/60 active:scale-95',
-        isFavorite ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground',
+        isFavorite ? 'text-amber-600 dark:text-amber-300' : 'text-muted-foreground hover:text-foreground',
         className
       )}
       aria-label={isFavorite ? '取消收藏' : '收藏'}

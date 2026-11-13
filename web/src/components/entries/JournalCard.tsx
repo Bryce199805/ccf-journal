@@ -99,6 +99,20 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
             )}
             {entry.sci_type && <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium">{entry.sci_type}</Badge>}
           </div>
+        {(entryTags.length > 0 || entry.note || noteEditing) && (
+          <div className="mt-3 space-y-2 border-t border-dashed pt-3">
+            {entryTags.length > 0 && <div className="flex flex-wrap gap-1">{entryTags.map(t => <TagBadge key={t} name={t} />)}</div>}
+            {entry.note && !noteEditing && (
+              <button
+                onClick={e => { e.stopPropagation(); setNoteEditing(true) }}
+                className="flex w-full items-center gap-1.5 text-left text-xs text-muted-foreground hover:text-foreground" title={entry.note}
+              >
+                <PencilLine className="h-3 w-3 shrink-0" /><span className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{entry.note}</span>
+              </button>
+            )}
+            {noteEditing && <NoteEditor entryId={entry.id} deviceId={deviceId} initialContent={entry.note || ''} onDone={() => setNoteEditing(false)} />}
+          </div>
+        )}
         </div>
         <dl className="metric-strip grid grid-cols-4 gap-px border-y">
           {[
@@ -122,20 +136,7 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
             </a>
           )}
         </div>
-        {(entryTags.length > 0 || entry.note || noteEditing) && (
-          <div className="space-y-2 border-t border-dashed px-4 py-3 sm:px-5">
-            {entryTags.length > 0 && <div className="flex flex-wrap gap-1">{entryTags.map(t => <TagBadge key={t} name={t} />)}</div>}
-            {entry.note && !noteEditing && (
-              <button
-                onClick={e => { e.stopPropagation(); setNoteEditing(true) }}
-                className="flex w-full items-center gap-1.5 text-left text-xs text-muted-foreground hover:text-foreground" title={entry.note}
-              >
-                <PencilLine className="h-3 w-3 shrink-0" /><span className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{entry.note}</span>
-              </button>
-            )}
-            {noteEditing && <NoteEditor entryId={entry.id} deviceId={deviceId} initialContent={entry.note || ''} onDone={() => setNoteEditing(false)} />}
-          </div>
-        )}
+
       </CardContent>
     </Card>
   )

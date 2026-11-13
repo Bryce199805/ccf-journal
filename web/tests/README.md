@@ -20,3 +20,13 @@ search and filter recovery, slow type changes, list/detail retries, keyboard det
 opening and focus restoration, duplicate favorite clicks, failed note drafts,
 Chinese input composition, nested tag dialogs, page jumps, and responsive overflow
 at 320, 390, 768, and 1440 pixels.
+
+Run `node web/tests/theme.cjs` with the same environment for visual-theme checks:
+system preference, persistent overrides, cross-tab sync, representative color
+contrast, semantic legend, and responsive light/dark screenshots. Screenshot data
+is synthetic and must not be treated as actual journal rankings or metrics.
+
+Run `node web/tests/details.cjs` for detail-specific regression: long text at
+320–1440px, fixed close/footer controls during scrolling, focus restoration,
+zero and missing metrics, expandable history and rankings, and malformed optional
+JSON fields. API data remains mocked.

@@ -1,36 +1,26 @@
 import { Button } from '@/components/ui/button'
-import { ExternalLink } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 
 interface ActionButtonsProps {
   letpubUrl: string | null
   officialUrl: string | null
   submissionUrl: string | null
   ccfUrl: string | null
+  ccfLabel?: string
 }
 
-export function ActionButtons({ letpubUrl, officialUrl, submissionUrl, ccfUrl }: ActionButtonsProps) {
-  return (
-    <div className="flex flex-wrap gap-1.5 pt-3 border-t">
-      {letpubUrl && (
-        <Button size="sm" variant="default" className="bg-emerald-700 text-white hover:bg-emerald-800 text-xs h-10 sm:h-8" asChild>
-          <a href={letpubUrl} target="_blank" rel="noopener">LetPub <ExternalLink className="h-3 w-3 ml-0.5" /></a>
-        </Button>
-      )}
-      {officialUrl && (
-        <Button size="sm" variant="default" className="bg-blue-700 text-white hover:bg-blue-800 text-xs h-10 sm:h-8" asChild>
-          <a href={officialUrl} target="_blank" rel="noopener">官网 <ExternalLink className="h-3 w-3 ml-0.5" /></a>
-        </Button>
-      )}
-      {submissionUrl && (
-        <Button size="sm" variant="default" className="bg-violet-700 text-white hover:bg-violet-800 text-xs h-10 sm:h-8" asChild>
-          <a href={submissionUrl} target="_blank" rel="noopener">投稿 <ExternalLink className="h-3 w-3 ml-0.5" /></a>
-        </Button>
-      )}
-      {ccfUrl && (
-        <Button size="sm" variant="secondary" className="text-xs h-10 sm:h-8" asChild>
-          <a href={ccfUrl} target="_blank" rel="noopener">CCF <ExternalLink className="h-3 w-3 ml-0.5" /></a>
-        </Button>
-      )}
-    </div>
-  )
+export function ActionButtons({ letpubUrl, officialUrl, submissionUrl, ccfUrl, ccfLabel = 'CCF' }: ActionButtonsProps) {
+  const links = [
+    { label: '官网', url: officialUrl, primary: !submissionUrl },
+    { label: 'LetPub', url: letpubUrl, primary: false },
+    { label: ccfLabel, url: ccfUrl, primary: false },
+    { label: '投稿', url: submissionUrl, primary: true },
+  ].filter(link => link.url)
+  if (!links.length) return null
+  return <footer className="detail-actions flex shrink-0 flex-wrap items-center gap-2 border-t bg-card px-3 py-3 sm:px-7">
+    <span className="mr-auto hidden text-xs text-muted-foreground sm:block">访问相关网站</span>
+    {links.map(link => <Button key={link.label} size="sm" variant={link.primary ? 'default' : 'outline'} className="h-10 min-w-0 flex-1 gap-1 px-2 text-xs sm:flex-none sm:px-3" asChild>
+      <a href={link.url!} target="_blank" rel="noopener noreferrer" aria-label={`${link.label}（新窗口打开）`}>{link.label}<ArrowUpRight className="hidden h-3.5 w-3.5 sm:block" /></a>
+    </Button>)}
+  </footer>
 }

@@ -77,9 +77,9 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
                 <TableCell className="text-center text-xs text-muted-foreground" title={e.wos_reason || undefined}>
                   {e.wos_zone ? <ZoneBadge zone={`JCR${e.wos_zone}`} variant="jcr" /> : wosStatusLabel(e.wos_status) || '-'}
                 </TableCell>
-                <TableCell className="text-center font-medium tabular-nums">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
-                <TableCell className="text-center font-medium tabular-nums">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
-                <TableCell className="text-center">{e.h_index ?? '-'}</TableCell>
+                <TableCell data-tone="blue" className="metric-value text-center font-semibold tabular-nums">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
+                <TableCell data-tone="emerald" className="metric-value text-center font-semibold tabular-nums">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
+                <TableCell data-tone="violet" className="metric-value text-center font-semibold tabular-nums">{e.h_index ?? '-'}</TableCell>
                 <TableCell>
                   {e.tags && e.tags.length > 0 ? (
                     <div className="flex gap-0.5 flex-wrap">

@@ -1,21 +1,31 @@
-import { useRef } from 'react'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
-import { RequestError } from '@/components/shared/RequestError'
+import { useRef, type ReactNode } from 'react'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { RequestError } from '@/components/shared/RequestError'
 import { LevelBadge, ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
+import { CCFGrade, CCFRelations } from '@/components/shared/CCFRelations'
 import { ActionButtons } from './ActionButtons'
-import { Loader2, ExternalLink } from 'lucide-react'
+import { BookOpen, CalendarDays, ChevronDown, Loader2, X } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
 import { fmt } from '@/lib/utils'
 import { wosStatusLabel } from '@/lib/wos'
-import { CCFGrade, CCFRelations } from '@/components/shared/CCFRelations'
 import type { Entry, CASPartition, JIFRanking, CiteScoreRanking } from '@/api/types'
 
 function parseCAS(json: string | null): CASPartition | null {
   if (!json) return null
-  try { return JSON.parse(json) } catch { return null }
+  try {
+    const parsed = JSON.parse(json)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
+  } catch { return null }
+}
+
+function parseRows<T>(json: string | null): T[] {
+  if (!json) return []
+  try {
+    const parsed = JSON.parse(json)
+    return Array.isArray(parsed) ? parsed.filter(item => item && typeof item === 'object') : []
+  } catch { return [] }
 }
 
 function formatDataDate(value: string | null): string | null {
@@ -36,293 +46,180 @@ interface DetailDialogProps {
 
 export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDialogProps) {
   const previousFocus = useRef<HTMLElement | null>(null)
+  const scrollArea = useRef<HTMLDivElement>(null)
   const { data, isLoading, isError, isFetching, refetch } = useEntryDetail(entryId, deviceId)
-  const entry = data?.entry as Entry | undefined
+  const entry = data?.entry
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="detail-surface grid-cols-1 w-full max-w-[calc(100%-2rem)] sm:max-w-5xl max-h-[90dvh] overflow-y-auto p-4 sm:p-6 gap-0"
-        onOpenAutoFocus={() => { previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null }}
-        onCloseAutoFocus={event => { if (previousFocus.current?.isConnected) { event.preventDefault(); previousFocus.current.focus() } }}
-        showCloseButton={true}
+        className="detail-shell flex w-[calc(100%-1rem)] max-w-none max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:w-[calc(100%-2rem)] sm:max-w-[82rem] sm:max-h-[94dvh]"
+        onOpenAutoFocus={event => {
+          previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+          event.preventDefault()
+          scrollArea.current?.focus({ preventScroll: true })
+        }}
+        onCloseAutoFocus={event => {
+          if (previousFocus.current?.isConnected) { event.preventDefault(); previousFocus.current.focus({ preventScroll: true }) }
+        }}
+        showCloseButton={false}
         aria-describedby={undefined}
       >
-        <DialogHeader className="min-w-0 pb-3 text-left">
-          <DialogTitle className="text-lg font-bold leading-relaxed [overflow-wrap:anywhere] pr-9">
-            {isLoading ? '加载中...' : entry?.ccf_full || entry?.name || entry?.ccf_abbr || '条目详情'}
-          </DialogTitle>
-        </DialogHeader>
-
-        {isError ? <RequestError message="详情加载失败，请重试。" onRetry={() => void refetch()} pending={isFetching} /> : isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : entry ? (
-          entry.type === 'conference' ? (
-            <ConferenceDetail entry={entry} />
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2 sm:px-6">
+          <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><BookOpen className="h-4 w-4 text-primary" />{entry?.type === 'conference' ? '会议详情' : '期刊详情'}</span>
+          <DialogClose asChild><Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="关闭详情"><X className="h-4 w-4" /></Button></DialogClose>
+        </div>
+        <div ref={scrollArea} data-detail-scroll tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain outline-none">
+          {isError ? <div className="p-5"><DialogTitle className="mb-3">详情暂时无法加载</DialogTitle><RequestError message="详情加载失败，请重试。" onRetry={() => void refetch()} pending={isFetching} /></div> : isLoading || !entry ? (
+            <div className="px-5 py-16 text-center"><DialogTitle className="sr-only">正在加载详情</DialogTitle><p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" />正在加载详情…</p></div>
           ) : (
-            <JournalDetail entry={entry} />
-          )
-        ) : null}
+            <div key={entry.id} className="min-w-0 [overflow-wrap:anywhere]">
+              <EntryIdentity entry={entry} />
+              {entry.type === 'conference' ? <ConferenceDetail entry={entry} /> : <JournalDetail entry={entry} />}
+            </div>
+          )}
+        </div>
+        {entry && !isError && <ActionButtons letpubUrl={entry.letpub_url} officialUrl={entry.official_url} submissionUrl={entry.submission_url} ccfUrl={entry.ccf_url} ccfLabel={entry.type === 'conference' ? 'DBLP' : 'CCF'} />}
       </DialogContent>
     </Dialog>
   )
 }
 
-function ConferenceDetail({ entry }: { entry: Entry }) {
+function EntryIdentity({ entry }: { entry: Entry }) {
+  const title = entry.ccf_full || entry.name || entry.ccf_abbr || '未命名条目'
+  const abbreviation = entry.ccf_abbr || entry.journal_abbr
+  const publisher = entry.ccf_publisher || entry.publisher
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <LevelBadge level={entry.ccf_level} />
-        <span className="font-semibold">{entry.ccf_abbr}</span>
+    <header className="detail-identity px-4 pb-4 pt-4 sm:px-7 sm:pb-4 sm:pt-5">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {entry.type === 'conference' ? <LevelBadge level={entry.ccf_level} label={`CCF ${entry.ccf_level}`} /> : entry.is_ccf ? <CCFGrade entry={entry} /> : <Badge variant="outline" className="text-xs">{entry.catalog_source === 'historical_ccf' ? '历史 CCF' : 'Non-CCF'}</Badge>}
+        {entry.type === 'journal' && parseCAS(entry.cas2025)?.isTop && <TopBadge />}
+        {entry.sci_type && <Badge variant="secondary" className="text-xs">{entry.sci_type}</Badge>}
+        {abbreviation && abbreviation !== title && <span className="min-w-0 text-sm font-semibold text-muted-foreground [overflow-wrap:anywhere]">{abbreviation}</span>}
       </div>
-      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <div><span className="text-muted-foreground">领域：</span>{entry.ccf_domain}</div>
-        <div><span className="text-muted-foreground">出版社：</span>{entry.ccf_publisher || '-'}</div>
-      </div>
-      {entry.ccf_url && (
-        <a href={entry.ccf_url} target="_blank" rel="noopener"
-           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
-          DBLP <ExternalLink className="h-3.5 w-3.5" />
-        </a>
-      )}
-    </div>
+      <DialogTitle className="max-w-4xl text-xl font-semibold leading-snug tracking-tight sm:text-2xl">{title}</DialogTitle>
+      {publisher && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{publisher}</p>}
+      {entry.is_ccf && <div className="mt-3"><CCFRelations entry={entry} /></div>}
+      {entry.is_ccf && entry.type === 'journal' && !entry.journalid && <p className="mt-3 text-xs leading-relaxed text-muted-foreground">已收录 CCF 目录，期刊指标待补充。</p>}
+    </header>
   )
+}
+
+function ConferenceDetail({ entry }: { entry: Entry }) {
+  return <section className="border-t px-4 py-5 sm:px-7"><SectionHeading>会议信息</SectionHeading><dl className="detail-info mt-3"><InfoField label="领域" value={entry.ccf_domain} /><InfoField label="出版社" value={entry.ccf_publisher} /></dl></section>
 }
 
 function JournalDetail({ entry }: { entry: Entry }) {
   const cas2025 = parseCAS(entry.cas2025)
   const cas2023 = parseCAS(entry.cas2023)
   const xinrui = parseCAS(entry.xinrui)
-  const isTopJournal = cas2025?.isTop
-  const displayName = entry.ccf_abbr || entry.journal_abbr || entry.ccf_full || entry.name || '未命名期刊'
-  const displayFullName = entry.ccf_full || entry.name || ''
-  const displayPublisher = entry.ccf_publisher || entry.publisher || ''
-
-  const jifRankings = parseJIF(entry.jif)
-  const jciRankings = parseJIF(entry.jci_json)
-  const citeScoreRankings = parseCiteScore(entry.citescore_rankings)
-
+  const jif = parseRows<JIFRanking>(entry.jif)
+  const jci = parseRows<JIFRanking>(entry.jci_json)
+  const citeScore = parseRows<CiteScoreRanking>(entry.citescore_rankings)
+  const updated = formatDataDate(entry.last_scraped_at)
   return (
-    <div className="min-w-0 space-y-5 [overflow-wrap:anywhere]">
-      {/* Row 1: Identity + Metrics */}
-      <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            {entry.is_ccf ? (
-              <CCFGrade entry={entry} />
-            ) : (
-              <Badge variant="outline" className="h-[22px] px-2 text-xs">{entry.catalog_source === 'historical_ccf' ? '历史 CCF' : 'Non-CCF'}</Badge>
-            )}
-            {displayName !== displayFullName && <span className="font-bold text-lg">{displayName}</span>}
-            {isTopJournal && <TopBadge />}
-            {entry.wos_zone && <ZoneBadge zone={`JCR${entry.wos_zone}`} variant="jcr" />}
-            {!entry.wos_zone && wosStatusLabel(entry.wos_status) && (
-              <span className="text-xs text-muted-foreground" title={entry.wos_reason || undefined}>
-                JCR：{wosStatusLabel(entry.wos_status)}
-              </span>
-            )}
-            {entry.sci_type && (
-              <span className="inline-flex items-center h-[20px] px-2 rounded text-xs font-medium bg-secondary text-secondary-foreground">
-                {entry.sci_type}
-              </span>
-            )}
+    <div className="detail-body grid min-w-0 gap-6 border-t px-4 py-5 sm:px-7 sm:py-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-7 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_17rem]">
+      <div className="contents">
+        <div className="min-w-0 space-y-5">
+        <JournalMetrics entry={entry} />
+        <section aria-label="分区对比">
+          <SectionHeading>分区对比</SectionHeading>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Partition label="中科院" year="2025" data={cas2025} variant="cas" />
+            <Partition label="新锐" year="2026" data={xinrui} variant="xinrui" />
           </div>
-          {displayPublisher && <div className="text-xs text-muted-foreground mt-0.5">{displayPublisher}</div>}
-          {entry.is_ccf && <div className="mt-2"><CCFRelations entry={entry} /></div>}
-          {entry.is_ccf && !entry.journalid && <p className="text-xs text-muted-foreground mt-2">已收录 CCF 目录，期刊指标待补充</p>}
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-xs">
+            <span className="mr-auto font-medium">JCR 分区</span>
+            {entry.wos_zone ? <ZoneBadge zone={entry.wos_zone} variant="jcr" /> : <span className="text-muted-foreground">{wosStatusLabel(entry.wos_status) || '暂无数据'}</span>}
+          </div>
+          {entry.wos_reason && <details className="detail-disclosure mt-2"><summary>JCR 数据说明<ChevronDown aria-hidden="true" /></summary><p className="px-3 pb-3 text-xs leading-relaxed text-muted-foreground">{entry.wos_reason}</p></details>}
+          <details className="detail-disclosure mt-2"><summary>历史分区 · 中科院 2023<ChevronDown aria-hidden="true" /></summary><div className="px-3 pb-3"><Partition label="中科院" year="2023" data={cas2023} variant="cas" /></div></details>
+        </section>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full lg:w-auto lg:shrink-0">
-          <MetricCard label="IF" value={entry.impact_factor != null ? fmt(entry.impact_factor) : null} color="blue" />
-          <MetricCard label="5年IF" value={entry.five_year_if != null ? fmt(entry.five_year_if) : null} color="indigo" />
-          <MetricCard label="实时IF" value={entry.realtime_if != null ? fmt(entry.realtime_if) : null} color="cyan" />
-          <MetricCard label="CS" value={entry.cite_score != null ? fmt(entry.cite_score) : null} color="emerald" />
-          <MetricCard label="H" value={entry.h_index != null ? String(entry.h_index) : null} color="violet" />
-          <MetricCard label="JCI" value={entry.jci_value != null ? fmt(entry.jci_value) : null} color="pink" />
-          <MetricCard label="文章" value={entry.article_count != null ? String(entry.article_count) : null} color="orange" />
-          <MetricCard label="LetPub" value={entry.letpub_score != null ? fmt(entry.letpub_score, 1) : null} color="amber" />
-        </div>
-      </div>
-
-      {entry.wos_reason && <details className="rounded-lg border p-3 text-sm">
-        <summary className="cursor-pointer font-medium">JCR 数据说明</summary>
-        <p className="mt-2 leading-relaxed text-muted-foreground">{entry.wos_reason}</p>
-      </details>}
-
-      {/* Partition table */}
-      <div>
-        <SectionLabel>分区对比</SectionLabel>
-        <div className="space-y-3 sm:hidden">
-          {([{ label: '新锐 2026', data: xinrui, variant: 'xinrui' }, { label: '中科院 2025', data: cas2025, variant: 'cas' }, { label: '中科院 2023', data: cas2023, variant: 'cas' }] as const).map(({ label, data, variant }) => (
-            <section key={label} className="rounded-lg border p-3">
-              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">{label}{data?.isTop && <TopBadge />}</h3>
-              {data ? <dl className="space-y-3 text-sm">
-                <div><dt className="mb-1 text-xs text-muted-foreground">大类学科 / 分区</dt><dd className="flex items-start gap-2"><span className="min-w-0 flex-1">{data.bigCategory || '暂无学科'}</span>{data.bigZone && <ZoneBadge zone={data.bigZone} variant={variant} />}</dd></div>
-                <div><dt className="mb-1 text-xs text-muted-foreground">小类学科 / 分区</dt><dd className="flex items-start gap-2"><span className="min-w-0 flex-1">{data.smallCategory || '暂无学科'}</span>{data.smallZone && <ZoneBadge zone={data.smallZone} variant={variant} />}</dd></div>
-              </dl> : <p className="text-sm text-muted-foreground">暂无数据</p>}
-            </section>
-          ))}
-        </div>
-        <div className="hidden min-w-0 overflow-x-auto sm:block" tabIndex={0} role="region" aria-label="分区对比表格"><table className="min-w-[36rem] w-full text-sm border-collapse border rounded-lg">
-          <thead>
-            <tr className="bg-muted/50">
-              <th className="py-1.5 px-3 text-left font-medium text-muted-foreground w-28">版本</th>
-              <th className="py-1.5 px-3 text-center font-medium text-muted-foreground w-20">大类分区</th>
-              <th className="py-1.5 px-3 text-left font-medium text-muted-foreground">大类学科</th>
-              <th className="py-1.5 px-3 text-center font-medium text-muted-foreground w-20">小类分区</th>
-              <th className="py-1.5 px-3 text-left font-medium text-muted-foreground">小类学科</th>
-              <th className="py-1.5 px-3 text-center font-medium text-muted-foreground w-14">Top</th>
-            </tr>
-          </thead>
-          <tbody>
-            <PartRow label="新锐 2026" p={xinrui} variant="xinrui" />
-            <PartRow label="中科院 2025" p={cas2025} variant="cas" />
-            <PartRow label="中科院 2023" p={cas2023} variant="cas" />
-          </tbody>
-        </table></div>
-      </div>
-
-      {/* Journal info - table layout for compactness */}
-      <div>
-        <SectionLabel>期刊信息</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
-          <InfoField label="ISSN" value={entry.issn} />
-          <InfoField label="eISSN" value={entry.eissn} />
-          <InfoField label="出版商" value={entry.publisher} />
-          <InfoField label="国家/地区" value={entry.country} />
-          <InfoField label="语言" value={entry.language} />
-          <InfoField label="出版周期" value={entry.periodicity} />
-          <InfoField label="是否OA" value={entry.is_oa} />
-          <InfoField label="Gold OA比例" value={entry.gold_oa_ratio} />
-          <InfoField label="自引率" value={entry.self_citation_rate} />
-          <InfoField label="审稿速度" value={entry.review_speed} />
-          <InfoField label="录取率" value={entry.acceptance_rate} />
-          <InfoField label="研究方向" value={entry.research_area} />
-          <InfoField label="SJR" value={entry.sjr != null ? entry.sjr.toFixed(2) : undefined} />
-          <InfoField label="SNIP" value={entry.snip != null ? entry.snip.toFixed(2) : undefined} />
-          <InfoField label="数据更新时间" value={formatDataDate(entry.last_scraped_at)} />
+        <div className="min-w-0 space-y-5 lg:col-start-1 xl:col-start-2">
+        {(citeScore.length > 0 || jif.length > 0 || jci.length > 0) && <section>
+          <SectionHeading>学科排名</SectionHeading>
+          <div className="mt-3 space-y-2">
+            {citeScore.length > 0 && <RankingGroup title="CiteScore 排名" tone="emerald" headers={['分区', '排名', '百分位']} rows={citeScore.map(r => ({ subject: r.category || r.subject || '未标注学科', values: [r.zone || '—', r.rank || '—', r.percentile || '—'] }))} />}
+            {jif.length > 0 && <RankingGroup title="JIF 学科排名" tone="blue" headers={['分区', '排名']} rows={jif.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
+            {jci.length > 0 && <RankingGroup title="JCI 学科排名" tone="pink" headers={['分区', '排名']} rows={jci.map(r => ({ subject: r.subject || '未标注学科', values: [r.quartile || '—', r.rank || '—'] }))} />}
+          </div>
+        </section>}
+        {entry.research_area && <section><SectionHeading>研究方向</SectionHeading><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{entry.research_area}</p></section>}
         </div>
       </div>
-
-      {/* Rankings - stacked, not side by side */}
-      {citeScoreRankings.length > 0 && (
-        <div>
-          <SectionLabel>CiteScore 排名</SectionLabel>
-          <RankingTable
-            headers={['学科', '分区', '排名', '百分位']}
-            rows={citeScoreRankings.map(r => [r.category || '-', r.zone || '-', r.rank || '-', r.percentile || '-'])}
-            zones={citeScoreRankings.map(r => r.zone)}
-          />
-        </div>
-      )}
-      {jifRankings.length > 0 && (
-        <div>
-          <SectionLabel>JIF 学科排名</SectionLabel>
-          <RankingTable
-            headers={['学科', '分区', '排名']}
-            rows={jifRankings.map(r => [r.subject || '-', r.quartile || '-', r.rank || '-'])}
-            zones={jifRankings.map(r => r.quartile)}
-          />
-        </div>
-      )}
-      {jciRankings.length > 0 && (
-        <div>
-          <SectionLabel>JCI 学科排名</SectionLabel>
-          <RankingTable
-            headers={['学科', '分区', '排名']}
-            rows={jciRankings.map(r => [r.subject || '-', r.quartile || '-', r.rank || '-'])}
-            zones={jciRankings.map(r => r.quartile)}
-          />
-        </div>
-      )}
-
-      {/* Actions */}
-      <ActionButtons
-        letpubUrl={entry.letpub_url}
-        officialUrl={entry.official_url}
-        submissionUrl={entry.submission_url}
-        ccfUrl={entry.ccf_url}
-      />
+      <aside className="min-w-0 space-y-5 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:border-l lg:pl-6 xl:col-start-3 xl:row-span-1" aria-label="期刊资料">
+        <section>
+          <SectionHeading>期刊信息</SectionHeading>
+          <dl className="detail-info mt-3">
+            <InfoField label="ISSN" value={entry.issn} />
+            <InfoField label="eISSN" value={entry.eissn} />
+            <InfoField label="出版商" value={entry.publisher || entry.ccf_publisher} />
+            <InfoField label="国家/地区" value={entry.country} />
+            <InfoField label="语言" value={entry.language} />
+            <InfoField label="出版周期" value={entry.periodicity} />
+            <InfoField label="开放获取" value={entry.is_oa} />
+            <InfoField label="Gold OA" value={entry.gold_oa_ratio} />
+            <InfoField label="自引率" value={entry.self_citation_rate} />
+          </dl>
+          {![entry.issn, entry.eissn, entry.publisher, entry.ccf_publisher, entry.country, entry.language, entry.periodicity, entry.is_oa, entry.gold_oa_ratio, entry.self_citation_rate].some(Boolean) && <p className="mt-3 text-sm text-muted-foreground">基础资料待补充。</p>}
+        </section>
+        {(entry.review_speed || entry.acceptance_rate) && <section><SectionHeading>投稿参考</SectionHeading><dl className="detail-info mt-3"><InfoField label="审稿速度" value={entry.review_speed} /><InfoField label="录取率" value={entry.acceptance_rate} /></dl></section>}
+        {updated && <p className="flex items-start gap-2 border-t pt-4 text-xs leading-relaxed text-muted-foreground"><CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>数据更新于 {updated}</span></p>}
+      </aside>
     </div>
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="section-label text-sm font-semibold mb-3">{children}</div>
+function JournalMetrics({ entry }: { entry: Entry }) {
+  const primary = [
+    { label: '影响因子 IF', value: entry.impact_factor, tone: 'blue' },
+    { label: 'CiteScore', value: entry.cite_score, tone: 'emerald' },
+    { label: 'H-index', value: entry.h_index, tone: 'violet' },
+    { label: '文章数', value: entry.article_count, tone: 'orange' },
+  ]
+  const extra = [
+    { label: '5 年影响因子', value: entry.five_year_if, tone: 'indigo' },
+    { label: '实时影响因子', value: entry.realtime_if, tone: 'cyan' },
+    { label: 'JCI', value: entry.jci_value, tone: 'pink' },
+    { label: 'LetPub 评分', value: entry.letpub_score, tone: 'amber' },
+    { label: 'SJR', value: entry.sjr, tone: 'blue' },
+    { label: 'SNIP', value: entry.snip, tone: 'emerald' },
+  ]
+  const hasMetrics = [...primary, ...extra].some(metric => metric.value != null)
+  return <section aria-label="期刊指标">
+    <SectionHeading>期刊指标</SectionHeading>
+    {hasMetrics ? <>
+      <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {primary.map(({ label, value, tone }) => <div key={label} data-tone={tone} data-empty={value == null} className="detail-metric min-w-0 rounded-xl border px-3 py-3">
+          <dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="detail-metric-dot" aria-hidden="true" />{label}</dt>
+          <dd className="mt-2 text-2xl font-semibold leading-none tabular-nums">{value == null ? '—' : label === 'H-index' || label === '文章数' ? String(value) : fmt(value)}</dd>
+        </div>)}
+      </dl>
+      {extra.some(metric => metric.value != null) && <details className="detail-disclosure mt-2"><summary>更多指标<ChevronDown aria-hidden="true" /></summary><dl className="grid grid-cols-1 gap-x-5 px-3 pb-3 sm:grid-cols-2">{extra.filter(metric => metric.value != null).map(({ label, value, tone }) => <div key={label} data-tone={tone} className="flex items-baseline justify-between gap-3 border-t py-2 text-xs"><dt className="text-muted-foreground">{label}</dt><dd className="metric-value font-semibold tabular-nums">{fmt(value!, label === 'LetPub 评分' ? 1 : 2)}</dd></div>)}</dl></details>}
+    </> : <p className="mt-3 rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">暂无期刊指标，待数据补充后展示。</p>}
+  </section>
 }
 
-function MetricCard({ label, value, color }: { label: string; value: string | null; color: string }) {
-  return (
-    <div data-tone={color} data-empty={value == null} className="metric-tile min-w-0 px-3 py-3 text-center">
-      <div className="text-lg font-semibold tabular-nums leading-snug">{value ?? '—'}</div>
-      <div className="text-xs mt-1 leading-tight">{label}</div>
-    </div>
-  )
+function SectionHeading({ children }: { children: ReactNode }) {
+  return <h3 className="text-sm font-semibold tracking-wide">{children}</h3>
 }
 
-function PartRow({ label, p, variant }: { label: string; p: CASPartition | null; variant: 'cas' | 'xinrui' }) {
-  return (
-    <tr className="border-t">
-      <td className="py-1.5 px-3 font-medium whitespace-nowrap">{label}</td>
-      {!p ? (
-        <td colSpan={5} className="py-1.5 px-3 text-muted-foreground">暂无数据</td>
-      ) : (
-        <>
-          <td className="py-1.5 px-3 text-center">{p.bigZone ? <ZoneBadge zone={p.bigZone} variant={variant} /> : '-'}</td>
-          <td className="py-1.5 px-3">{p.bigCategory || '-'}</td>
-          <td className="py-1.5 px-3 text-center">{p.smallZone ? <ZoneBadge zone={p.smallZone} variant={variant} /> : '-'}</td>
-          <td className="py-1.5 px-3 text-muted-foreground">{p.smallCategory || '-'}</td>
-          <td className="py-1.5 px-3 text-center">{p.isTop ? <TopBadge /> : '-'}</td>
-        </>
-      )}
-    </tr>
-  )
+function Partition({ label, year, data, variant }: { label: string; year: string; data: CASPartition | null; variant: 'cas' | 'xinrui' }) {
+  return <section className="detail-partition min-w-0 rounded-xl border bg-card p-3.5">
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-semibold">{label}<span className="ml-2 text-xs font-normal text-muted-foreground">{year}</span></h4>{data?.isTop && <TopBadge />}</div>
+    {data ? <dl className="space-y-3 text-sm">
+      <div><dt className="mb-1.5 text-xs text-muted-foreground">大类学科</dt><dd className="flex items-start justify-between gap-2"><span className="min-w-0 leading-relaxed">{data.bigCategory || '暂无学科'}</span>{data.bigZone && <ZoneBadge zone={data.bigZone} variant={variant} />}</dd></div>
+      <div className="border-t pt-3"><dt className="mb-1.5 text-xs text-muted-foreground">小类学科</dt><dd className="flex items-start justify-between gap-2"><span className="min-w-0 leading-relaxed">{data.smallCategory || '暂无学科'}</span>{data.smallZone && <ZoneBadge zone={data.smallZone} variant={variant} />}</dd></div>
+    </dl> : <p className="py-2 text-sm text-muted-foreground">暂无分区数据</p>}
+  </section>
 }
 
 function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
-  return (
-    <div className="min-w-0 flex items-baseline gap-3 text-sm leading-relaxed">
-      <span className="w-24 text-muted-foreground shrink-0">{label}</span>
-      <span className="min-w-0 flex-1 font-medium whitespace-pre-wrap [overflow-wrap:anywhere]" title={value}>{value}</span>
-    </div>
-  )
+  return <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 border-b border-border/60 py-2.5 text-sm leading-relaxed last:border-0 sm:text-xs"><dt className="text-muted-foreground">{label}</dt><dd className="min-w-0 whitespace-pre-wrap font-medium [overflow-wrap:anywhere]">{value}</dd></div>
 }
 
-function RankingTable({ headers, rows, zones }: { headers: string[]; rows: string[][]; zones: (string | undefined)[] }) {
-  return (
-    <div className="min-w-0 overflow-x-auto" tabIndex={0} role="region" aria-label="可横向滚动的数据表格">
-      <table className="min-w-[24rem] w-full text-sm border-collapse border rounded-lg">
-        <thead>
-          <tr className="bg-muted/50">
-            {headers.map((h, i) => (
-              <th key={i} className="py-1.5 px-3 text-left font-medium text-muted-foreground">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri} className="border-t">
-              {row.map((cell, ci) => (
-                <td key={ci} className="py-1 px-3">
-                  {ci === 1 && zones[ri] ? <ZoneBadge zone={zones[ri]!} variant="cas" /> : cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function parseJIF(json: string | null): JIFRanking[] {
-  if (!json) return []
-  try { return JSON.parse(json) } catch { return [] }
-}
-
-function parseCiteScore(json: string | null): CiteScoreRanking[] {
-  if (!json) return []
-  try { return JSON.parse(json) } catch { return [] }
+function RankingGroup({ title, tone, headers, rows }: { title: string; tone: string; headers: string[]; rows: { subject: string; values: string[] }[] }) {
+  return <details className="detail-disclosure"><summary><span>{title}<span className="ml-2 text-xs font-normal text-muted-foreground">{rows.length} 个学科</span></span><ChevronDown aria-hidden="true" /></summary><ul className="space-y-3 px-3 pb-3">{rows.map((row, index) => <li key={index} className="rounded-lg border bg-card p-3"><p className="text-sm font-medium leading-relaxed">{row.subject}</p><dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2">{headers.map((header, i) => <div key={header} data-tone={tone} className="min-w-0"><dt className="text-xs text-muted-foreground">{header}</dt><dd className="metric-value mt-0.5 text-sm font-semibold tabular-nums">{row.values[i]}</dd></div>)}</dl></li>)}</ul></details>
 }

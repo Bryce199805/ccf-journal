@@ -33,7 +33,7 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
     <header className="site-header sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-16 flex flex-wrap items-center justify-between gap-3 py-3 sm:flex-nowrap sm:py-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="brand-mark flex shrink-0 w-9 h-9 rounded-xl bg-primary items-center justify-center text-primary-foreground text-sm font-bold">
+          <div className="brand-mark flex shrink-0 w-9 h-9 rounded-xl bg-primary items-center justify-center text-white text-sm font-bold">
             <BookOpen className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">

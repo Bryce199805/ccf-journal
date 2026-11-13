@@ -130,6 +130,7 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
                 <FilterChip
                   key={l.key}
                   label={l.label}
+                  grade={l.key}
                   active={filter.levels.includes(l.key)}
                   onClick={() => {
                     const levels = filter.levels.includes(l.key)
