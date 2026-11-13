@@ -57,15 +57,17 @@ Use `tests/experience.cjs` for behavior regressions. See `tests/README.md` for s
 
 The dialog has a fixed close bar and, when external URLs exist, a fixed action
 footer. Only the middle content scrolls, with overscroll contained locally.
-The title and full publisher name wrap independently of the close control.
+Nothing is collapsed: every metric, partition, ranking and metadata field is
+visible so a journal can be read at a glance.
 
-Four primary metrics (IF, CiteScore, H-index, article count) use colored numbers
-and light borders on neutral surfaces. Secondary metrics live in an expandable
-section. Current CAS and Xinrui partitions appear together; the historical CAS
-partition and subject rankings expand on request. No values are discarded.
-At desktop widths journal metadata is a separate side column. On phones it
-follows the metrics and partitions in the reading flow. Ranking categories and
-long values wrap without requiring a horizontal table swipe.
+At xl widths (>=1280px) the dialog is ~82rem wide and a typical journal fits
+without scrolling: a title strip, then one metrics band (four large primary
+tiles beside the compact secondary metrics), then three columns — partitions
+(CAS current, Xinrui, JCR with its note, historical CAS), subject-ranking
+tables (CiteScore / JIF / JCI, then research area), and a journal-info panel
+(identifiers, submission references, data date). Between 1024 and 1279px it is
+two columns with the info panel below; on phones everything stacks. Long lists
+of ranking subjects scroll inside the dialog rather than being hidden.
 
 The submission link is the primary footer action; the official website takes
 that emphasis if no submission URL exists. Other links use outlined buttons.

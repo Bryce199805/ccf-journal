@@ -106,7 +106,6 @@ async function main() {
       detailFailure = false
       await page.getByRole('dialog').getByRole('button', { name: '重试', exact: true }).click()
       await page.getByText('期刊信息', { exact: true }).waitFor()
-      await page.getByText('JCR 数据说明', { exact: true }).click()
       await page.getByText(entry.wos_reason, { exact: true }).waitFor()
       await page.keyboard.press('Escape')
       assert.equal(await page.getByRole('button', { name: '查看 TEST 详情', exact: true }).evaluate(e => e === document.activeElement), true)

@@ -245,11 +245,6 @@ html { scrollbar-color: var(--input) var(--background); }
   .detail-metric-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--tone); }
   .detail-metric[data-empty="true"] { color: var(--muted-foreground); border-color: var(--border); }
   .detail-metric[data-empty="true"] .detail-metric-dot { background: var(--muted-foreground); }
-  .detail-disclosure { border: 1px solid var(--border); border-radius: 0.65rem; background: var(--card); }
-  .detail-disclosure > summary { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.625rem 0.75rem; cursor: pointer; list-style: none; font-size: 0.75rem; font-weight: 500; }
-  .detail-disclosure > summary::-webkit-details-marker { display: none; }
-  .detail-disclosure > summary > svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--muted-foreground); transition: transform 150ms; }
-  .detail-disclosure[open] > summary > svg { transform: rotate(180deg); }
-  .detail-disclosure > summary:hover { color: var(--primary); }
+  .detail-metric-sm { background: var(--card); border-color: var(--tone-line); }
   .detail-actions { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
 }
