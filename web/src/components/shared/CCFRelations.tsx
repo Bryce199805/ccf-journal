@@ -1,5 +1,6 @@
 import type { EntryListItem } from '@/api/types'
 import { LevelBadge } from './ZoneBadge'
+import { cn } from '@/lib/utils'
 import { ccfRelations } from '@/lib/ccf'
 
 export function CCFGrade({ entry }: { entry: EntryListItem }) {
@@ -15,16 +16,16 @@ export function CCFGrade({ entry }: { entry: EntryListItem }) {
   )
 }
 
-export function CCFRelations({ entry }: { entry: EntryListItem }) {
+export function CCFRelations({ entry, compact = false }: { entry: EntryListItem; compact?: boolean }) {
   if (!entry.is_ccf) return null
   const relations = ccfRelations(entry).filter(r => r.domain)
   const hasDifferentLevels = new Set(relations.map(r => r.level)).size > 1
   if (!relations.length) return null
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs leading-relaxed text-muted-foreground" aria-label="CCF 所属领域">
+    <div className={cn("flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-xs leading-relaxed text-muted-foreground", compact && "flex-1")} aria-label="CCF 所属领域">
       {relations.map((relation, index) => (
         <span key={`${relation.domain}-${index}`} className="inline-flex min-w-0 max-w-full items-center gap-1.5 [overflow-wrap:anywhere]">
-          <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+          {!compact && <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden="true" />}
           <span className="min-w-0 whitespace-normal">{relation.domain}</span>{hasDifferentLevels && <LevelBadge level={relation.level} />}
         </span>
       ))}

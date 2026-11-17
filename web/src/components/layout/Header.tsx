@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { BookOpen, Star, LayoutGrid, Table2, User, LogOut } from 'lucide-react'
+import { Star, User, LogOut } from 'lucide-react'
 import { ThemePicker } from './ThemePicker'
 import { useStats } from '@/hooks/use-stats'
 import type { FilterState } from '@/api/types'
@@ -33,11 +33,8 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
     <header className="site-header sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-16 flex flex-wrap items-center justify-between gap-3 py-3 sm:flex-nowrap sm:py-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="brand-mark flex shrink-0 w-9 h-9 rounded-xl bg-primary items-center justify-center text-white text-sm font-bold">
-            <BookOpen className="h-5 w-5" aria-hidden="true" />
-          </div>
           <div className="min-w-0">
-            <h1 className="text-base font-bold leading-tight tracking-tight">CCF 推荐目录</h1>
+            <h1 className="text-lg font-semibold leading-tight tracking-tight"><span className="font-bold text-primary">CCF</span> 推荐目录</h1>
             <span className="text-xs text-muted-foreground">
               {stats ? `${stats.total_journals} 期刊 / ${stats.total_conferences} 会议` : ''}
               {dataUpdatedDate && (
@@ -57,23 +54,23 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
             <div className="flex rounded-lg border bg-muted/60 p-0.5">
               <Button
                 variant={filter.layout === 'card' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-10 w-10 sm:h-8 sm:w-8"
+                size="sm"
+                className="h-9 px-3 text-xs sm:h-8"
                 onClick={() => onToggleLayout('card')}
                 aria-label="卡片视图"
                 aria-pressed={filter.layout === 'card'}
               >
-                <LayoutGrid className="h-4 w-4" />
+                卡片
               </Button>
               <Button
                 variant={filter.layout === 'table' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-10 w-10 sm:h-8 sm:w-8"
+                size="sm"
+                className="h-9 px-3 text-xs sm:h-8"
                 onClick={() => onToggleLayout('table')}
                 aria-label="表格视图"
                 aria-pressed={filter.layout === 'table'}
               >
-                <Table2 className="h-4 w-4" />
+                表格
               </Button>
             </div>
           )}

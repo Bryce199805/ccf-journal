@@ -23,10 +23,17 @@ at 320, 390, 768, and 1440 pixels.
 
 Run `node web/tests/theme.cjs` with the same environment for visual-theme checks:
 system preference, persistent overrides, cross-tab sync, representative color
-contrast, semantic legend, and responsive light/dark screenshots. Screenshot data
+contrast, and responsive light/dark screenshots. Screenshot data
 is synthetic and must not be treated as actual journal rankings or metrics.
 
 Run `node web/tests/details.cjs` for detail-specific regression: long text at
 320–1440px, fixed close/footer controls during scrolling, focus restoration,
 zero and missing metrics, expandable history and rankings, and malformed optional
 JSON fields. API data remains mocked.
+
+Run `node web/tests/homepage.cjs` for compact journal-card regression: abbreviation
+and labeled partitions, CCF/domain grouping, shared metric/footer alignment with
+unequal tags/notes/publishers, note editing, both themes, narrow/landscape viewports,
+and enlarged text. Set `CCF_SCREENSHOTS` to save homepage previews.
+If Chromium is already installed separately, `CCF_CHROMIUM_EXECUTABLE` selects
+its executable in the homepage, experience, and theme runners.

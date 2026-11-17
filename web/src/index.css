@@ -191,11 +191,6 @@
 
 @layer components {
   .site-header { box-shadow: 0 1px 12px #12244806; }
-  .brand-mark {
-    background: linear-gradient(145deg, #245bd6, #16828c);
-    color: white;
-    box-shadow: 0 3px 10px #245bd62b, inset 0 1px 0 #ffffff40;
-  }
   .filter-surface { background: color-mix(in srgb, var(--card) 78%, var(--background)); }
   .journal-card {
     position: relative;

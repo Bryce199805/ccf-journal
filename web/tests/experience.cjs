@@ -5,7 +5,7 @@ const assert = require('node:assert/strict')
 const origin = process.env.CCF_TEST_ORIGIN || 'http://127.0.0.1:5173'
 
 async function main() {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CCF_CHROMIUM_EXECUTABLE })
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
     const errors = []

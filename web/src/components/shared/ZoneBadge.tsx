@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 
 interface ZoneBadgeProps {
   zone: string
+  label?: string
   variant?: 'cas' | 'xinrui' | 'jcr' | 'default'
   className?: string
 }
@@ -15,7 +16,7 @@ function extractZoneNum(zone: string): string {
   return match ? match[1] : ''
 }
 
-export function ZoneBadge({ zone, variant = 'default', className }: ZoneBadgeProps) {
+export function ZoneBadge({ zone, label, variant = 'default', className }: ZoneBadgeProps) {
   const n = extractZoneNum(zone)
 
   let colorClass: string
@@ -37,7 +38,7 @@ export function ZoneBadge({ zone, variant = 'default', className }: ZoneBadgePro
       colorClass,
       className
     )}>
-      {displayText}
+      {label ?? displayText}
     </span>
   )
 }
