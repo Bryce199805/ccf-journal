@@ -3,7 +3,6 @@ import {
 } from '@/components/ui/table'
 import { ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { Badge } from '@/components/ui/badge'
-import { TagBadge } from '@/components/tags/TagBadge'
 import { FavoriteStar } from './FavoriteStar'
 import { fmt } from '@/lib/utils'
 import { wosStatusLabel } from '@/lib/wos'
@@ -39,12 +38,11 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
             <TableHead className="min-w-[90px]">领域</TableHead>
             <TableHead className="w-16 text-center">中科院</TableHead>
             <TableHead className="w-16 text-center">新锐</TableHead>
+            <TableHead className="w-16 text-center">TOP</TableHead>
             <TableHead className="min-w-[100px] text-center">JCR</TableHead>
             <TableHead className="w-14 text-center">IF</TableHead>
             <TableHead className="w-14 text-center">CS</TableHead>
             <TableHead className="w-10 text-center">H</TableHead>
-            <TableHead className="min-w-[80px]">标签</TableHead>
-            <TableHead className="min-w-[100px]">备注</TableHead>
             <TableHead className="w-12 text-center">★</TableHead>
           </TableRow>
         </TableHeader>
@@ -67,29 +65,19 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
                 <TableCell>
                   <div className="flex items-center gap-1 min-w-0">
                     <button className="font-medium block max-w-[12rem] truncate text-left hover:text-primary" title={displayName} aria-label={`查看 ${displayName} 详情`} onClick={event => { event.stopPropagation(); onSelect(e.id) }}>{displayName}</button>
-                    {top && <TopBadge className="shrink-0" />}
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground max-w-[320px] truncate" title={displayFullName}>{displayFullName}</TableCell>
                 <TableCell className="text-muted-foreground text-xs min-w-[180px]"><CCFRelations entry={e} /></TableCell>
                 <TableCell className="text-center">{cas ? <ZoneBadge zone={cas} variant="cas" /> : '-'}</TableCell>
                 <TableCell className="text-center">{xin ? <ZoneBadge zone={xin} variant="xinrui" /> : '-'}</TableCell>
+                <TableCell className="text-center">{top ? <TopBadge /> : '-'}</TableCell>
                 <TableCell className="text-center text-xs text-muted-foreground" title={e.wos_reason || undefined}>
                   {e.wos_zone ? <ZoneBadge zone={`JCR${e.wos_zone}`} variant="jcr" /> : wosStatusLabel(e.wos_status) || '-'}
                 </TableCell>
                 <TableCell data-tone="blue" className="metric-value text-center font-semibold tabular-nums">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
                 <TableCell data-tone="emerald" className="metric-value text-center font-semibold tabular-nums">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
                 <TableCell data-tone="violet" className="metric-value text-center font-semibold tabular-nums">{e.h_index ?? '-'}</TableCell>
-                <TableCell>
-                  {e.tags && e.tags.length > 0 ? (
-                    <div className="flex gap-0.5 flex-wrap">
-                      {e.tags.map(t => <TagBadge key={t} name={t} />)}
-                    </div>
-                  ) : '-'}
-                </TableCell>
-                <TableCell className="max-w-[150px] truncate text-xs text-muted-foreground">
-                  {e.note || '-'}
-                </TableCell>
                 <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                   <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} />
                 </TableCell>
