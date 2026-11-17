@@ -28,10 +28,12 @@ RUN node /catalog/scraper/import_data.js \
 # Stage 3: Build Go server
 FROM golang:1.22-alpine AS go-builder
 
-RUN apk add --no-cache gcc musl-dev git
+# RUN apk add --no-cache gcc musl-dev git
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories && apk add --no-cache gcc musl-dev git
 
 WORKDIR /app
 COPY server/ .
+ENV GOPROXY=https://goproxy.cn,direct
 RUN go mod tidy && \
     go mod download && \
     CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /ccf-server ./cmd/server
