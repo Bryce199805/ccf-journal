@@ -3,7 +3,6 @@ import { JournalTable } from './JournalTable'
 import { ConferenceList } from './ConferenceList'
 import { Pagination } from '@/components/shared/Pagination'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { CatalogLegend } from '@/components/shared/CatalogLegend'
 import { RequestError } from '@/components/shared/RequestError'
 import { Loader2 } from 'lucide-react'
 import type { EntryListItem, FilterState } from '@/api/types'
@@ -57,7 +56,7 @@ export function EntryList({
           <span className="rounded-full border border-primary/15 bg-primary/10 px-2.5 py-0.5 text-xs font-medium tabular-nums text-primary">{total}</span>
           {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" aria-hidden="true" />}
         </div>
-        <div className="flex shrink-0 items-center gap-1"><span className="text-xs tabular-nums text-muted-foreground">第 {page} / {totalPages} 页</span><CatalogLegend /></div>
+        <div className="flex shrink-0 items-center gap-1"><span className="text-xs tabular-nums text-muted-foreground">第 {page} / {totalPages} 页</span></div>
       </div>
       {isJournal ? (
         filter.layout === 'card' ? (

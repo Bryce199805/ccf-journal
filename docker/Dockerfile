@@ -28,7 +28,8 @@ RUN node /catalog/scraper/import_data.js \
 # Stage 3: Build Go server
 FROM golang:1.22-alpine AS go-builder
 
-RUN apk add --no-cache gcc musl-dev git
+# RUN apk add --no-cache gcc musl-dev git
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories && apk add --no-cache gcc musl-dev git
 
 WORKDIR /app
 COPY server/ .

@@ -31,7 +31,7 @@ text visible: color supports a classification, but never replaces its label.
 Cards, details, and tables use the same metric hues. Changing an accent should
 update both theme variants. Avoid applying primary-foreground to custom dark
 backgrounds: that token becomes navy in dark mode; solid colored external-link
-buttons and the brand mark explicitly use white.
+buttons explicitly use white. The homepage uses a plain typographic title.
 
 ## Interaction and layout
 
@@ -40,9 +40,13 @@ buttons and the brand mark explicitly use white.
 - Hover elevation is limited to devices with a fine pointer and hover support.
 - Reduced-motion preferences suppress transitions and animation.
 - Full titles wrap; badges, metadata, and controls wrap within the viewport.
-- Card tags and notes sit in their own footer row below the metric strip.
+- Journal abbreviations and fully labeled rectangular partition badges share the first wrapping row.
+- CCF grade and domains share a separate row with the card actions.
+- Tags and editable note previews sit above metrics. Cards use shared subgrid tracks
+  for their content, metrics, and publisher footers so variable content cannot
+  misalign the metric strips within a desktop row.
 - Mobile partition details use stacked sections; wide tables retain local scrolling.
-- A compact legend explains the independent classification systems.
+- Badge text identifies each classification system directly; no separate legend is shown.
 
 ## Verification
 

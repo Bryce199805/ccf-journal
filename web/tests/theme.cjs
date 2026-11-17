@@ -22,7 +22,7 @@ const entries = ['A', 'B', 'C'].map((level, index) => ({
 }))
 
 async function main() {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CCF_CHROMIUM_EXECUTABLE })
   try {
     const context = await browser.newContext({ colorScheme: 'light', viewport: { width: 1440, height: 1000 } })
     await context.route(`${origin}/api/**`, async route => {
@@ -116,9 +116,8 @@ async function main() {
     await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' })
     await page.waitForFunction(() => !document.documentElement.classList.contains('dark'))
     assert.equal(await page.evaluate(() => document.documentElement.style.colorScheme), 'light')
-    await page.getByRole('button', { name: '查看标识说明' }).click()
-    await page.getByRole('heading', { name: '目录标识与颜色' }).waitFor()
-    console.log('PASS system mode restored and semantic legend opens')
+    assert.equal(await page.getByRole('button', { name: '查看标识说明' }).count(), 0)
+    console.log('PASS system mode restored; catalog legend removed')
     assert.deepEqual(errors, [])
   } finally { await browser.close() }
 }
