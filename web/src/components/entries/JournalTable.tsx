@@ -29,21 +29,35 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
   return (
     <div className="min-w-0 rounded-xl border bg-card">
       <p className="border-b px-3 py-2 text-xs leading-relaxed text-muted-foreground lg:hidden">左右滑动查看完整表格，点击条目查看详情。</p>
-      <Table className="data-table">
+      <Table className="data-table min-w-[60rem] table-fixed">
+        <colgroup>
+          <col className="w-24" />
+          <col className="w-28" />
+          <col />
+          <col className="w-32" />
+          <col className="w-16" />
+          <col className="w-16" />
+          <col className="w-14" />
+          <col className="w-20" />
+          <col className="w-14" />
+          <col className="w-14" />
+          <col className="w-14" />
+          <col className="w-12" />
+        </colgroup>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className="min-w-[90px] text-center">目录等级</TableHead>
-            <TableHead className="min-w-[100px]">简称</TableHead>
+            <TableHead className="text-center">目录等级</TableHead>
+            <TableHead>简称</TableHead>
             <TableHead>全称</TableHead>
-            <TableHead className="min-w-[90px]">领域</TableHead>
-            <TableHead className="w-16 text-center">中科院</TableHead>
-            <TableHead className="w-16 text-center">新锐</TableHead>
-            <TableHead className="w-16 text-center">TOP</TableHead>
-            <TableHead className="min-w-[100px] text-center">JCR</TableHead>
-            <TableHead className="w-14 text-center">IF</TableHead>
-            <TableHead className="w-14 text-center">CS</TableHead>
-            <TableHead className="w-10 text-center">H</TableHead>
-            <TableHead className="w-12 text-center">★</TableHead>
+            <TableHead>领域</TableHead>
+            <TableHead className="text-center">中科院</TableHead>
+            <TableHead className="text-center">新锐</TableHead>
+            <TableHead className="text-center">TOP</TableHead>
+            <TableHead className="text-center">JCR</TableHead>
+            <TableHead className="text-center">IF</TableHead>
+            <TableHead className="text-center">CS</TableHead>
+            <TableHead className="text-center">H</TableHead>
+            <TableHead className="text-center">★</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,20 +78,20 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1 min-w-0">
-                    <button className="font-medium block max-w-[12rem] truncate text-left hover:text-primary" title={displayName} aria-label={`查看 ${displayName} 详情`} onClick={event => { event.stopPropagation(); onSelect(e.id) }}>{displayName}</button>
+                    <button className="font-medium block max-w-full truncate text-left hover:text-primary" title={displayName} aria-label={`查看 ${displayName} 详情`} onClick={event => { event.stopPropagation(); onSelect(e.id) }}>{displayName}</button>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground max-w-[320px] truncate" title={displayFullName}>{displayFullName}</TableCell>
-                <TableCell className="text-muted-foreground text-xs min-w-[180px]"><CCFRelations entry={e} /></TableCell>
+                <TableCell className="text-muted-foreground whitespace-normal [overflow-wrap:anywhere]" title={displayFullName}>{displayFullName}</TableCell>
+                <TableCell className="text-muted-foreground text-xs whitespace-normal"><CCFRelations entry={e} /></TableCell>
                 <TableCell className="text-center">{cas ? <ZoneBadge zone={cas} variant="cas" /> : '-'}</TableCell>
                 <TableCell className="text-center">{xin ? <ZoneBadge zone={xin} variant="xinrui" /> : '-'}</TableCell>
                 <TableCell className="text-center">{top ? <TopBadge /> : '-'}</TableCell>
-                <TableCell className="text-center text-xs text-muted-foreground" title={e.wos_reason || undefined}>
+                <TableCell className="text-center text-xs text-muted-foreground whitespace-normal [overflow-wrap:anywhere]" title={e.wos_reason || undefined}>
                   {e.wos_zone ? <ZoneBadge zone={`JCR${e.wos_zone}`} variant="jcr" /> : wosStatusLabel(e.wos_status) || '-'}
                 </TableCell>
-                <TableCell data-tone="blue" className="metric-value text-center font-semibold tabular-nums">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
-                <TableCell data-tone="emerald" className="metric-value text-center font-semibold tabular-nums">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
-                <TableCell data-tone="violet" className="metric-value text-center font-semibold tabular-nums">{e.h_index ?? '-'}</TableCell>
+                <TableCell data-tone="blue" className="metric-value text-center font-semibold tabular-nums whitespace-normal [overflow-wrap:anywhere]">{e.impact_factor != null ? fmt(e.impact_factor) : '-'}</TableCell>
+                <TableCell data-tone="emerald" className="metric-value text-center font-semibold tabular-nums whitespace-normal [overflow-wrap:anywhere]">{e.cite_score != null ? fmt(e.cite_score) : '-'}</TableCell>
+                <TableCell data-tone="violet" className="metric-value text-center font-semibold tabular-nums whitespace-normal [overflow-wrap:anywhere]">{e.h_index ?? '-'}</TableCell>
                 <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                   <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} />
                 </TableCell>
