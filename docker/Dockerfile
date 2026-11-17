@@ -32,6 +32,7 @@ RUN apk add --no-cache gcc musl-dev git
 
 WORKDIR /app
 COPY server/ .
+ENV GOPROXY=https://goproxy.cn,direct
 RUN go mod tidy && \
     go mod download && \
     CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /ccf-server ./cmd/server
