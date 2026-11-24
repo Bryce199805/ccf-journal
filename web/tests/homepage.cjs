@@ -83,6 +83,14 @@ async function main() {
       for (const width of [320, 375, 390, 844, 1024, 1440]) {
         await page.setViewportSize({ width, height: width === 844 ? 390 : 900 })
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${mode} ${width} overflow`)
+        if (width < 640) {
+          const actions = first.locator('[aria-label="备注"], [aria-label="标签"], [aria-label="取消收藏"], [aria-label="收藏"]')
+          assert.ok(await actions.count() >= 3)
+          const sizes = await actions.evaluateAll(items => items.map(el => ({
+            label: el.getAttribute('aria-label'), width: el.offsetWidth, height: el.offsetHeight,
+          })))
+          for (const target of sizes) assert.ok(target.width >= 44 && target.height >= 44, JSON.stringify(target))
+        }
         if (width >= 1024) await aligned()
         for (const card of await cards.all()) assert.ok(await card.evaluate(e => e.scrollWidth <= e.clientWidth + 1))
         if (output && [375, 1440].includes(width)) {

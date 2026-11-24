@@ -43,7 +43,7 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
           <div className="flex rounded-lg border p-0.5 bg-muted/50">
             <button
               aria-pressed={filter.type === 'journal'}
-              className={`min-h-10 px-4 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs font-semibold rounded-md transition-all ${
+              className={`min-h-11 px-4 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs font-semibold rounded-md transition-all ${
                 filter.type === 'journal'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -57,7 +57,7 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
             </button>
             <button
               aria-pressed={filter.type === 'conference'}
-              className={`min-h-10 px-4 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs font-semibold rounded-md transition-all ${
+              className={`min-h-11 px-4 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs font-semibold rounded-md transition-all ${
                 filter.type === 'conference'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -94,7 +94,7 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
           )}
 
           <button
-            className="min-h-10 ml-auto inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:hidden"
+            className="min-h-11 ml-auto inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:hidden"
             onClick={() => setFiltersOpen(open => !open)}
             aria-expanded={filtersOpen}
             aria-controls="entry-filters"
@@ -242,8 +242,8 @@ export function FilterBar({ filter, onFilterChange, onSearchChange, onManageTags
 
         {(selected.length > 0 || filter.query) && (
           <div className="flex flex-wrap items-center gap-2 border-t pt-2.5" aria-label="已选筛选条件">
-            {selected.map(item => <button key={item.label} onClick={item.clear} aria-label={`移除${item.label}`} className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary hover:bg-primary/15"><span className="min-w-0 [overflow-wrap:anywhere]">{item.label}</span><X className="h-3 w-3 shrink-0" /></button>)}
-            <Button variant="ghost" size="sm" onClick={onReset} className="min-h-9 text-xs text-muted-foreground">清除全部</Button>
+            {selected.map(item => <button key={item.label} onClick={item.clear} aria-label={`移除${item.label}`} className="inline-flex min-h-11 sm:min-h-9 max-w-full items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary hover:bg-primary/15"><span className="min-w-0 [overflow-wrap:anywhere]">{item.label}</span><X className="h-3 w-3 shrink-0" /></button>)}
+            <Button variant="ghost" size="sm" onClick={onReset} className="min-h-11 sm:min-h-9 text-xs text-muted-foreground">清除全部</Button>
           </div>
         )}
 

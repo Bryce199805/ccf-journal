@@ -15,7 +15,7 @@ export function ThemePicker() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8" aria-label="外观设置" title="外观设置"><Icon className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" className="size-11 sm:size-8" aria-label="外观设置" title="外观设置"><Icon className="h-4 w-4" /></Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] rounded-xl p-4">
         <h2 className="text-sm font-semibold">外观设置</h2>

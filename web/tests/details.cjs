@@ -3,7 +3,7 @@ const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const origin = process.env.CCF_TEST_ORIGIN || 'http://127.0.0.1:5173'
 async function main() {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CCF_CHROMIUM_EXECUTABLE })
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
     const errors = []
@@ -43,6 +43,12 @@ async function main() {
       const close = page.getByRole('button', { name: '关闭详情', exact: true })
       const footer = page.locator('.detail-actions')
       const closeBefore = await close.boundingBox(), footerBefore = await footer.boundingBox()
+      if (width < 640) {
+        assert.ok(closeBefore.width >= 44 && closeBefore.height >= 44, 'phone close target')
+        const bounds = await dialog.boundingBox()
+        assert.equal(Math.round(bounds.width), width)
+        assert.equal(Math.round(bounds.height), 740)
+      }
       assert.ok(closeBefore.y >= 0)
       assert.ok(footerBefore.y + footerBefore.height <= 740)
       assert.ok(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1))

@@ -30,9 +30,9 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
   const dataUpdatedDate = formatDataDate(stats?.data_updated_at)
 
   return (
-    <header className="site-header sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
+    <header className="site-header relative sm:sticky sm:top-0 z-40 border-b bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-16 flex flex-wrap items-center justify-between gap-3 py-3 sm:flex-nowrap sm:py-2">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3 pr-12 sm:pr-0">
           <div className="min-w-0">
             <h1 className="text-lg font-semibold leading-tight tracking-tight"><span className="font-bold text-primary">CCF</span> 推荐目录</h1>
             <span className="text-xs text-muted-foreground">
@@ -55,7 +55,7 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
               <Button
                 variant={filter.layout === 'card' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-9 px-3 text-xs sm:h-8"
+                className="h-11 px-3 text-xs sm:h-8"
                 onClick={() => onToggleLayout('card')}
                 aria-label="卡片视图"
                 aria-pressed={filter.layout === 'card'}
@@ -65,7 +65,7 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
               <Button
                 variant={filter.layout === 'table' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-9 px-3 text-xs sm:h-8"
+                className="h-11 px-3 text-xs sm:h-8"
                 onClick={() => onToggleLayout('table')}
                 aria-label="表格视图"
                 aria-pressed={filter.layout === 'table'}
@@ -77,17 +77,17 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
           {isAuthenticated ? (
             <div className="flex items-center gap-1.5">
               <span className="max-w-28 truncate text-xs text-muted-foreground hidden sm:inline">{username}</span>
-              <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8" onClick={onLogout} aria-label="退出登录">
+              <Button variant="ghost" size="icon" className="size-11 sm:size-8" onClick={onLogout} aria-label="退出登录">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8" onClick={onLoginClick} aria-label="登录或注册">
+            <Button variant="ghost" size="icon" className="size-11 sm:size-8" onClick={onLoginClick} aria-label="登录或注册">
               <User className="h-4 w-4" />
             </Button>
           )}
           <ThemePicker />
-          <Button asChild variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8">
+          <Button asChild variant="ghost" size="icon" className="absolute right-4 top-2 sm:static size-11 sm:size-8">
             <a
               href="https://github.com/Bryce199805/ccf-journal"
               target="_blank"
@@ -103,13 +103,13 @@ export function Header({ filter, favCount, isAuthenticated, username, onToggleFa
           <Button
             variant={filter.favOnly ? 'default' : 'outline'}
             size="sm"
-            className="h-10 gap-1.5 text-xs sm:h-8"
+            className="h-11 gap-1.5 text-xs sm:h-8"
             onClick={onToggleFav}
             aria-pressed={filter.favOnly}
             aria-label="收藏"
           >
             <Star className="h-3.5 w-3.5" fill={filter.favOnly ? 'currentColor' : 'none'} />
-            <span className="hidden sm:inline">收藏</span>
+            <span>收藏</span>
             {favCount > 0 && <span className="opacity-70">({favCount})</span>}
           </Button>
         </div>

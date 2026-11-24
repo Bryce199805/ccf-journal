@@ -36,4 +36,4 @@ and labeled partitions, CCF/domain grouping, shared metric/footer alignment with
 unequal tags/notes/publishers, note editing, both themes, narrow/landscape viewports,
 and enlarged text. Set `CCF_SCREENSHOTS` to save homepage previews.
 If Chromium is already installed separately, `CCF_CHROMIUM_EXECUTABLE` selects
-its executable in the homepage, experience, and theme runners.
+its executable in all four runners.

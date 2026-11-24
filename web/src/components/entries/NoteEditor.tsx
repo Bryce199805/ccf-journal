@@ -53,8 +53,8 @@ export function NoteEditor({ entryId, deviceId, initialContent, onDone }: NoteEd
       {upsert.isError && <p role="alert" className="text-sm text-destructive">保存失败，内容已保留，请重试。</p>}
       <div className="flex items-center gap-2">
         <span className="mr-auto text-xs tabular-nums text-muted-foreground">{content.length}/200</span>
-        <button aria-label="取消编辑备注" onClick={() => onDone?.()} disabled={upsert.isPending} className="inline-flex min-h-10 items-center gap-1 rounded-md px-3 text-sm hover:bg-muted disabled:opacity-50"><X className="h-4 w-4" />取消</button>
-        <button aria-label="保存备注" onClick={handleSave} disabled={upsert.isPending} className="inline-flex min-h-10 items-center gap-1 rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50">
+        <button aria-label="取消编辑备注" onClick={() => onDone?.()} disabled={upsert.isPending} className="inline-flex min-h-11 sm:min-h-10 items-center gap-1 rounded-md px-3 text-sm hover:bg-muted disabled:opacity-50"><X className="h-4 w-4" />取消</button>
+        <button aria-label="保存备注" onClick={handleSave} disabled={upsert.isPending} className="inline-flex min-h-11 sm:min-h-10 items-center gap-1 rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50">
           {upsert.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{upsert.isPending ? '保存中' : '保存'}
         </button>
       </div>

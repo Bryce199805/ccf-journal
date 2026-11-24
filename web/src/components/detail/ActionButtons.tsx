@@ -19,7 +19,7 @@ export function ActionButtons({ letpubUrl, officialUrl, submissionUrl, ccfUrl, c
   if (!links.length) return null
   return <footer className="detail-actions flex shrink-0 flex-wrap items-center gap-2 border-t bg-card px-3 py-3 sm:px-7">
     <span className="mr-auto hidden text-xs text-muted-foreground sm:block">访问相关网站</span>
-    {links.map(link => <Button key={link.label} size="sm" variant={link.primary ? 'default' : 'outline'} className="h-10 min-w-0 flex-1 gap-1 px-2 text-xs sm:flex-none sm:px-3" asChild>
+    {links.map(link => <Button key={link.label} size="sm" variant={link.primary ? 'default' : 'outline'} className="h-11 sm:h-10 min-w-0 flex-1 gap-1 px-2 text-xs sm:flex-none sm:px-3" asChild>
       <a href={link.url!} target="_blank" rel="noopener noreferrer" aria-label={`${link.label}（新窗口打开）`}>{link.label}<ArrowUpRight className="hidden h-3.5 w-3.5 sm:block" /></a>
     </Button>)}
   </footer>

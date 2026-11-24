@@ -75,13 +75,13 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
               )}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-1 text-muted-foreground">
-              <button onClick={e => { e.stopPropagation(); setNoteEditing(true) }} className="inline-flex size-9 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground" aria-label="备注" title="编辑备注">
+              <button onClick={e => { e.stopPropagation(); setNoteEditing(true) }} className="inline-flex size-11 sm:size-9 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground" aria-label="备注" title="编辑备注">
                 <PencilLine className="size-4" />
               </button>
               <TagPicker deviceId={deviceId} selectedTags={entryTags} onTagsChange={handleTagsChange} pending={updateFavTags.isPending} error={updateFavTags.isError}>
-                <button onClick={e => e.stopPropagation()} className="inline-flex size-9 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground" aria-label="标签" title="管理标签"><Tag className="size-4" /></button>
+                <button onClick={e => e.stopPropagation()} className="inline-flex size-11 sm:size-9 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground" aria-label="标签" title="管理标签"><Tag className="size-4" /></button>
               </TagPicker>
-              <FavoriteStar entryId={entry.id} isFavorite={entry.is_favorite} deviceId={deviceId} className="m-0 size-9 p-0 [&_svg]:size-4" />
+              <FavoriteStar entryId={entry.id} isFavorite={entry.is_favorite} deviceId={deviceId} className="m-0 size-11 sm:size-9 p-0 [&_svg]:size-4" />
             </div>
           </div>
           {entry.is_ccf && !entry.journalid && <p className="text-xs leading-relaxed text-muted-foreground">已收录 CCF 目录，期刊指标待补充</p>}

@@ -53,7 +53,7 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="detail-shell flex w-[calc(100%-1rem)] max-w-none max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:w-[calc(100%-2rem)] sm:max-w-[82rem] sm:max-h-[94dvh]"
+        className="detail-shell flex w-full max-w-none h-dvh max-h-dvh sm:h-auto flex-col gap-0 overflow-hidden rounded-none sm:rounded-2xl p-0 sm:w-[calc(100%-2rem)] sm:max-w-[82rem] sm:max-h-[94dvh]"
         onOpenAutoFocus={event => {
           previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
           event.preventDefault()
@@ -67,7 +67,7 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-1 sm:px-6">
           <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><BookOpen className="h-4 w-4 text-primary" />{entry?.type === 'conference' ? '会议详情' : '期刊详情'}</span>
-          <DialogClose asChild><Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="关闭详情"><X className="h-4 w-4" /></Button></DialogClose>
+          <DialogClose asChild><Button variant="ghost" size="icon" className="size-11 sm:size-9 rounded-full" aria-label="关闭详情"><X className="h-4 w-4" /></Button></DialogClose>
         </div>
         <div ref={scrollArea} data-detail-scroll tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain outline-none">
           {isError ? <div className="p-5"><DialogTitle className="mb-3">详情暂时无法加载</DialogTitle><RequestError message="详情加载失败，请重试。" onRetry={() => void refetch()} pending={isFetching} /></div> : isLoading || !entry ? (
