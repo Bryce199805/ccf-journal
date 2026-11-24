@@ -201,6 +201,56 @@ async function main() {
       assert.equal(await page.getByText('账号专属备注', { exact: true }).count(), 0)
       await page.getByText(note, { exact: true }).waitFor()
     })
+    await check('compare 2–3 favorites across pages, including private notes, on mobile and desktop', async () => {
+      const journals = [1, 2, 3, 4].map(id => ({
+        ...entry, id, ccf_full: '候选期刊 ' + id, note: '我的备注 ' + id,
+        is_favorite: true, impact_factor: id === 1 ? 0 : null,
+        research_area: id === 2 ? '信息检索' : null,
+        ccf_relations: JSON.stringify([{ domain: '人工智能', level: 'A' }, { domain: '数据库', level: 'B' }]),
+      }))
+      await page.route('**/api/entries?**', route => {
+        const params = new URL(route.request().url()).searchParams
+        const p = Number(params.get('page'))
+        return route.fulfill({ json: { data: p === 2 ? journals.slice(2) : journals.slice(0, 2), page: p, total: 4, total_pages: 2 } })
+      })
+      let failSecond = true
+      await page.route(/\/api\/entries\/\d+\?/, route => {
+        const id = Number(new URL(route.request().url()).pathname.split('/').pop())
+        return route.fulfill({ status: id === 2 && failSecond ? 503 : 200, json: { entry: { ...journals[id - 1], note: undefined } } })
+      })
+      for (const width of [320, 1280]) {
+        await page.setViewportSize({ width, height: 844 })
+        await page.goto(origin + '?favOnly=true')
+        await page.getByRole('button', { name: '对比收藏期刊' }).click()
+        const dialog = page.getByRole('dialog')
+        const checkbox = id => dialog.getByRole('checkbox', { name: '候选期刊 ' + id })
+        const compare = dialog.getByRole('button', { name: '查看对比' })
+        await checkbox(1).check()
+        assert.ok(await compare.isDisabled())
+        await checkbox(2).check()
+        await dialog.getByRole('button', { name: '下一页' }).click()
+        await checkbox(3).check()
+        assert.ok(await checkbox(4).isDisabled())
+        await compare.click()
+        if (failSecond) {
+          await dialog.getByRole('alert').waitFor()
+          failSecond = false
+          await dialog.getByRole('button', { name: '重试' }).click()
+        }
+        await dialog.getByText('我的备注 3', { exact: true }).waitFor()
+        assert.ok(await dialog.getByText('信息检索', { exact: true }).isVisible())
+        assert.ok(await dialog.getByText('0.00', { exact: true }).isVisible())
+        assert.ok(await dialog.getByText('暂无数据', { exact: true }).count() > 0)
+        assert.ok(await dialog.getByText(/人工智能 · A.*数据库 · B/s).count() > 0)
+        assert.ok(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1))
+        await dialog.getByRole('button', { name: '修改选择' }).click()
+        await checkbox(3).uncheck()
+        await compare.click()
+        await dialog.getByText('我的备注 2', { exact: true }).waitFor()
+        assert.equal(await dialog.getByText('我的备注 3', { exact: true }).count(), 0)
+        await page.keyboard.press('Escape')
+      }
+    })
     assert.deepEqual(errors, [])
   } finally { await browser.close() }
 }

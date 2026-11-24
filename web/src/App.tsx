@@ -8,6 +8,7 @@ import { useFavorites } from '@/hooks/use-favorites'
 import { useAuth } from '@/hooks/use-auth'
 import { Header } from '@/components/layout/Header'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { FavoriteComparison } from '@/components/entries/FavoriteComparison'
 import { EntryList } from '@/components/entries/EntryList'
 import { DetailDialog } from '@/components/detail/DetailDialog'
 import { AuthDialog } from '@/components/auth/AuthDialog'
@@ -74,6 +75,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
         deviceId={deviceId}
       />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+        {filter.favOnly && filter.type === 'journal' && <FavoriteComparison deviceId={deviceId} />}
         <EntryList
           entries={data?.data ?? []}
           total={data?.total ?? 0}

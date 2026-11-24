@@ -9,17 +9,10 @@ import { ShareLink } from './ShareLink'
 import { ActionButtons } from './ActionButtons'
 import { BookOpen, CalendarDays, ChevronDown, Info, Loader2, X } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
+import { parseCAS } from '@/lib/partition'
 import { fmt } from '@/lib/utils'
 import { wosStatusLabel } from '@/lib/wos'
 import type { Entry, CASPartition, JIFRanking, CiteScoreRanking } from '@/api/types'
-
-function parseCAS(json: string | null): CASPartition | null {
-  if (!json) return null
-  try {
-    const parsed = JSON.parse(json)
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
-  } catch { return null }
-}
 
 function parseRows<T>(json: string | null): T[] {
   if (!json) return []
