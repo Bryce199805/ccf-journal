@@ -13,6 +13,7 @@ import { DetailDialog } from '@/components/detail/DetailDialog'
 import { AuthDialog } from '@/components/auth/AuthDialog'
 import { TagManager } from '@/components/tags/TagManager'
 import { DEFAULT_FILTER } from '@/lib/filter-state'
+import { useDetailNavigation } from '@/hooks/use-detail-navigation'
 import { useFilterState } from '@/hooks/use-filter-state'
 import type { FilterState } from '@/api/types'
 
@@ -20,8 +21,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const deviceId = useDeviceId()
   const { user, isAuthenticated, login, register, logout } = auth
   const [filter, setFilter] = useFilterState()
-  const [detailId, setDetailId] = useState<number | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const { entryId, openEntry, closeEntry } = useDetailNavigation()
   const [authOpen, setAuthOpen] = useState(false)
   const [tagManagerOpen, setTagManagerOpen] = useState(false)
 
@@ -48,11 +48,6 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const handleSearchChange = useCallback((query: string) => {
     setFilter(prev => ({ ...prev, query, page: 1 }), true)
   }, [setFilter])
-
-  const handleSelect = useCallback((id: number) => {
-    setDetailId(id)
-    setDialogOpen(true)
-  }, [])
 
   const handleLogin = useCallback(async (username: string, password: string) => {
     return login(username, password, deviceId)
@@ -92,15 +87,15 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
           onRetry={() => void refetch()}
           onReset={resetFilters}
           onBrowse={() => updateFilter({ ...DEFAULT_FILTER, type: filter.type, layout: filter.layout })}
-          onSelect={handleSelect}
+          onSelect={openEntry}
           onPageChange={p => updateFilter({ page: p })}
         />
       </main>
       <DetailDialog
-        entryId={detailId}
+        entryId={entryId}
         deviceId={deviceId}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={entryId !== null}
+        onOpenChange={open => { if (!open) closeEntry() }}
       />
       <AuthDialog
         open={authOpen}

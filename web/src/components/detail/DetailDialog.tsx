@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { RequestError } from '@/components/shared/RequestError'
 import { LevelBadge, ZoneBadge, TopBadge } from '@/components/shared/ZoneBadge'
 import { CCFGrade, CCFRelations } from '@/components/shared/CCFRelations'
+import { ShareLink } from './ShareLink'
 import { ActionButtons } from './ActionButtons'
 import { BookOpen, CalendarDays, ChevronDown, Info, Loader2, X } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
@@ -67,6 +68,7 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-1 sm:px-6">
           <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><BookOpen className="h-4 w-4 text-primary" />{entry?.type === 'conference' ? '会议详情' : '期刊详情'}</span>
+          {entry?.type === 'journal' && <ShareLink key={entry.id} entryId={entry.id} />}
           <DialogClose asChild><Button variant="ghost" size="icon" className="size-11 sm:size-9 rounded-full" aria-label="关闭详情"><X className="h-4 w-4" /></Button></DialogClose>
         </div>
         <div ref={scrollArea} data-detail-scroll tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain outline-none">
