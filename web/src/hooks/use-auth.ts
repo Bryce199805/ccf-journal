@@ -1,22 +1,25 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { ApiError } from '@/api/client'
 import * as authApi from '@/api/auth'
 import type { User } from '@/api/types'
 
 export function useAuth() {
-  const qc = useQueryClient()
+  const [session, setSession] = useState(0)
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => Boolean(localStorage.getItem('ccf_token')))
 
   useEffect(() => {
     const token = localStorage.getItem('ccf_token')
     if (token) {
       authApi.getMe()
-        .then(res => setUser(res.user))
-        .catch(() => localStorage.removeItem('ccf_token'))
+        .then(res => { if (localStorage.getItem('ccf_token') === token) setUser(res.user) })
+        .catch(error => {
+          if (error instanceof ApiError && error.status === 401 && localStorage.getItem('ccf_token') === token) {
+            localStorage.removeItem('ccf_token')
+            setSession(previous => previous + 1)
+          }
+        })
         .finally(() => setIsLoading(false))
-    } else {
-      setIsLoading(false)
     }
   }, [])
 
@@ -24,25 +27,26 @@ export function useAuth() {
     const res = await authApi.login({ username, password, device_id: deviceId })
     localStorage.setItem('ccf_token', res.token)
     setUser(res.user)
-    qc.invalidateQueries()
+    setSession(previous => previous + 1)
     return res
-  }, [qc])
+  }, [])
 
   const register = useCallback(async (username: string, password: string) => {
     const res = await authApi.register({ username, password })
     localStorage.setItem('ccf_token', res.token)
     setUser(res.user)
-    qc.invalidateQueries()
+    setSession(previous => previous + 1)
     return res
-  }, [qc])
+  }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem('ccf_token')
     setUser(null)
-    qc.invalidateQueries()
-  }, [qc])
+    setSession(previous => previous + 1)
+  }, [])
 
   return {
+    session,
     user,
     isAuthenticated: !!user,
     isLoading,

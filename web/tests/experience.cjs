@@ -22,7 +22,8 @@ async function main() {
     await page.route(`${origin}/api/**`, async route => {
       const request = route.request(), url = new URL(request.url()), path = url.pathname
       let body = {}, status = 200
-      if (path === '/api/entries') {
+      if (path === '/api/auth/me') body = { user: { id: 1, username: 'reader' } }
+      else if (path === '/api/entries') {
         lastParams = url.searchParams
         const type = lastParams.get('type')
         const query = lastParams.get('q')
@@ -168,6 +169,17 @@ async function main() {
         await page.keyboard.press('Escape')
       })
     }
+    await check('logout clears account notes before the guest list arrives', async () => {
+      await page.evaluate(() => localStorage.setItem('ccf_token', 'mock-session'))
+      note = '账号专属备注'
+      await openList()
+      await page.getByText(note, { exact: true }).waitFor()
+      delay = 500
+      note = '游客备注'
+      await page.getByRole('button', { name: '退出登录' }).click()
+      assert.equal(await page.getByText('账号专属备注', { exact: true }).count(), 0)
+      await page.getByText(note, { exact: true }).waitFor()
+    })
     assert.deepEqual(errors, [])
   } finally { await browser.close() }
 }

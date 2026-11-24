@@ -1,3 +1,4 @@
+import { ApiError } from '@/api/client'
 import { useState, type FormEvent } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -35,8 +36,10 @@ export function AuthDialog({ open, onOpenChange, onLogin, onRegister }: AuthDial
       setUsername('')
       setPassword('')
       onOpenChange(false)
-    } catch {
-      setError(tab === 'login' ? '用户名或密码错误' : '注册失败，用户名可能已存在')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) setError('用户名或密码错误')
+      else if (error instanceof ApiError && error.status === 409) setError('用户名已存在')
+      else setError(tab === 'login' ? '登录未完成，请稍后重试。' : '注册未完成，请稍后重试。')
     } finally {
       setLoading(false)
     }

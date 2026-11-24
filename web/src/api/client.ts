@@ -1,3 +1,12 @@
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(status: number) {
+    super(`API ${status}`)
+    this.status = status
+  }
+}
+
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('ccf_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -13,7 +22,7 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   const res = await fetch(url, {
     headers: { ...getAuthHeader() },
   })
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status)
   return res.json()
 }
 
@@ -23,7 +32,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status)
   return res.json()
 }
 
@@ -33,7 +42,7 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status)
   return res.json()
 }
 
@@ -43,6 +52,6 @@ export async function apiDelete<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status)
   return res.json()
 }

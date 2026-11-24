@@ -16,18 +16,9 @@ import { DEFAULT_FILTER } from '@/lib/filter-state'
 import { useFilterState } from '@/hooks/use-filter-state'
 import type { FilterState } from '@/api/types'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-})
-
-function AppContent() {
+function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const deviceId = useDeviceId()
-  const { user, isAuthenticated, login, register, logout } = useAuth()
+  const { user, isAuthenticated, login, register, logout } = auth
   const [filter, setFilter] = useFilterState()
   const [detailId, setDetailId] = useState<number | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -126,13 +117,24 @@ function AppContent() {
   )
 }
 
+function SessionCatalog({ auth }: { auth: ReturnType<typeof useAuth> }) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30_000,
+        retry: 1,
+      },
+    },
+  }))
+  return <QueryClientProvider client={queryClient}><AppContent auth={auth} /></QueryClientProvider>
+}
+
 function App() {
+  const auth = useAuth()
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <SessionCatalog key={auth.session} auth={auth} />
+    </ThemeProvider>
   )
 }
 
