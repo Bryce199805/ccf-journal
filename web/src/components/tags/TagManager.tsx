@@ -6,7 +6,8 @@ import { RequestError } from '@/components/shared/RequestError'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTags, useCreateTag, useDeleteTag } from '@/hooks/use-tags'
-import { TagBadge, TAG_COLORS } from './TagBadge'
+import { TagBadge } from './TagBadge'
+import { TAG_COLORS } from '@/lib/tag-colors'
 import { Plus, Trash2, Loader2 } from 'lucide-react'
 
 interface TagManagerProps {

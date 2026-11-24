@@ -10,19 +10,22 @@ export function useTags(deviceId: string) {
   })
 }
 
-export function useCreateTag(_deviceId: string) {
+export function useCreateTag(deviceId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (req: CreateTagRequest) => createTag(req),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tags', deviceId] }),
   })
 }
 
-export function useUpdateTag(_deviceId: string) {
+export function useUpdateTag(deviceId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...req }: { id: number } & CreateTagRequest) => updateTag(id, req),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['tags'] }),
+    onSettled: () => Promise.all([
+      qc.invalidateQueries({ queryKey: ['tags', deviceId] }),
+      qc.invalidateQueries({ queryKey: ['entries'] }),
+    ]),
   })
 }
 
