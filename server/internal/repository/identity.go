@@ -2,8 +2,7 @@ package repository
 
 import "strconv"
 
-// accountDeviceID keeps legacy (device_id, entry_id) constraints isolated per
-// account while user-owned data is queried by user_id.
+// Account ownership is determined by user_id; device_id remains non-null for legacy consumers.
 func accountDeviceID(userID int) string {
 	return "user:" + strconv.Itoa(userID)
 }

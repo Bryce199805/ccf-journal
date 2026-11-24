@@ -19,10 +19,9 @@ func (r *NoteRepo) Upsert(deviceID string, userID *int, entryID int, content str
 		_, err := r.db.Exec(
 			`INSERT INTO notes (device_id, user_id, entry_id, content, updated_at)
 			 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-			 ON CONFLICT(device_id, entry_id) DO UPDATE SET
+			 ON CONFLICT(user_id, entry_id) WHERE user_id IS NOT NULL DO UPDATE SET
 			   content = excluded.content,
-			   updated_at = CURRENT_TIMESTAMP,
-			   user_id = excluded.user_id`,
+			   updated_at = CURRENT_TIMESTAMP`,
 			accountDeviceID(*userID), *userID, entryID, content,
 		)
 		return err
@@ -30,7 +29,7 @@ func (r *NoteRepo) Upsert(deviceID string, userID *int, entryID int, content str
 	_, err := r.db.Exec(
 		`INSERT INTO notes (device_id, user_id, entry_id, content, updated_at)
 		 VALUES (?, NULL, ?, ?, CURRENT_TIMESTAMP)
-		 ON CONFLICT(device_id, entry_id) DO UPDATE SET
+		 ON CONFLICT(device_id, entry_id) WHERE user_id IS NULL DO UPDATE SET
 		   content = excluded.content,
 		   updated_at = CURRENT_TIMESTAMP`,
 		deviceID, entryID, content,
@@ -172,50 +171,4 @@ func joinNotePlaceholders(p []string) string {
 		result += s
 	}
 	return result
-}
-
-// MergeDeviceNotes merges notes from device_id into user_id during login
-func (r *NoteRepo) MergeDeviceNotes(tx *sql.Tx, deviceID string, userID int) error {
-	rows, err := tx.Query(
-		"SELECT entry_id, content, updated_at FROM notes WHERE device_id = ? AND user_id IS NULL",
-		deviceID,
-	)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	type noteRow struct {
-		entryID   int
-		content   string
-		updatedAt string
-	}
-	var deviceNotes []noteRow
-	for rows.Next() {
-		var n noteRow
-		if err := rows.Scan(&n.entryID, &n.content, &n.updatedAt); err != nil {
-			return err
-		}
-		deviceNotes = append(deviceNotes, n)
-	}
-
-	for _, n := range deviceNotes {
-		var existingUpdated string
-		err := tx.QueryRow(
-			"SELECT updated_at FROM notes WHERE user_id = ? AND entry_id = ?",
-			userID, n.entryID,
-		).Scan(&existingUpdated)
-
-		if err == sql.ErrNoRows {
-			_, err := tx.Exec(
-				"UPDATE notes SET user_id = ?, device_id = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?",
-				userID, accountDeviceID(userID), deviceID, n.entryID,
-			)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

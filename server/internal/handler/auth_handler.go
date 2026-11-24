@@ -13,19 +13,11 @@ import (
 )
 
 type AuthHandler struct {
-	userRepo     *repository.UserRepo
-	favoriteRepo *repository.FavoriteRepo
-	noteRepo     *repository.NoteRepo
-	tagRepo      *repository.TagRepo
+	userRepo *repository.UserRepo
 }
 
-func NewAuthHandler(userRepo *repository.UserRepo, favoriteRepo *repository.FavoriteRepo, noteRepo *repository.NoteRepo, tagRepo *repository.TagRepo) *AuthHandler {
-	return &AuthHandler{
-		userRepo:     userRepo,
-		favoriteRepo: favoriteRepo,
-		noteRepo:     noteRepo,
-		tagRepo:      tagRepo,
-	}
+func NewAuthHandler(userRepo *repository.UserRepo) *AuthHandler {
+	return &AuthHandler{userRepo: userRepo}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -74,28 +66,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Merge device data if device_id provided
-	deviceID := c.Query("device_id")
-	log.Printf("Login: username=%s device_id=%s", req.Username, deviceID)
-	if deviceID != "" {
-		tx, err := h.userRepo.DB().Begin()
-		if err != nil {
-			log.Printf("Login: failed to begin transaction: %v", err)
-		} else {
-			if err := h.favoriteRepo.MergeDeviceFavorites(tx, deviceID, user.ID); err != nil {
-				log.Printf("Login: MergeDeviceFavorites error: %v", err)
-			}
-			if err := h.noteRepo.MergeDeviceNotes(tx, deviceID, user.ID); err != nil {
-				log.Printf("Login: MergeDeviceNotes error: %v", err)
-			}
-			if err := h.tagRepo.MergeDeviceTags(tx, deviceID, user.ID); err != nil {
-				log.Printf("Login: MergeDeviceTags error: %v", err)
-			}
-			if err := tx.Commit(); err != nil {
-				log.Printf("Login: commit error: %v", err)
-			} else {
-				log.Printf("Login: merge committed for user_id=%d device_id=%s", user.ID, deviceID)
-			}
+	if deviceID := c.Query("device_id"); deviceID != "" {
+		if err := h.userRepo.MergeDeviceData(deviceID, user.ID); err != nil {
+			log.Printf("Failed to merge device data: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "device data merge failed"})
+			return
 		}
 	}
 

@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
 	"ccf-directory/internal/middleware"
 	"ccf-directory/internal/model"
+	"ccf-directory/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -78,19 +80,17 @@ func (h *Handler) UpdateTag(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.tagRepo.GetByID(tagID)
-	if err != nil || existing.UserID != *userID {
-		c.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
-		return
-	}
-
 	var req model.UpdateTagRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	tag, err := h.tagRepo.Update(tagID, req.Name, req.Color)
+	tag, err := h.tagRepo.Update(*userID, tagID, req.Name, req.Color)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -112,24 +112,16 @@ func (h *Handler) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.tagRepo.GetByID(tagID)
-	if err != nil || existing.UserID != *userID {
+	err = h.tagRepo.Delete(*userID, tagID)
+	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
 		return
 	}
-
-	// Check if tag is in use
-	inUse, err := h.tagRepo.IsTagInUse(*userID, existing.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if inUse {
+	if err == repository.ErrTagInUse {
 		c.JSON(http.StatusConflict, gin.H{"error": "标签正在使用中，请先移除所有条目上的该标签"})
 		return
 	}
-
-	if err := h.tagRepo.Delete(tagID); err != nil {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

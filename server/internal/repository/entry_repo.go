@@ -134,11 +134,11 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	// Tag filter (filter favorites by tag name in JSON)
 	if q.Tag != "" && q.Favorites {
 		if q.UserID != nil {
-			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.user_id = ? AND f.tags LIKE ?)")
-			args = append(args, *q.UserID, `%"`+escapeLike(q.Tag)+`"%`)
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.user_id = ? AND EXISTS (SELECT 1 FROM json_each(f.tags) tag WHERE tag.value = ?))")
+			args = append(args, *q.UserID, q.Tag)
 		} else if q.DeviceID != "" {
-			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.user_id IS NULL AND f.tags LIKE ?)")
-			args = append(args, q.DeviceID, `%"`+escapeLike(q.Tag)+`"%`)
+			conditions = append(conditions, "EXISTS (SELECT 1 FROM favorites f WHERE f.entry_id = e.id AND f.device_id = ? AND f.user_id IS NULL AND EXISTS (SELECT 1 FROM json_each(f.tags) tag WHERE tag.value = ?))")
+			args = append(args, q.DeviceID, q.Tag)
 		}
 	}
 

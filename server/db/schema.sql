@@ -1,4 +1,5 @@
--- CCF Journal & Conference Directory Database Schema
+-- Version-zero baseline for new installations and legacy upgrades.
+-- Apply with db.Migrate so versioned schema changes run in the same transaction.
 
 CREATE TABLE IF NOT EXISTS catalog_metadata (
     key TEXT PRIMARY KEY,

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	dbpkg "ccf-directory/db"
 	"ccf-directory/internal/handler"
@@ -56,13 +55,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to read schema: %v", err)
 	}
-	if _, err := db.Exec(string(schemaSQL)); err != nil {
+	if err := dbpkg.Migrate(db, string(schemaSQL)); err != nil {
 		log.Fatalf("Failed to initialize schema: %v", err)
 	}
 	log.Println("Database initialized")
-
-	// Run migrations for existing databases
-	runMigrations(db)
 
 	// Import data if available
 	importPath := os.Getenv("IMPORT_PATH")
@@ -111,36 +107,4 @@ func main() {
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
-}
-
-func runMigrations(db *sql.DB) {
-	migrations := []string{
-		"ALTER TABLE favorites ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'",
-		"ALTER TABLE favorites ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE",
-		"ALTER TABLE entries ADD COLUMN is_ccf INTEGER NOT NULL DEFAULT 1",
-		"ALTER TABLE entries ADD COLUMN catalog_source TEXT NOT NULL DEFAULT 'ccf'",
-		"ALTER TABLE entries ADD COLUMN inclusion_reason TEXT NOT NULL DEFAULT 'CCF推荐目录'",
-		"ALTER TABLE entries ADD COLUMN last_scraped_at DATETIME",
-		"ALTER TABLE entries ADD COLUMN last_scrape_error TEXT",
-		"ALTER TABLE entries ADD COLUMN ccf_relations TEXT",
-		"ALTER TABLE entries ADD COLUMN wos_status TEXT",
-		"ALTER TABLE entries ADD COLUMN wos_reason TEXT",
-		"ALTER TABLE entries ADD COLUMN journal_abbr TEXT",
-		"DELETE FROM notes WHERE user_id IS NOT NULL AND id NOT IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id, entry_id ORDER BY datetime(updated_at) DESC, id DESC) AS row_num FROM notes WHERE user_id IS NOT NULL) WHERE row_num = 1)",
-		"UPDATE favorites SET device_id = 'user:' || user_id WHERE user_id IS NOT NULL AND device_id != 'user:' || user_id",
-		"UPDATE notes SET device_id = 'user:' || user_id WHERE user_id IS NOT NULL AND device_id != 'user:' || user_id",
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_user_entry ON favorites(user_id, entry_id) WHERE user_id IS NOT NULL",
-		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_entry ON notes(user_id, entry_id) WHERE user_id IS NOT NULL",
-		"CREATE INDEX IF NOT EXISTS idx_entries_is_ccf ON entries(is_ccf)",
-		"CREATE INDEX IF NOT EXISTS idx_entries_catalog_source ON entries(catalog_source)",
-	}
-	for _, m := range migrations {
-		if _, err := db.Exec(m); err != nil {
-			// Column already exists is expected for new databases
-			if !strings.Contains(err.Error(), "duplicate column name") {
-				log.Printf("Migration warning: %v", err)
-			}
-		}
-	}
-	log.Println("Migrations applied")
 }

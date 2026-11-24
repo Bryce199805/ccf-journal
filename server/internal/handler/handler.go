@@ -33,7 +33,7 @@ func New(db *sql.DB) *Handler {
 		noteRepo:     noteRepo,
 		tagRepo:      tagRepo,
 		userRepo:     userRepo,
-		authHandler:  NewAuthHandler(userRepo, favRepo, noteRepo, tagRepo),
+		authHandler:  NewAuthHandler(userRepo),
 	}
 }
 
@@ -129,6 +129,10 @@ func (h *Handler) AddFavorite(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	if userID == nil && req.DeviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
+		return
+	}
 	tags := req.Tags
 	if tags == nil {
 		tags = []string{}
@@ -151,6 +155,10 @@ func (h *Handler) RemoveFavorite(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	if userID == nil && req.DeviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
+		return
+	}
 	if err := h.favoriteRepo.Remove(req.DeviceID, userID, req.EntryID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -191,6 +199,10 @@ func (h *Handler) UpdateFavoriteTags(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	if userID == nil && req.DeviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
+		return
+	}
 	if err := h.favoriteRepo.UpdateTags(req.DeviceID, userID, req.EntryID, req.Tags); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

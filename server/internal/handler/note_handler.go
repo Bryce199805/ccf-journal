@@ -17,6 +17,10 @@ func (h *Handler) UpsertNote(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	if userID == nil && req.DeviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
+		return
+	}
 	if err := h.noteRepo.Upsert(req.DeviceID, userID, req.EntryID, req.Content); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -33,6 +37,10 @@ func (h *Handler) DeleteNote(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	if userID == nil && req.DeviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
+		return
+	}
 	if err := h.noteRepo.Delete(req.DeviceID, userID, req.EntryID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
