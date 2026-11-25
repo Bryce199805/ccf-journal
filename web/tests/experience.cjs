@@ -201,68 +201,6 @@ async function main() {
       assert.equal(await page.getByText('账号专属备注', { exact: true }).count(), 0)
       await page.getByText(note, { exact: true }).waitFor()
     })
-    await check('compare from catalog, table and detail; search and replace on mobile and desktop', async () => {
-      const journals = [1, 2, 3, 4].map(id => ({
-        ...entry, id, ccf_abbr: 'J' + id, ccf_full: '候选期刊 ' + id, note: '我的备注 ' + id,
-        is_favorite: false, impact_factor: id === 1 ? 0 : null,
-        research_area: id === 2 ? '信息检索' : null,
-        ccf_relations: JSON.stringify([{ domain: '人工智能', level: 'A' }, { domain: '数据库', level: 'B' }]),
-      }))
-      await page.route('**/api/entries?**', route => {
-        const params = new URL(route.request().url()).searchParams
-        const p = Number(params.get('page'))
-        const q = params.get('q')
-        const matches = q ? journals.filter(e => e.ccf_abbr === q) : p === 2 ? journals.slice(2) : journals.slice(0, 2)
-        return route.fulfill({ json: { data: matches, page: p, total: q ? matches.length : 4, total_pages: q ? 1 : 2 } })
-      })
-      let failSecond = true
-      await page.route(/\/api\/entries\/\d+\?/, route => {
-        const id = Number(new URL(route.request().url()).pathname.split('/').pop())
-        return route.fulfill({ status: id === 2 && failSecond ? 503 : 200, json: { entry: { ...journals[id - 1], note: undefined } } })
-      })
-      await page.route('**/api/notes?**', route => route.fulfill({ json: { notes: journals.map(e => ({ entry_id: e.id, content: e.note })) } }))
-      for (const width of [320, 1280]) {
-        await page.setViewportSize({ width, height: 844 })
-        await page.goto(origin)
-        const tray = page.getByRole('complementary', { name: '对比清单' })
-        const add = id => page.getByRole('button', { name: '加入对比：候选期刊 ' + id, exact: true })
-        await add(1).click()
-        assert.ok(await tray.getByRole('button', { name: '查看对比' }).isDisabled())
-        await page.getByRole('button', { name: '表格视图' }).click()
-        await add(2).click()
-        await page.getByRole('button', { name: '下一页', exact: true }).click()
-        await page.getByRole('button', { name: '查看 J3 详情' }).click()
-        await page.getByRole('dialog').getByRole('button', { name: '加入对比：候选期刊 3' }).click()
-        await page.keyboard.press('Escape')
-        await add(4).click()
-        await page.getByRole('button', { name: '候选期刊 3', exact: true }).click()
-        await tray.getByRole('button', { name: '查看对比' }).click()
-        const dialog = page.getByRole('dialog', { name: '期刊对比', exact: true })
-        if (failSecond) {
-          await dialog.getByRole('alert').waitFor()
-          failSecond = false
-          await dialog.getByRole('button', { name: '重试' }).click()
-        }
-        await dialog.getByText('我的备注 4', { exact: true }).waitFor()
-        assert.ok(await dialog.getByText('信息检索', { exact: true }).isVisible())
-        assert.ok(await dialog.getByText('0.00', { exact: true }).isVisible())
-        assert.ok(await dialog.getByText('暂无数据', { exact: true }).count() > 0)
-        assert.ok(await dialog.getByText(/人工智能 · A.*数据库 · B/s).count() > 0)
-        assert.ok(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth + 1))
-        await dialog.getByRole('button', { name: '更换 候选期刊 4' }).click()
-        await page.getByRole('textbox', { name: '搜索对比期刊' }).fill('J3')
-        await page.getByRole('button', { name: '候选期刊 3', exact: true }).click()
-        await dialog.getByText('我的备注 3', { exact: true }).waitFor()
-        assert.equal(await dialog.getByText('我的备注 4', { exact: true }).count(), 0)
-        await page.keyboard.press('Escape')
-        await tray.getByRole('button', { name: '移除 候选期刊 1' }).click()
-        await tray.getByRole('button', { name: '查看对比' }).click()
-        await dialog.getByRole('button', { name: '添加期刊' }).click()
-        await page.getByRole('button', { name: '候选期刊 1', exact: true }).click()
-        await dialog.getByText('我的备注 1', { exact: true }).waitFor()
-        await page.keyboard.press('Escape')
-      }
-    })
     assert.deepEqual(errors, [])
   } finally { await browser.close() }
 }

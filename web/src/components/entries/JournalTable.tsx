@@ -1,4 +1,3 @@
-import { CompareButton } from '@/components/compare/CompareButton'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -81,7 +80,6 @@ export function JournalTable({ entries, deviceId, onSelect }: JournalTableProps)
                   <div className="flex items-center gap-1 min-w-0">
                     <button className="font-medium block max-w-full truncate text-left hover:text-primary" title={displayName} aria-label={`查看 ${displayName} 详情`} onClick={event => { event.stopPropagation(); onSelect(e.id) }}>{displayName}</button>
                   </div>
-                  <CompareButton entry={e} />
                 </TableCell>
                 <TableCell className="text-muted-foreground whitespace-normal [overflow-wrap:anywhere]" title={displayFullName}>{displayFullName}</TableCell>
                 <TableCell className="text-muted-foreground text-xs whitespace-normal"><CCFRelations entry={e} /></TableCell>

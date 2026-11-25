@@ -1,4 +1,3 @@
-import { CompareButton } from '@/components/compare/CompareButton'
 import { useRef, type ReactNode } from 'react'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -10,10 +9,17 @@ import { ShareLink } from './ShareLink'
 import { ActionButtons } from './ActionButtons'
 import { BookOpen, CalendarDays, ChevronDown, Info, Loader2, X } from 'lucide-react'
 import { useEntryDetail } from '@/hooks/use-entries'
-import { parseCAS } from '@/lib/partition'
 import { fmt } from '@/lib/utils'
 import { wosStatusLabel } from '@/lib/wos'
 import type { Entry, CASPartition, JIFRanking, CiteScoreRanking } from '@/api/types'
+
+function parseCAS(json: string | null): CASPartition | null {
+  if (!json) return null
+  try {
+    const parsed = JSON.parse(json)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
+  } catch { return null }
+}
 
 function parseRows<T>(json: string | null): T[] {
   if (!json) return []
@@ -70,7 +76,6 @@ export function DetailDialog({ entryId, deviceId, open, onOpenChange }: DetailDi
             <div className="px-5 py-16 text-center"><DialogTitle className="sr-only">正在加载详情</DialogTitle><p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" />正在加载详情…</p></div>
           ) : (
             <div key={entry.id} className="min-w-0 [overflow-wrap:anywhere]">
-              {entry.type === 'journal' && <div className="px-4 pt-2 sm:px-7"><CompareButton entry={entry} /></div>}
               <EntryIdentity entry={entry} aside={entry.type === 'journal' ? <JournalMetrics entry={entry} /> : null} />
               {entry.type === 'conference' ? <ConferenceDetail entry={entry} /> : <JournalDetail entry={entry} />}
             </div>
