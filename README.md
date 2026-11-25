@@ -282,9 +282,11 @@ FORCE_REFRESH=1 npm run scrape
 预期失败类型包括临时网络/HTTP 错误、LetPub 限流或验证码、搜索无结果、仅名称可匹配、
 强身份冲突、详情结构异常和准入拒绝。限流任务会以非零退出状态提醒执行者；校验失败时
 `npm run publish:data` 退出非零且正式文件保持不变。发布还要求发现报告为完整全量状态，
-且详情报告中没有 `pending` 任务；canary 允许保留 `pending`，此时 `closed=false`，只能
+详情报告须为已完成的全量运行，并且内容摘要与待发布快照一致；canary 允许保留 `pending`，此时 `closed=false`，只能
 校验、不能发布。旧 journalid/ISSN 仅作为查找提示，详情名称和 ISSN/EISSN 校验不一致时会
 进入冲突报告。无法匹配 LetPub 的 CCF 仍以 CCF 全名保留，`journalid` 留空。
+
+正式发布会同时生成 `data/letpub_full.json.retirements.json`。复制指标快照或部署到另一台机器时，请同时复制此文件，以便旧库归档明确拒收的非 CCF 期刊并保留个人记录。
 
 ### 新增期刊数据校对
 

@@ -1,5 +1,7 @@
 // Import scraped data into SQLite database
 // Usage: node import_data.js [letpub_full.json] [conferences.json] [output.json]
+const { createHash } = require('node:crypto');
+const { snapshotDigest } = require('./lib/snapshot_digest');
 const fs = require('fs');
 const path = require('path');
 const { mergeJournalCatalog } = require('./lib/catalog_merge');
@@ -10,7 +12,7 @@ const OUTPUT_FILE = process.argv[4] || process.env.IMPORT_OUTPUT_FILE || path.jo
 
 function buildImportData(letpubData, conferencesData, journalCatalog, identityCorrections = {}) {
     return {
-        journalCatalogComplete: !!journalCatalog,
+        journalCatalogComplete: false,
         retiredJournalIdentities: identityCorrections.retiredJournalIdentities || [],
         journals: (journalCatalog ? mergeJournalCatalog(letpubData, journalCatalog) : letpubData).map(j => ({
             ...j,
@@ -26,18 +28,23 @@ function buildImportData(letpubData, conferencesData, journalCatalog, identityCo
     };
 }
 
+function verifyCatalog(journals, audit) {
+    const members = journals.filter(j => j.isCCF);
+    const keys = members.flatMap(j => j.ccfRelations.map(r =>
+        [r.domain, r.level, r.full, r.abbr || ''].join('\t'))).sort();
+    const digest = createHash('sha256').update(keys.join('\n')).digest('hex');
+    if (members.length !== audit.uniqueJournalTitles || keys.length !== audit.verifiedRelations ||
+        digest !== audit.relationsSha256) throw new Error('Official catalog differs from the audited relations');
+}
+
 function main() {
     console.log('Importing data...');
     console.log('LetPub file:', LETPUB_FILE);
     console.log('Conferences file:', CONFERENCES_FILE);
 
     // Load data
-    const letpubData = fs.existsSync(LETPUB_FILE)
-        ? JSON.parse(fs.readFileSync(LETPUB_FILE, 'utf8'))
-        : [];
-    const conferencesData = fs.existsSync(CONFERENCES_FILE)
-        ? JSON.parse(fs.readFileSync(CONFERENCES_FILE, 'utf8'))
-        : {};
+    const letpubData = JSON.parse(fs.readFileSync(LETPUB_FILE, 'utf8'));
+    const conferencesData = JSON.parse(fs.readFileSync(CONFERENCES_FILE, 'utf8'));
 
     console.log(`LetPub entries: ${letpubData.length}`);
     const confEntries = Object.entries(conferencesData).flatMap(([domain, entries]) => entries);
@@ -51,7 +58,17 @@ function main() {
         ? JSON.parse(fs.readFileSync(correctionsFile, 'utf8')) : {};
     const importData = buildImportData(letpubData, conferencesData, journalCatalog, identityCorrections);
     const metadataFile = process.env.CCF_METADATA_FILE || path.join(__dirname, '..', 'data', 'ccf_catalog_meta.json');
-    if (fs.existsSync(metadataFile)) importData.journalCatalog = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+    const metadata = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+    verifyCatalog(importData.journals, metadata.pdfAudit);
+    importData.journalCatalog = metadata;
+    importData.journalCatalogComplete = true;
+    const retirementsFile = LETPUB_FILE + '.retirements.json';
+    if (fs.existsSync(retirementsFile)) {
+        const manifest = JSON.parse(fs.readFileSync(retirementsFile, 'utf8'));
+        const ids = manifest[snapshotDigest(letpubData)];
+        if (!Array.isArray(ids)) throw new Error('Retirements and metrics are from different publications');
+        importData.rejectedNonCCF = ids;
+    }
     fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(importData, null, 2));
     console.log(`Generated import JSON: ${OUTPUT_FILE}`);
@@ -60,4 +77,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { buildImportData };
+module.exports = { buildImportData, verifyCatalog };

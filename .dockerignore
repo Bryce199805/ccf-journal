@@ -11,6 +11,7 @@ deploy/*.tar.gz
 # Catalog sources and metric snapshots required by the import adapter.
 data/*
 !data/letpub_full.json
+!data/letpub_full.json.retirements.json
 !data/all_conferences_correct.json
 !data/all_journals_correct.json
 !data/ccf_catalog_meta.json

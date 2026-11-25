@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "mode": "full",
+  "scope": "all",
   "totalTasks": 2,
   "countsClosed": true,
   "closed": true,
@@ -11,5 +12,6 @@
     "not_found": 0,
     "parse_failed": 0,
     "rate_limited": 0
-  }
+  },
+  "stagingDigest": "8dabb9104e3b50a4a2f733bedd8c44c1d0f62608e7d9812891e2205643c8501c"
 }

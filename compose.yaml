@@ -23,7 +23,7 @@ services:
       TZ: "${TZ:-Asia/Shanghai}"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/stats"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/ready"]
       interval: 10s
       timeout: 3s
       retries: 10

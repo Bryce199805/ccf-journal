@@ -1,16 +1,19 @@
 package db
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
 // ImportData represents the data to import
 type ImportData struct {
+	RejectedNonCCF           []string                    `json:"rejectedNonCCF"`
 	JournalCatalog           json.RawMessage             `json:"journalCatalog"`
 	JournalCatalogComplete   bool                        `json:"journalCatalogComplete"`
 	Journals                 []JournalImport             `json:"journals"`
@@ -303,6 +306,60 @@ func findExistingJournalID(tx *sql.Tx, j JournalImport, complete bool) (int, err
 	return int(low.Int64), nil
 }
 
+// Check the packet again before a complete snapshot can archive existing rows.
+func validateMembership(data ImportData, previous []byte) error {
+	if !data.JournalCatalogComplete {
+		return nil
+	}
+	// Legacy packets with no edition metadata may only update an unversioned database.
+	if (len(data.JournalCatalog) == 0 || string(data.JournalCatalog) == "null") && (len(previous) == 0 || string(previous) == "null") {
+		return nil
+	}
+	var meta struct {
+		PDF   string `json:"formalPdfSha256"`
+		Audit struct {
+			Titles    int    `json:"uniqueJournalTitles"`
+			Relations int    `json:"verifiedRelations"`
+			Digest    string `json:"relationsSha256"`
+		} `json:"pdfAudit"`
+	}
+	if err := json.Unmarshal(data.JournalCatalog, &meta); err != nil {
+		return fmt.Errorf("missing catalog audit: %w", err)
+	}
+	// Packets produced before relation digests were included identify this edition by its PDF.
+	if meta.PDF == "271b630b576bf8a4f802e767f5694caded93680e22b3a19bef7902591c45c1d3" {
+		meta.Audit.Digest = "0e16256c0e76640a7fa7ca5cd528d3b4b7bd1e7ff711878697d32ec6d6846d9c"
+	}
+	var keys []string
+	titles := map[string]bool{}
+	for _, j := range data.Journals {
+		if j.IsCCF != nil && !*j.IsCCF {
+			continue
+		}
+		if titles[j.CCFFull] {
+			return fmt.Errorf("duplicate CCF journal %s", j.CCFFull)
+		}
+		titles[j.CCFFull] = true
+		relations, _ := j.CCFRelations.([]interface{})
+		for _, value := range relations {
+			rel, _ := value.(map[string]interface{})
+			domain, _ := rel["domain"].(string)
+			level, _ := rel["level"].(string)
+			full, _ := rel["full"].(string)
+			abbr, _ := rel["abbr"].(string)
+			if full != j.CCFFull || domain == "" {
+				return fmt.Errorf("invalid relation for %s", j.CCFFull)
+			}
+			keys = append(keys, strings.Join([]string{domain, level, full, abbr}, "\t"))
+		}
+	}
+	sort.Strings(keys)
+	if len(titles) != meta.Audit.Titles || len(keys) != meta.Audit.Relations || fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(keys, "\n")))) != meta.Audit.Digest {
+		return fmt.Errorf("catalog membership does not match the audited edition")
+	}
+	return nil
+}
+
 // ImportFromJSON incrementally inserts or updates catalog data while preserving entry IDs.
 func ImportFromJSON(db *sql.DB, path string) error {
 	data, err := os.ReadFile(path)
@@ -320,6 +377,21 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		return err
 	}
 	defer tx.Rollback()
+	var previous []byte
+	if err := tx.QueryRow("SELECT value FROM catalog_metadata WHERE key='journal_catalog'").Scan(&previous); err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	if err := validateMembership(importData, previous); err != nil {
+		return err
+	}
+	for _, id := range importData.RejectedNonCCF {
+		if id == "" {
+			return fmt.Errorf("empty rejected journal ID")
+		}
+		if _, err := tx.Exec(`UPDATE entries SET catalog_source='historical_non_ccf', inclusion_reason='已退出非 CCF 收录范围', updated_at=CURRENT_TIMESTAMP WHERE type='journal' AND is_ccf=0 AND journalid=? AND catalog_source NOT IN ('historical_ccf','historical_non_ccf')`, id); err != nil {
+			return err
+		}
+	}
 	if err := retireJournalIdentities(tx, importData); err != nil {
 		return err
 	}
@@ -448,7 +520,7 @@ func ImportFromJSON(db *sql.DB, path string) error {
 		return fmt.Errorf("catalog sync aborted with %d errors", len(importErrors))
 	}
 
-	if len(importData.JournalCatalog) > 0 {
+	if len(importData.JournalCatalog) > 0 && string(importData.JournalCatalog) != "null" {
 		if _, err := tx.Exec("INSERT INTO catalog_metadata(key, value) VALUES ('journal_catalog', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value WHERE value IS NOT excluded.value", string(importData.JournalCatalog)); err != nil {
 			return err
 		}

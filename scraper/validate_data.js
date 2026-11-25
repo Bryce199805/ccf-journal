@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { snapshotDigest } = require('./lib/snapshot_digest');
 const { atomicWriteJSON, readJSON } = require('./lib/runtime');
 const { evaluateCatalogEntry } = require('./lib/catalog_policy');
 const { normalizeISSN, normalizeName } = require('./lib/identity');
@@ -354,10 +355,12 @@ function runValidation(options = {}) {
     if (options.report) atomicWriteJSON(options.report, result);
     return result;
   }
+  const scrape = options.scrapeReport ? readJSON(options.scrapeReport, null) : null;
+  const digest = snapshotDigest(input);
   const result = validateDataset(input, {
     baseline: readJSON(options.baseline, []),
     ccfSource: readJSON(options.ccf, {}),
-    scrapeReport: readJSON(options.scrapeReport, null),
+    scrapeReport: scrape,
     maxDropRatio: options.maxDropRatio
   });
   const discoveryReport = options.discoveryReport ? readJSON(options.discoveryReport, null) : null;
@@ -371,7 +374,13 @@ function runValidation(options = {}) {
     ...result
   };
   if (result.ok && options.publish) {
-    if (readJSON(options.scrapeReport, {})?.mode === 'partial') {
+    if (scrape?.mode !== 'full' || scrape.closed !== true || scrape.countsClosed !== true ||
+        !scrape.totalTasks || scrape.haltedEarly || scrape.counts?.parse_failed || scrape.counts?.rate_limited ||
+        scrape.stagingDigest !== digest) {
+      report.ok = false;
+      report.errors.push({ code: 'complete_matching_scrape_required' });
+    }
+    if (scrape?.mode === 'partial') {
       report.ok = false;
       report.errors.push({ code: 'cannot_publish_partial_run' });
     }
@@ -379,13 +388,25 @@ function runValidation(options = {}) {
       report.ok = false;
       report.errors.push({ code: 'cannot_publish_without_complete_discovery' });
     }
-    if (Number(readJSON(options.scrapeReport, {})?.counts?.pending || 0) > 0) {
+    if (Number(scrape?.counts?.pending || 0) > 0) {
       report.ok = false;
       report.errors.push({ code: 'cannot_publish_with_pending_tasks' });
     }
   }
   if (report.ok && options.publish) {
     if (!options.formal) throw new Error('formal output path is required for --publish');
+    const file = options.formal + '.retirements.json';
+    // Keep the still-published snapshot readable if the process stops before its rename.
+    const manifests = readJSON(file, {});
+    const previous = readJSON(options.formal, null);
+    const previousDigest = previous && snapshotDigest(previous);
+    const previousIDs = manifests[previousDigest] || [];
+    const active = new Set(input.map(row => String(row.journalid)));
+    const journalids = [...new Set([...previousIDs, ...(scrape.rejectedNonCCF || [])])]
+      .filter(id => !active.has(id)).sort();
+    const versions = previousDigest ? { [previousDigest]: previousIDs } : {};
+    versions[digest] = journalids;
+    atomicWriteJSON(file, versions);
     atomicWriteJSON(options.formal, input);
     report.published = true;
     report.formal = options.formal;

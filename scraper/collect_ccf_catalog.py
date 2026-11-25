@@ -322,6 +322,7 @@ def main():
         "formalPdfModificationDate": "2026-04-09T11:13:27+08:00",
         "pdfAudit": {
             "path": "scraper/fixtures/catalog/ccf_pdf_transcription_audit.json",
+            "relationsSha256": "0e16256c0e76640a7fa7ca5cd528d3b4b7bd1e7ff711878697d32ec6d6846d9c",
             "verifiedRelations": 295,
             "uniqueJournalTitles": 291,
         },

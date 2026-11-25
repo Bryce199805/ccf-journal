@@ -299,3 +299,37 @@ func TestImportConflictsAndUnchangedRows(t *testing.T) {
 		}
 	}
 }
+
+func TestRejectedNonCCFIsArchivedWithoutRemovingReferences(t *testing.T) {
+	database, err := sql.Open("sqlite3", filepath.Join(t.TempDir(), "catalog.db")+"?_foreign_keys=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	schema, err := os.ReadFile("schema.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(database, string(schema)); err != nil {
+		t.Fatal(err)
+	}
+	_, err = database.Exec(`INSERT INTO entries(type,ccf_full,ccf_abbr,ccf_level,ccf_domain,journalid,is_ccf,catalog_source)
+	VALUES ('journal','Rejected','R','','','123',0,'letpub');
+	INSERT INTO favorites(device_id,entry_id) VALUES ('guest',1)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(t.TempDir(), "data.json")
+	if err := os.WriteFile(file, []byte(`{"rejectedNonCCF":["123"]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := ImportFromJSON(database, file); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var count int
+	if err := database.QueryRow(`SELECT COUNT(*) FROM entries e JOIN favorites f ON e.id=f.entry_id WHERE e.catalog_source='historical_non_ccf'`).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("archived favorite: %d, %v", count, err)
+	}
+}

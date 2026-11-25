@@ -65,14 +65,24 @@ func main() {
 	if importPath == "" {
 		importPath = "./db/import_data.json"
 	}
-	if _, err := os.Stat(importPath); err == nil {
-		if err := dbpkg.ImportFromJSON(db, importPath); err != nil {
-			log.Printf("Warning: import failed: %v", err)
+	if err := dbpkg.ImportFromJSON(db, importPath); err != nil {
+		var available bool
+		if queryErr := db.QueryRow("SELECT EXISTS(SELECT 1 FROM entries WHERE type='journal' AND is_ccf=1)").Scan(&available); queryErr != nil || !available {
+			log.Fatalf("Cannot initialize catalog: %v", err)
 		}
+		log.Printf("Catalog update failed; serving previous catalog: %v", err)
 	}
 
 	// Setup Gin
 	r := gin.Default()
+	r.GET("/ready", func(c *gin.Context) {
+		var available bool
+		if err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM entries WHERE type='journal' AND is_ccf=1)").Scan(&available); err != nil || !available {
+			c.Status(503)
+			return
+		}
+		c.Status(200)
+	})
 
 	// CORS
 	r.Use(cors.New(cors.Config{

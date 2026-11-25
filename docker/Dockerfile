@@ -14,11 +14,11 @@ WORKDIR /catalog
 COPY scraper/import_data.js /catalog/scraper/import_data.js
 COPY scraper/ccf_title_aliases.json /catalog/scraper/ccf_title_aliases.json
 COPY scraper/ccf_identity_hints.json /catalog/scraper/ccf_identity_hints.json
-COPY scraper/lib/catalog_merge.js scraper/lib/identity.js /catalog/scraper/lib/
+COPY scraper/lib/catalog_merge.js scraper/lib/identity.js scraper/lib/snapshot_digest.js /catalog/scraper/lib/
 COPY data/all_journals_correct.json /catalog/data/all_journals_correct.json
 COPY data/ccf_catalog_meta.json /catalog/data/ccf_catalog_meta.json
 COPY data/journal_identity_corrections.json /catalog/data/journal_identity_corrections.json
-COPY data/letpub_full.json /catalog/data/letpub_full.json
+COPY data/letpub_full.json* /catalog/data/
 COPY data/all_conferences_correct.json /catalog/data/all_conferences_correct.json
 RUN node /catalog/scraper/import_data.js \
     /catalog/data/letpub_full.json \

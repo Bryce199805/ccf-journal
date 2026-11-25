@@ -64,7 +64,7 @@ test('official catalog supplies missing journals and updates all relations witho
     Networks: [{ full: 'Existing Journal', abbr: 'NEW', level: 'B' }, { full: 'Missing Journal', abbr: '', level: 'C' }],
     Security: [{ full: 'Existing Journal', abbr: 'NEW', level: 'A' }],
   });
-  assert.equal(result.journalCatalogComplete, true);
+  assert.equal(result.journalCatalogComplete, false); // An unaudited source is never authoritative.
   assert.equal(result.journals.length, 3);
   assert.equal(result.journals[0].impactFactor, 5);
   assert.equal(result.journals[0].journalid, '1');
@@ -101,4 +101,17 @@ test('import adapter accepts legacy journals and preserves current metadata', ()
   assert.equal(result.journals[1].lastScrapedAt, '2026-09-03T00:00:00Z');
   assert.equal(result.journals[1].wosStatus, 'not_indexed');
   assert.deepEqual(result.conferences[0], { domain: 'AI', abbr: 'CONF', full: 'Conference' });
+});
+
+test('the published edition digest detects a missing domain or changed grade', () => {
+  const { verifyCatalog } = require('./import_data');
+  const source = require('../data/all_journals_correct.json');
+  const { pdfAudit } = require('../data/ccf_catalog_meta.json');
+  const journals = mergeJournalCatalog([], source);
+  verifyCatalog(journals, pdfAudit);
+  const partial = { ...source };
+  delete partial['计算机网络'];
+  assert.throws(() => verifyCatalog(mergeJournalCatalog([], partial), pdfAudit), /audited relations/);
+  journals[0].ccfRelations[0].level = 'X';
+  assert.throws(() => verifyCatalog(journals, pdfAudit), /audited relations/);
 });

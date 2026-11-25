@@ -1,4 +1,5 @@
 const path = require('path');
+const { snapshotDigest } = require('./lib/snapshot_digest');
 const {
   atomicWriteJSON,
   fetchWithRetry,
@@ -1068,6 +1069,10 @@ async function runBatch(options = {}) {
     haltedEarly: Boolean(haltedReason),
     haltedReason,
     consecutiveRateLimits,
+    stagingDigest: snapshotDigest(results),
+    rejectedNonCCF: tasks.filter(task => !task.isCCF && currentStates[task.key]?.status === 'rejected'
+      && currentStates[task.key]?.policy?.accepted === false)
+      .map(task => currentStates[task.key].journalid).filter(Boolean).map(String),
     stagingFile: config.stagingFile,
     progressFile: config.progressFile,
     conflictCount: conflicts.length,

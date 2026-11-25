@@ -316,7 +316,7 @@ test('valid full discovery and closed scrape can publish atomically', t => {
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const formal = path.join(directory, 'formal.json');
   const report = path.join(directory, 'report.json');
-  fs.writeFileSync(formal, 'OLD');
+  fs.writeFileSync(formal, '[]');
   const result = runValidation({
     input: path.join(validationFixtures, 'valid_staging.json'),
     baseline: path.join(validationFixtures, 'baseline.json'),
@@ -388,4 +388,23 @@ test('partial canary cannot publish even with adequate coverage', t => {
   assert.equal(result.ok, false);
   assert.equal(result.errors.some(error => error.code === 'cannot_publish_partial_run'), true);
   assert.equal(fs.readFileSync(formal, 'utf8'), 'OLD');
+});
+
+test('missing or unrelated scrape evidence preserves the published snapshot', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccf-publication-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const formal = path.join(dir, 'formal.json');
+  const scrapeReport = path.join(dir, 'scrape.json');
+  fs.writeFileSync(formal, '[]');
+  const options = { input: path.join(validationFixtures, 'valid_staging.json'),
+    ccf: path.join(validationFixtures, 'ccf_source.json'),
+    discoveryReport: path.join(validationFixtures, 'discovery_report.json'), scrapeReport, formal, publish: true };
+  for (const evidence of [null, { ...load('scrape_report.json'), stagingDigest: 'different' }]) {
+    if (evidence) fs.writeFileSync(scrapeReport, JSON.stringify(evidence));
+    assert.equal(runValidation(options).published, false);
+    assert.equal(fs.readFileSync(formal, 'utf8'), '[]');
+  }
+  fs.writeFileSync(scrapeReport, JSON.stringify({ ...load('scrape_report.json'), rejectedNonCCF: ['123456'] }));
+  assert.equal(runValidation(options).published, true);
+  assert.deepEqual(JSON.parse(fs.readFileSync(formal + '.retirements.json'))[load('scrape_report.json').stagingDigest], ['123456']);
 });

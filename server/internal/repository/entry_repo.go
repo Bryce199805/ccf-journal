@@ -71,7 +71,7 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	var args []interface{}
 	// Archived rows remain addressable for existing favorites and notes.
 	if !q.Favorites {
-		conditions = append(conditions, "e.catalog_source != 'historical_ccf'")
+		conditions = append(conditions, "e.catalog_source NOT IN ('historical_ccf','historical_non_ccf')")
 	}
 
 	// Build WHERE conditions
@@ -82,7 +82,7 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	if q.Catalog == "ccf" {
 		conditions = append(conditions, "e.is_ccf = 1")
 	} else if q.Catalog == "non_ccf" {
-		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0 AND e.catalog_source != 'historical_ccf'")
+		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0 AND e.catalog_source NOT IN ('historical_ccf','historical_non_ccf')")
 	}
 	domains, levels := q.Domains(), q.Levels()
 	var prefix string
@@ -189,6 +189,8 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		order = "DESC"
 	}
 
+	order += " NULLS LAST, e.id ASC"
+
 	// Pagination
 	offset := (q.Page - 1) * q.PerPage
 
@@ -259,7 +261,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	if err := r.db.QueryRow("SELECT value FROM catalog_metadata WHERE key = 'journal_catalog'").Scan(&catalogJSON); err == nil && json.Valid([]byte(catalogJSON)) {
 		stats.JournalCatalog = json.RawMessage(catalogJSON)
 	}
-	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf'").Scan(&stats.TotalJournals); err != nil {
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND catalog_source NOT IN ('historical_ccf','historical_non_ccf')").Scan(&stats.TotalJournals); err != nil {
 		return nil, err
 	}
 	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'conference'").Scan(&stats.TotalConferences); err != nil {
@@ -268,7 +270,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 1").Scan(&stats.CCFJournals); err != nil {
 		return nil, err
 	}
-	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 0 AND catalog_source != 'historical_ccf'").Scan(&stats.NonCCFJournals); err != nil {
+	if err := r.db.QueryRow("SELECT COUNT(*) FROM entries WHERE type = 'journal' AND is_ccf = 0 AND catalog_source NOT IN ('historical_ccf','historical_non_ccf')").Scan(&stats.NonCCFJournals); err != nil {
 		return nil, err
 	}
 	var dataUpdatedAt sql.NullString
@@ -291,7 +293,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 	} {
 		query := memberships + fmt.Sprintf(`SELECT m.%[1]s, COUNT(DISTINCT m.entry_id)
 			FROM memberships m JOIN entries e ON e.id=m.entry_id
-			WHERE e.catalog_source != 'historical_ccf' AND m.%[1]s IS NOT NULL GROUP BY m.%[1]s`, dimension.column)
+			WHERE e.catalog_source NOT IN ('historical_ccf','historical_non_ccf') AND m.%[1]s IS NOT NULL GROUP BY m.%[1]s`, dimension.column)
 		if err := r.readCounts(query, dimension.counts); err != nil {
 			return nil, err
 		}
@@ -307,7 +309,7 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 				ELSE '未分区'
 			END as zone,
 			COUNT(*)
-			FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf' GROUP BY zone ORDER BY zone`, stats.ByCASZone); err != nil {
+			FROM entries WHERE type = 'journal' AND catalog_source NOT IN ('historical_ccf','historical_non_ccf') GROUP BY zone ORDER BY zone`, stats.ByCASZone); err != nil {
 		return nil, err
 	}
 	return stats, nil
