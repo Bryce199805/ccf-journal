@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"ccf-directory/internal/model"
 )
@@ -14,16 +15,33 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) Create(username, passwordHash string) (*model.User, error) {
-	result, err := r.db.Exec(
-		"INSERT INTO users (username, password_hash) VALUES (?, ?)",
-		username, passwordHash,
-	)
+var ErrUsernameTaken = errors.New("username already exists")
+
+func (r *UserRepo) Create(username, passwordHash, deviceID string) (*model.User, error) {
+	tx, err := r.db.Begin()
 	if err != nil {
 		return nil, err
 	}
-	id, _ := result.LastInsertId()
-	return r.GetByID(int(id))
+	defer tx.Rollback()
+	var u model.User
+	err = tx.QueryRow(`INSERT INTO users (username, password_hash) VALUES (?, ?)
+		ON CONFLICT(username) DO NOTHING RETURNING id, username, created_at`, username, passwordHash).
+		Scan(&u.ID, &u.Username, &u.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrUsernameTaken
+	}
+	if err != nil {
+		return nil, err
+	}
+	if deviceID != "" {
+		if err := mergeDeviceData(tx, deviceID, u.ID); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &u, nil
 }
 
 func (r *UserRepo) GetByID(id int) (*model.User, error) {
@@ -58,10 +76,17 @@ func (r *UserRepo) MergeDeviceData(deviceID string, userID int) error {
 		return err
 	}
 	defer tx.Rollback()
+	if err := mergeDeviceData(tx, deviceID, userID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func mergeDeviceData(tx *sql.Tx, deviceID string, userID int) error {
 	if _, err := tx.Exec(`
 		INSERT INTO user_tags(user_id, name)
 		SELECT DISTINCT ?, tag.value FROM favorites f, json_each(f.tags) tag
-		WHERE f.device_id = ? AND f.user_id IS NULL
+		WHERE f.device_id = ? AND f.user_id IS NULL AND tag.type = 'text'
 		ON CONFLICT(user_id, name) DO NOTHING`, userID, deviceID); err != nil {
 		return err
 	}
@@ -81,5 +106,5 @@ func (r *UserRepo) MergeDeviceData(deviceID string, userID int) error {
 		userID, accountDeviceID(userID), deviceID, userID); err != nil {
 		return err
 	}
-	return tx.Commit()
+	return nil
 }

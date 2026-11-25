@@ -33,9 +33,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userRepo.Create(req.Username, string(hash))
-	if err != nil {
+	user, err := h.userRepo.Create(req.Username, string(hash), c.Query("device_id"))
+	if err == repository.ErrUsernameTaken {
 		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
+		return
+	}
+
+	if err != nil {
+		log.Printf("Failed to create account: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration failed"})
 		return
 	}
 

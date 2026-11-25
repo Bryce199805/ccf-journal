@@ -31,8 +31,8 @@ export function useAuth() {
     return res
   }, [])
 
-  const register = useCallback(async (username: string, password: string) => {
-    const res = await authApi.register({ username, password })
+  const register = useCallback(async (username: string, password: string, deviceId: string) => {
+    const res = await authApi.register({ username, password, device_id: deviceId })
     localStorage.setItem('ccf_token', res.token)
     setUser(res.user)
     setSession(previous => previous + 1)

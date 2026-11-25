@@ -101,7 +101,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
         open={authOpen}
         onOpenChange={setAuthOpen}
         onLogin={handleLogin}
-        onRegister={register}
+        onRegister={(username, password) => register(username, password, deviceId)}
       />
       <TagManager
         open={tagManagerOpen}

@@ -207,6 +207,23 @@ async function main() {
       assert.equal(await page.getByText('账号专属备注', { exact: true }).count(), 0)
       await page.getByText(note, { exact: true }).waitFor()
     })
+    await check('registration submits the current guest device', async () => {
+      const device = await page.evaluate(() => localStorage.getItem('ccf_devid'))
+      let submittedDevice
+      await page.route('**/api/auth/register**', route => {
+        submittedDevice = new URL(route.request().url()).searchParams.get('device_id')
+        return route.fulfill({ json: { token: 'registered-session', user: { id: 2, username: 'newreader' } } })
+      })
+      await page.getByRole('button', { name: '登录或注册' }).click()
+      const dialog = page.getByRole('dialog')
+      await dialog.getByRole('button', { name: '注册', exact: true }).click()
+      await dialog.getByLabel('用户名').fill('newreader')
+      await dialog.getByLabel('密码').fill('fixture-only')
+      await dialog.locator('button[type=submit]').click()
+      await page.getByRole('button', { name: '退出登录' }).waitFor()
+      assert.ok(device)
+      assert.equal(submittedDevice, device)
+    })
     assert.deepEqual(errors, [])
   } finally { await browser.close() }
 }
