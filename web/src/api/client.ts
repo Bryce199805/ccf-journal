@@ -7,8 +7,17 @@ export class ApiError extends Error {
   }
 }
 
+let sessionToken = localStorage.getItem('ccf_token')
+
+export function setSessionToken(token: string | null) {
+  sessionToken = token
+  if (token) localStorage.setItem('ccf_token', token)
+  else localStorage.removeItem('ccf_token')
+}
+
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem('ccf_token')
+  if (token !== sessionToken) throw new ApiError(409)
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

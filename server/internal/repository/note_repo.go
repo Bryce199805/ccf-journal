@@ -15,6 +15,9 @@ func NewNoteRepo(db *sql.DB) *NoteRepo {
 
 // Upsert creates or updates a note for a given identity (device_id or user_id)
 func (r *NoteRepo) Upsert(deviceID string, userID *int, entryID int, content string) error {
+	if content == "" {
+		return r.Delete(deviceID, userID, entryID)
+	}
 	if userID != nil {
 		_, err := r.db.Exec(
 			`INSERT INTO notes (device_id, user_id, entry_id, content, updated_at)

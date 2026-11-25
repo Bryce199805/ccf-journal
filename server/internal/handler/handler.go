@@ -143,6 +143,10 @@ func (h *Handler) AddFavorite(c *gin.Context) {
 	}
 
 	if err := h.favoriteRepo.Add(req.DeviceID, userID, req.EntryID, tags); err != nil {
+		if err == repository.ErrStaleTag {
+			c.JSON(http.StatusConflict, gin.H{"error": "标签已变更，请刷新后重试"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -208,6 +212,10 @@ func (h *Handler) UpdateFavoriteTags(c *gin.Context) {
 		return
 	}
 	err := h.favoriteRepo.UpdateTags(req.DeviceID, userID, req.EntryID, req.Tags)
+	if err == repository.ErrStaleTag {
+		c.JSON(http.StatusConflict, gin.H{"error": "标签已变更，请刷新后重试"})
+		return
+	}
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "favorite not found"})
 		return

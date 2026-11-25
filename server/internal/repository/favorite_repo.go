@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 )
 
 type FavoriteRepo struct {
@@ -13,20 +14,54 @@ func NewFavoriteRepo(db *sql.DB) *FavoriteRepo {
 	return &FavoriteRepo{db: db}
 }
 
-func (r *FavoriteRepo) Add(deviceID string, userID *int, entryID int, tags []string) error {
-	tagsJSON, _ := json.Marshal(tags)
-	if userID != nil {
-		_, err := r.db.Exec(
-			"INSERT OR IGNORE INTO favorites (device_id, user_id, entry_id, tags) VALUES (?, ?, ?, ?)",
-			accountDeviceID(*userID), *userID, entryID, string(tagsJSON),
-		)
+var ErrStaleTag = errors.New("tag no longer exists")
+
+// Validate and write in the same transaction so a rename cannot interleave.
+func (r *FavoriteRepo) writeTags(userID *int, tags []string, write func(*sql.Tx, string) error) error {
+	if tags == nil {
+		tags = []string{}
+	}
+	encoded, err := json.Marshal(tags)
+	if err != nil {
 		return err
 	}
-	_, err := r.db.Exec(
-		"INSERT OR IGNORE INTO favorites (device_id, entry_id, tags) VALUES (?, ?, ?)",
-		deviceID, entryID, string(tagsJSON),
-	)
-	return err
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if userID != nil && len(tags) > 0 {
+		var invalid bool
+		err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM json_each(?) tag WHERE NOT EXISTS
+   (SELECT 1 FROM user_tags t WHERE t.user_id=? AND t.name=tag.value))`, string(encoded), *userID).Scan(&invalid)
+		if err != nil {
+			return err
+		}
+		if invalid {
+			return ErrStaleTag
+		}
+	}
+	if err := write(tx, string(encoded)); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (r *FavoriteRepo) Add(deviceID string, userID *int, entryID int, tags []string) error {
+	return r.writeTags(userID, tags, func(tx *sql.Tx, tagsJSON string) error {
+		if userID != nil {
+			_, err := tx.Exec(
+				"INSERT OR IGNORE INTO favorites (device_id, user_id, entry_id, tags) VALUES (?, ?, ?, ?)",
+				accountDeviceID(*userID), *userID, entryID, tagsJSON,
+			)
+			return err
+		}
+		_, err := tx.Exec(
+			"INSERT OR IGNORE INTO favorites (device_id, entry_id, tags) VALUES (?, ?, ?)",
+			deviceID, entryID, tagsJSON,
+		)
+		return err
+	})
 }
 
 func (r *FavoriteRepo) Remove(deviceID string, userID *int, entryID int) error {
@@ -117,22 +152,23 @@ func (r *FavoriteRepo) GetTags(deviceID string, userID *int, entryID int) ([]str
 
 // UpdateTags updates the tags for a favorite entry
 func (r *FavoriteRepo) UpdateTags(deviceID string, userID *int, entryID int, tags []string) error {
-	tagsJSON, _ := json.Marshal(tags)
-	query := "UPDATE favorites SET tags = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?"
-	var owner interface{} = deviceID
-	if userID != nil {
-		query = "UPDATE favorites SET tags = ? WHERE user_id = ? AND entry_id = ?"
-		owner = *userID
-	}
-	result, err := r.db.Exec(query, string(tagsJSON), owner, entryID)
-	if err != nil {
+	return r.writeTags(userID, tags, func(tx *sql.Tx, tagsJSON string) error {
+		query := "UPDATE favorites SET tags = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?"
+		var owner interface{} = deviceID
+		if userID != nil {
+			query = "UPDATE favorites SET tags = ? WHERE user_id = ? AND entry_id = ?"
+			owner = *userID
+		}
+		result, err := tx.Exec(query, tagsJSON, owner, entryID)
+		if err != nil {
+			return err
+		}
+		count, err := result.RowsAffected()
+		if err == nil && count == 0 {
+			return sql.ErrNoRows
+		}
 		return err
-	}
-	count, err := result.RowsAffected()
-	if err == nil && count == 0 {
-		return sql.ErrNoRows
-	}
-	return err
+	})
 }
 
 // GetTagsForEntries returns tags map for multiple entries (for list view)

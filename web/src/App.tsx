@@ -28,12 +28,17 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const debouncedQuery = useDebounce(filter.query, 300)
   const filterWithDebounce = { ...filter, query: debouncedQuery }
 
-  const { data, isLoading, isFetching, isError, refetch } = useEntries(filterWithDebounce, deviceId)
+  const { data, isLoading, isFetching, isPlaceholderData, isError, refetch } = useEntries(filterWithDebounce, deviceId)
   useEffect(() => {
     if (data?.page != null) {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }
   }, [data?.page])
+  useEffect(() => {
+    if (!data || isPlaceholderData || isFetching || isError || data.page !== filter.page) return
+    const lastPage = Math.max(1, data.total_pages)
+    if (filter.page > lastPage) setFilter(prev => ({ ...prev, page: lastPage }), true)
+  }, [data, filter.page, isPlaceholderData, isFetching, isError, setFilter])
   const { data: favData } = useFavorites(deviceId)
   const favCount = favData?.entry_ids?.length ?? 0
 
@@ -128,7 +133,9 @@ function App() {
   const auth = useAuth()
   return (
     <ThemeProvider>
-      <SessionCatalog key={auth.session} auth={auth} />
+      {auth.verificationFailed ? <div role="alert" className="p-4">
+        暂时无法确认登录状态。<button className="text-primary" onClick={() => window.location.reload()}>重试</button>
+      </div> : auth.isLoading ? <p role="status" className="p-4">正在确认登录状态…</p> : <SessionCatalog key={auth.session} auth={auth} />}
     </ThemeProvider>
   )
 }

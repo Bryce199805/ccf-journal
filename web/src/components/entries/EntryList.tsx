@@ -38,7 +38,7 @@ export function EntryList({
   const filtered = Boolean(filter.query || filter.catalog !== 'all' || filter.domains.length || filter.levels.length || filter.casZones.length || filter.wosZones.length || filter.topOnly || filter.tag)
   if (entries.length === 0) {
     if (isError) return <RequestError onRetry={onRetry} pending={isFetching} />
-    if (isFetching) return <div role="status" className="py-12 text-center text-sm text-muted-foreground">正在更新结果…</div>
+    if (isFetching || total > 0) return <div role="status" className="py-12 text-center text-sm text-muted-foreground">正在更新结果…</div>
     return <EmptyState favorites={filter.favOnly} filtered={filtered} onReset={onReset} onBrowse={onBrowse} />
   }
 

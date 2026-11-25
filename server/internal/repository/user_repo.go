@@ -100,6 +100,12 @@ func mergeDeviceData(tx *sql.Tx, deviceID string, userID int) error {
 		WHERE device_id = ? AND user_id IS NULL`, userID, accountDeviceID(userID), deviceID); err != nil {
 		return err
 	}
+	if _, err := tx.Exec("DELETE FROM notes WHERE user_id=? AND content=''", userID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM notes WHERE user_id IS NULL AND device_id=? AND content=''", deviceID); err != nil {
+		return err
+	}
 	if _, err := tx.Exec(`UPDATE notes AS guest SET user_id = ?, device_id = ?
 		WHERE device_id = ? AND user_id IS NULL
 		AND NOT EXISTS (SELECT 1 FROM notes owned WHERE owned.user_id = ? AND owned.entry_id = guest.entry_id)`,

@@ -90,6 +90,20 @@ func TestPersonalDataUpgradeAndMerge(t *testing.T) {
 	}
 	count(`SELECT count(*) FROM favorites WHERE user_id=1 AND tags='["renamed"]'`, 1)
 	count(`SELECT count(*) FROM favorites WHERE user_id=1 AND tags='["keep"]'`, 1)
+	owner := 1
+	if err := NewFavoriteRepo(db).UpdateTags("device", &owner, 2, []string{"A_%"}); err != ErrStaleTag {
+		t.Fatalf("stale update: %v", err)
+	}
+	count(`SELECT count(*) FROM favorites WHERE user_id=1 AND tags='["renamed"]'`, 1)
+	if err := notes.Upsert("device", &owner, 2, ""); err != nil {
+		t.Fatal(err)
+	}
+	count("SELECT count(*) FROM notes WHERE user_id=1 AND entry_id=2", 0)
+	exec(`INSERT INTO notes(device_id,user_id,entry_id,content) VALUES ('user:1',1,2,''),('device',NULL,2,'new draft')`)
+	if err := users.MergeDeviceData("device", owner); err != nil {
+		t.Fatal(err)
+	}
+	count("SELECT count(*) FROM notes WHERE user_id=1 AND entry_id=2 AND content='new draft'", 1)
 	exec("DELETE FROM favorites WHERE entry_id=2")
 	if err := tags.Delete(1, 1); err != nil {
 		t.Fatal(err)
