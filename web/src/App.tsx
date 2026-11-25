@@ -8,7 +8,8 @@ import { useFavorites } from '@/hooks/use-favorites'
 import { useAuth } from '@/hooks/use-auth'
 import { Header } from '@/components/layout/Header'
 import { FilterBar } from '@/components/layout/FilterBar'
-import { FavoriteComparison } from '@/components/entries/FavoriteComparison'
+import { ComparisonTray } from '@/components/compare/ComparisonTray'
+import { ComparisonContext, useComparisonSelection } from '@/hooks/use-comparison'
 import { EntryList } from '@/components/entries/EntryList'
 import { DetailDialog } from '@/components/detail/DetailDialog'
 import { AuthDialog } from '@/components/auth/AuthDialog'
@@ -75,7 +76,6 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
         deviceId={deviceId}
       />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
-        {filter.favOnly && filter.type === 'journal' && <FavoriteComparison deviceId={deviceId} />}
         <EntryList
           entries={data?.data ?? []}
           total={data?.total ?? 0}
@@ -93,6 +93,7 @@ function AppContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
           onPageChange={p => updateFilter({ page: p })}
         />
       </main>
+      {filter.type === 'journal' && <ComparisonTray deviceId={deviceId} />}
       <DetailDialog
         entryId={entryId}
         deviceId={deviceId}
@@ -123,7 +124,12 @@ function SessionCatalog({ auth }: { auth: ReturnType<typeof useAuth> }) {
       },
     },
   }))
-  return <QueryClientProvider client={queryClient}><AppContent auth={auth} /></QueryClientProvider>
+  const comparison = useComparisonSelection()
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ComparisonContext.Provider value={comparison}><AppContent auth={auth} /></ComparisonContext.Provider>
+    </QueryClientProvider>
+  )
 }
 
 function App() {

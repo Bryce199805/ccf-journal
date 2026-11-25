@@ -1,3 +1,4 @@
+import { CompareButton } from '@/components/compare/CompareButton'
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -114,6 +115,7 @@ export function JournalCard({ entry, deviceId, onClick }: JournalCardProps) {
         </dl>
         <div data-card-footer className="flex min-w-0 items-center justify-between gap-3 px-4 py-2.5">
           <span className="min-w-0 text-xs text-muted-foreground [overflow-wrap:anywhere]">{displayPublisher || '出版商待补充'}</span>
+          <CompareButton entry={entry} />
           {entry.letpub_url && <a href={entry.letpub_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="inline-flex min-h-8 shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline">LetPub <ArrowUpRight className="size-3" /></a>}
         </div>
       </CardContent>
