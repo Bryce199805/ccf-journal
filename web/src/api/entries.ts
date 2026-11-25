@@ -1,8 +1,8 @@
 import { apiGet } from './client'
 import type { PaginatedResponse, EntryDetailResponse, FilterState } from './types'
 
-export function fetchEntries(f: FilterState, deviceId: string) {
-  return apiGet<PaginatedResponse>('/entries', {
+export function entryParams(f: FilterState, deviceId: string) {
+  return {
     type: f.type,
     catalog: f.catalog === 'all' ? undefined : f.catalog,
     domain: f.domains.length > 0 ? f.domains.join(',') : undefined,
@@ -18,7 +18,11 @@ export function fetchEntries(f: FilterState, deviceId: string) {
     favorites: f.favOnly ? '1' : undefined,
     top: f.topOnly ? '1' : undefined,
     tag: f.favOnly ? f.tag || undefined : undefined,
-  })
+  }
+}
+
+export function fetchEntries(params: ReturnType<typeof entryParams>) {
+  return apiGet<PaginatedResponse>('/entries', params)
 }
 
 export function fetchEntryDetail(id: number, deviceId: string) {

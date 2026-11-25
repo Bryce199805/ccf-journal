@@ -1,4 +1,6 @@
 import { LevelBadge } from '@/components/shared/ZoneBadge'
+import { useRef, useState } from 'react'
+import { NoteEditor } from './NoteEditor'
 import { FavoriteStar } from './FavoriteStar'
 import { ExternalLink } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -7,6 +9,18 @@ import type { EntryListItem } from '@/api/types'
 interface ConferenceListProps {
   entries: EntryListItem[]
   deviceId: string
+}
+
+function ConferenceNote({ entry, deviceId }: { entry: EntryListItem; deviceId: string }) {
+  const [editing, setEditing] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  return <div>
+    {entry.note && <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{entry.note}</p>}
+    <button ref={trigger} type="button" hidden={editing} className="min-h-11 text-xs text-primary"
+      onClick={() => setEditing(true)}>{entry.note ? '编辑备注' : '添加备注'}</button>
+    {editing && <NoteEditor entryId={entry.id} deviceId={deviceId} initialContent={entry.note || ''}
+      onDone={() => { setEditing(false); requestAnimationFrame(() => trigger.current?.focus()) }} />}
+  </div>
 }
 
 export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
@@ -24,13 +38,14 @@ export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
               {e.ccf_full !== e.ccf_abbr && <p className="text-sm leading-relaxed text-muted-foreground">{e.ccf_full}</p>}
             </div>
             <dl className="space-y-2 border-t pt-3 text-sm leading-relaxed">
-              {([['领域', e.ccf_domain], ['出版社', e.ccf_publisher], ['备注', e.note]] as const).map(([label, value]) => value && (
+              {([['领域', e.ccf_domain], ['出版社', e.ccf_publisher]] as const).map(([label, value]) => value && (
                 <div key={label} className="flex gap-3">
                   <dt className="w-12 shrink-0 text-muted-foreground">{label}</dt>
                   <dd className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{value}</dd>
                 </div>
               ))}
             </dl>
+            <ConferenceNote entry={e} deviceId={deviceId} />
             {e.ccf_url && <a href={e.ccf_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1 text-sm text-primary hover:underline">DBLP <ExternalLink className="h-4 w-4" /></a>}
           </Card>
         ))}
@@ -67,7 +82,7 @@ export function ConferenceList({ entries, deviceId }: ConferenceListProps) {
                   </a>
                 )}
               </td>
-              <td className="py-2 px-2 text-xs text-muted-foreground truncate max-w-[150px]">{e.note || '-'}</td>
+              <td className="py-2 px-2 text-xs text-muted-foreground max-w-[200px]"><ConferenceNote entry={e} deviceId={deviceId} /></td>
               <td className="py-2 px-2 text-center" onClick={(ev) => ev.stopPropagation()}>
                 <FavoriteStar entryId={e.id} isFavorite={e.is_favorite} deviceId={deviceId} />
               </td>

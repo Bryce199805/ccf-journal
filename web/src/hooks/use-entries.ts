@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchEntries, fetchEntryDetail } from '@/api/entries'
+import { entryParams, fetchEntries, fetchEntryDetail } from '@/api/entries'
 import type { FilterState, PaginatedResponse } from '@/api/types'
 
 export function useEntries(f: FilterState, deviceId: string) {
+  const filters = entryParams(f, deviceId)
   return useQuery({
-    queryKey: ['entries', f, deviceId],
-    queryFn: () => fetchEntries(f, deviceId),
+    queryKey: ['entries', filters],
+    queryFn: () => fetchEntries(filters),
     placeholderData: (prev: PaginatedResponse | undefined, query) => {
-      const previousFilter = query?.queryKey[1] as FilterState | undefined
+      const previousFilter = query?.queryKey[1] as ReturnType<typeof entryParams> | undefined
       return previousFilter?.type === f.type ? prev : undefined
     },
   })
