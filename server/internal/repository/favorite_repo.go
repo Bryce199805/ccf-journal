@@ -118,17 +118,20 @@ func (r *FavoriteRepo) GetTags(deviceID string, userID *int, entryID int) ([]str
 // UpdateTags updates the tags for a favorite entry
 func (r *FavoriteRepo) UpdateTags(deviceID string, userID *int, entryID int, tags []string) error {
 	tagsJSON, _ := json.Marshal(tags)
+	query := "UPDATE favorites SET tags = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?"
+	var owner interface{} = deviceID
 	if userID != nil {
-		_, err := r.db.Exec(
-			"UPDATE favorites SET tags = ? WHERE user_id = ? AND entry_id = ?",
-			string(tagsJSON), *userID, entryID,
-		)
+		query = "UPDATE favorites SET tags = ? WHERE user_id = ? AND entry_id = ?"
+		owner = *userID
+	}
+	result, err := r.db.Exec(query, string(tagsJSON), owner, entryID)
+	if err != nil {
 		return err
 	}
-	_, err := r.db.Exec(
-		"UPDATE favorites SET tags = ? WHERE device_id = ? AND user_id IS NULL AND entry_id = ?",
-		string(tagsJSON), deviceID, entryID,
-	)
+	count, err := result.RowsAffected()
+	if err == nil && count == 0 {
+		return sql.ErrNoRows
+	}
 	return err
 }
 

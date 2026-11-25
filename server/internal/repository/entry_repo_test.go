@@ -27,6 +27,9 @@ func TestDomainAndLevelMustMatchSameRelation(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := NewEntryRepo(database)
+	if _, _, err := repo.List(&model.ListQuery{Favorites: true}); err != ErrFavoriteOwnerRequired {
+		t.Fatalf("unexpected ownerless favorites result: %v", err)
+	}
 	for _, testcase := range []struct {
 		domain, level string
 		count         int64
@@ -66,6 +69,9 @@ func TestDomainAndLevelMustMatchSameRelation(t *testing.T) {
 	stats, err := repo.GetStats()
 	if err != nil {
 		t.Fatal(err)
+	}
+	if stats.ByDomain["Security"] != 1 || stats.ByDomain["Networks"] != 1 || stats.ByLevel["B"] != 1 || stats.ByLevel["A"] != 1 {
+		t.Fatalf("overlapping memberships counted incorrectly: %+v", stats)
 	}
 	if stats.TotalJournals != 2 || stats.NonCCFJournals != 1 {
 		t.Fatal("catalog totals included archived rows")

@@ -10,6 +10,7 @@ import type { Tag } from '@/api/types'
 
 interface TagPickerProps {
   deviceId: string
+  isFavorite: boolean
   selectedTags: string[]
   onTagsChange: (tags: string[]) => void
   pending?: boolean
@@ -17,7 +18,7 @@ interface TagPickerProps {
   children: React.ReactNode
 }
 
-export function TagPicker({ deviceId, selectedTags, onTagsChange, pending, error, children }: TagPickerProps) {
+export function TagPicker({ isFavorite, deviceId, selectedTags, onTagsChange, pending, error, children }: TagPickerProps) {
   const { data: tags, isLoading, isError, refetch } = useTags(deviceId)
   const [open, setOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
@@ -36,7 +37,7 @@ export function TagPicker({ deviceId, selectedTags, onTagsChange, pending, error
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-64 max-w-[calc(100vw-2rem)] p-3" align="end" onClick={e => e.stopPropagation()}>
         <div className="text-xs font-medium text-muted-foreground mb-1.5">选择标签</div>
-        {isError ? <RequestError onRetry={() => void refetch()} /> : isLoading ? <p role="status" className="py-2 text-sm">正在加载标签…</p> : tags && tags.length > 0 ? (
+        {!isFavorite ? <p className="py-2 text-sm text-muted-foreground">请先收藏此期刊，再添加标签。</p> : isError ? <RequestError onRetry={() => void refetch()} /> : isLoading ? <p role="status" className="py-2 text-sm">正在加载标签…</p> : tags && tags.length > 0 ? (
           <div className="max-h-60 space-y-0.5 overflow-y-auto">
             {tags.map((tag: Tag) => (
               <button

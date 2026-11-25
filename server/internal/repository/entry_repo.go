@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -50,7 +51,22 @@ func escapeLike(s string) string {
 	return s
 }
 
+var ErrFavoriteOwnerRequired = errors.New("device_id or auth required")
+
+// Include legacy primary memberships and all catalog relations. Filtering and
+// statistics use the same pairs so a level must match within its own domain.
+const memberships = `WITH memberships(entry_id, domain, level) AS (
+	SELECT id, ccf_domain, ccf_level FROM entries
+	UNION ALL
+	SELECT e.id, json_extract(rel.value,'$.domain'), json_extract(rel.value,'$.level')
+	FROM entries e, json_each(CASE WHEN json_valid(e.ccf_relations) THEN e.ccf_relations ELSE '[]' END) rel
+	WHERE rel.type='object'
+) `
+
 func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, error) {
+	if q.Favorites && q.UserID == nil && q.DeviceID == "" {
+		return nil, 0, ErrFavoriteOwnerRequired
+	}
 	var conditions []string
 	var args []interface{}
 	// Archived rows remain addressable for existing favorites and notes.
@@ -69,29 +85,24 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		conditions = append(conditions, "e.type = 'journal' AND e.is_ccf = 0 AND e.catalog_source != 'historical_ccf'")
 	}
 	domains, levels := q.Domains(), q.Levels()
+	var prefix string
 	if len(domains) > 0 || len(levels) > 0 {
-		primary, related := []string{}, []string{}
-		primaryArgs, relatedArgs := []interface{}{}, []interface{}{}
+		prefix = memberships
+		var predicates []string
 		for _, field := range []struct {
-			values          []string
-			column, jsonKey string
-		}{
-			{domains, "e.ccf_domain", "domain"}, {levels, "e.ccf_level", "level"},
-		} {
+			column string
+			values []string
+		}{{"domain", domains}, {"level", levels}} {
 			if len(field.values) == 0 {
 				continue
 			}
 			placeholders := strings.TrimSuffix(strings.Repeat("?,", len(field.values)), ",")
-			primary = append(primary, field.column+" IN ("+placeholders+")")
-			related = append(related, "json_extract(relation.value, '$."+field.jsonKey+"') IN ("+placeholders+")")
-			for _, value := range field.values {
-				primaryArgs = append(primaryArgs, value)
-				relatedArgs = append(relatedArgs, value)
+			predicates = append(predicates, field.column+" IN ("+placeholders+")")
+			for _, v := range field.values {
+				args = append(args, v)
 			}
 		}
-		conditions = append(conditions, "(("+strings.Join(primary, " AND ")+") OR EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(e.ccf_relations) THEN e.ccf_relations ELSE '[]' END) relation WHERE "+strings.Join(related, " AND ")+"))")
-		args = append(args, primaryArgs...)
-		args = append(args, relatedArgs...)
+		conditions = append(conditions, "e.id IN (SELECT entry_id FROM memberships WHERE "+strings.Join(predicates, " AND ")+")")
 	}
 	if casZones := q.CASZones(); len(casZones) > 0 {
 		zoneConditions := make([]string, len(casZones))
@@ -148,7 +159,7 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 	}
 
 	// Count total
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM entries e %s", whereClause)
+	countQuery := prefix + fmt.Sprintf("SELECT COUNT(*) FROM entries e %s", whereClause)
 	var total int64
 	if err := r.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
@@ -194,7 +205,7 @@ func (r *EntryRepo) List(q *model.ListQuery) ([]model.EntryListItem, int64, erro
 		favSubquery = `, '[]' as tags, '' as note, 0 as is_favorite`
 	}
 
-	query := fmt.Sprintf(
+	query := prefix + fmt.Sprintf(
 		"SELECT %s%s FROM entries e %s ORDER BY %s %s LIMIT ? OFFSET ?",
 		listColumns, favSubquery, whereClause, sortCol, order,
 	)
@@ -272,65 +283,49 @@ func (r *EntryRepo) GetStats() (*model.Stats, error) {
 		stats.DataUpdatedAt = &dataUpdatedAt.String
 	}
 
-	// By domain - use separate scope to avoid rows variable reuse
-	func() {
-		rows, err := r.db.Query("SELECT ccf_domain, COUNT(*) FROM entries WHERE catalog_source != 'historical_ccf' GROUP BY ccf_domain")
-		if err != nil {
-			return
+	for _, dimension := range []struct {
+		column string
+		counts map[string]int
+	}{
+		{"domain", stats.ByDomain}, {"level", stats.ByLevel},
+	} {
+		query := memberships + fmt.Sprintf(`SELECT m.%[1]s, COUNT(DISTINCT m.entry_id)
+			FROM memberships m JOIN entries e ON e.id=m.entry_id
+			WHERE e.catalog_source != 'historical_ccf' AND m.%[1]s IS NOT NULL GROUP BY m.%[1]s`, dimension.column)
+		if err := r.readCounts(query, dimension.counts); err != nil {
+			return nil, err
 		}
-		defer rows.Close()
-		for rows.Next() {
-			var domain string
-			var count int
-			if err := rows.Scan(&domain, &count); err != nil {
-				return
-			}
-			stats.ByDomain[domain] = count
-		}
-	}()
-
-	// By level
-	func() {
-		rows, err := r.db.Query("SELECT ccf_level, COUNT(*) FROM entries WHERE catalog_source != 'historical_ccf' GROUP BY ccf_level ORDER BY ccf_level")
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var level string
-			var count int
-			if err := rows.Scan(&level, &count); err != nil {
-				return
-			}
-			stats.ByLevel[level] = count
-		}
-	}()
+	}
 
 	// By CAS zone
-	func() {
-		rows, err := r.db.Query(`SELECT 
-			CASE 
+	if err := r.readCounts(`SELECT
+			CASE
 				WHEN cas2025 LIKE '%"bigZone":"1区"%' THEN '1区'
 				WHEN cas2025 LIKE '%"bigZone":"2区"%' THEN '2区'
 				WHEN cas2025 LIKE '%"bigZone":"3区"%' THEN '3区'
 				WHEN cas2025 LIKE '%"bigZone":"4区"%' THEN '4区'
 				ELSE '未分区'
 			END as zone,
-			COUNT(*) 
-			FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf' GROUP BY zone ORDER BY zone`)
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var zone string
-			var count int
-			if err := rows.Scan(&zone, &count); err != nil {
-				return
-			}
-			stats.ByCASZone[zone] = count
-		}
-	}()
-
+			COUNT(*)
+			FROM entries WHERE type = 'journal' AND catalog_source != 'historical_ccf' GROUP BY zone ORDER BY zone`, stats.ByCASZone); err != nil {
+		return nil, err
+	}
 	return stats, nil
+}
+
+func (r *EntryRepo) readCounts(query string, counts map[string]int) error {
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var key string
+		var count int
+		if err := rows.Scan(&key, &count); err != nil {
+			return err
+		}
+		counts[key] = count
+	}
+	return rows.Err()
 }

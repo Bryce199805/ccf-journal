@@ -55,6 +55,10 @@ func (h *Handler) ListEntries(c *gin.Context) {
 	q.UserID = middleware.GetUserID(c)
 
 	items, total, err := h.entryRepo.List(q)
+	if err == repository.ErrFavoriteOwnerRequired {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -203,7 +207,12 @@ func (h *Handler) UpdateFavoriteTags(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id or auth required"})
 		return
 	}
-	if err := h.favoriteRepo.UpdateTags(req.DeviceID, userID, req.EntryID, req.Tags); err != nil {
+	err := h.favoriteRepo.UpdateTags(req.DeviceID, userID, req.EntryID, req.Tags)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "favorite not found"})
+		return
+	}
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

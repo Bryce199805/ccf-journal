@@ -132,6 +132,12 @@ async function main() {
       await page.keyboard.press('Escape')
       assert.equal(await page.getByRole('button', { name: '查看 TEST 详情', exact: true }).evaluate(e => e === document.activeElement), true)
     })
+    await check('tagging a journal requires a favorite', async () => {
+      await page.getByRole('button', { name: '标签', exact: true }).click()
+      await page.getByText('请先收藏此期刊，再添加标签。').waitFor()
+      assert.equal(await page.getByRole('button', { name: '研究', exact: true, pressed: true }).count(), 0)
+      await page.keyboard.press('Escape')
+    })
     await check('favorite blocks duplicate writes and recovers after failure', async () => {
       mutationFailure = true
       const star = page.locator('[data-slot="card"]').getByRole('button', { name: '收藏', exact: true })
