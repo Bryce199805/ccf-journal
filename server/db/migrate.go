@@ -22,13 +22,26 @@ func Migrate(db *sql.DB, baseline string) error {
 		return err
 	}
 	switch version {
-	case 1:
+	case 2:
 		return nil
 	case 0:
+		if err := migrateLegacy(tx, baseline); err != nil {
+			return err
+		}
+	case 1:
 	default:
 		return fmt.Errorf("unsupported database version %d", version)
 	}
+	if _, err := tx.Exec(journalLookupMigration); err != nil {
+		return fmt.Errorf("migrate journal lookup indexes: %w", err)
+	}
+	return tx.Commit()
+}
 
+//go:embed migrations/002_journal_lookup.sql
+var journalLookupMigration string
+
+func migrateLegacy(tx *sql.Tx, baseline string) error {
 	if _, err := tx.Exec(baseline); err != nil {
 		return err
 	}
@@ -57,5 +70,5 @@ func Migrate(db *sql.DB, baseline string) error {
 	if _, err := tx.Exec(personalDataMigration); err != nil {
 		return fmt.Errorf("migrate personal data: %w", err)
 	}
-	return tx.Commit()
+	return nil
 }

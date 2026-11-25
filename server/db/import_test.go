@@ -240,3 +240,62 @@ func TestCompleteCatalogPreservesEntryIDsAndRetiresRemovedMembership(t *testing.
 		t.Fatal("resolved journal did not preserve its provider identity")
 	}
 }
+
+func TestImportConflictsAndUnchangedRows(t *testing.T) {
+	database, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	database.SetMaxOpenConns(1)
+	schema, err := os.ReadFile("schema.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(database, string(schema)); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "catalog.json")
+	load := func(packet ImportData) error {
+		payload, err := json.Marshal(packet)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, payload, 0600); err != nil {
+			t.Fatal(err)
+		}
+		return ImportFromJSON(database, path)
+	}
+	alpha := JournalImport{CCFFull: "Alpha", JournalID: "101", ISSN: "1111-1111"}
+	beta := JournalImport{CCFFull: "Beta", JournalID: "202", ISSN: "2222-2222"}
+	packet := ImportData{JournalCatalogComplete: true, Journals: []JournalImport{alpha, beta}, Conferences: []ConferenceImport{{Abbr: "C", Full: "Conf"}}}
+	if err := load(packet); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Exec("CREATE TRIGGER reject_rewrites BEFORE UPDATE ON entries BEGIN SELECT RAISE(ABORT,'unexpected write'); END"); err != nil {
+		t.Fatal(err)
+	}
+	if err := load(packet); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Exec("DROP TRIGGER reject_rewrites; INSERT INTO favorites(device_id,entry_id) SELECT 'device',id FROM entries WHERE journalid='101'"); err != nil {
+		t.Fatal(err)
+	}
+	for _, conflict := range []JournalImport{
+		{CCFFull: "Beta", JournalID: "101", ISSN: beta.ISSN},
+		{CCFFull: "Beta", JournalID: "101"},
+		{CCFFull: "Alpha", JournalID: "unknown", ISSN: "3333-3333"},
+	} {
+		if err := load(ImportData{Journals: []JournalImport{{CCFFull: "Prior insert"}, conflict}}); err == nil {
+			t.Fatal("accepted conflicting identity")
+		}
+		var count int
+		if err := database.QueryRow("SELECT count(*) FROM entries").Scan(&count); err != nil || count != 3 {
+			t.Fatalf("partial import: %d %v", count, err)
+		}
+		var title string
+		if err := database.QueryRow("SELECT ccf_full FROM entries JOIN favorites ON entry_id=entries.id").Scan(&title); err != nil || title != "Alpha" {
+			t.Fatalf("favorite changed: %s %v", title, err)
+		}
+	}
+}

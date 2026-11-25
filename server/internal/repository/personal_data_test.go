@@ -54,7 +54,7 @@ func TestPersonalDataUpgradeAndMerge(t *testing.T) {
 	if err := dbpkg.Migrate(db, "invalid if migration runs twice"); err != nil {
 		t.Fatal(err)
 	}
-	count("PRAGMA user_version", 1)
+	count("PRAGMA user_version", 2)
 
 	notes, tags := NewNoteRepo(db), NewTagRepo(db)
 	if err := notes.Upsert("user:1", nil, 1, "guest"); err != nil {
